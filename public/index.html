@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WeClick AI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --orange:#FF6A00;--orange-light:#FFF3EB;--orange-mid:#FFE0CC;
+  --bg:#FAFAFA;--surface:#FFFFFF;--border:#E5E5E5;
+  --text:#0F0F0F;--muted:#6B7280;--subtle:#9CA3AF;
+  --green:#10B981;--green-bg:#ECFDF5;
+  --red:#EF4444;--red-bg:#FEF2F2;
+  --blue:#3B82F6;--blue-bg:#EFF6FF;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 16px rgba(0,0,0,.08);
+  font-family:'DM Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;display:flex;height:100vh;overflow:hidden}
+#sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh}
+.sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:var(--orange);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px}
+.logo-text{font-size:15px;font-weight:600;letter-spacing:-0.3px}
+.logo-sub{font-size:10px;color:var(--muted)}
+.sidebar-nav{padding:12px 8px;flex:1;overflow-y:auto}
+.nav-section{font-size:10px;font-weight:600;color:var(--subtle);letter-spacing:.8px;text-transform:uppercase;padding:8px 12px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;cursor:pointer;color:var(--muted);font-size:13.5px;font-weight:400;transition:all .12s;margin-bottom:1px;user-select:none}
+.nav-item:hover{background:#F5F5F5;color:var(--text)}
+.nav-item.active{background:var(--orange-light);color:var(--orange);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.avatar-sm{width:28px;height:28px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600;flex-shrink:0}
+#main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:600;letter-spacing:-0.2px}
+.topbar-actions{display:flex;gap:8px;align-items:center}
+.page-content{flex:1;overflow-y:auto;padding:24px 28px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;transition:box-shadow .15s}
+.stat-card:hover{box-shadow:var(--shadow-md)}
+.stat-card.accent{border-left:3px solid var(--orange)}
+.stat-card.green-accent{border-left:3px solid var(--green)}
+.stat-card.blue-accent{border-left:3px solid var(--blue)}
+.stat-label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.stat-value{font-size:21px;font-weight:600;letter-spacing:-0.5px}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);transition:all .12s;white-space:nowrap;font-family:inherit}
+.btn:hover{background:#F5F5F5}
+.btn-primary{background:var(--orange);color:#fff;border-color:var(--orange)}
+.btn-primary:hover{background:#e55f00}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-danger{background:var(--red-bg);color:var(--red);border-color:#fecaca}
+.btn-ghost{border:none;background:transparent;color:var(--muted);padding:4px 8px}
+.btn-ghost:hover{background:#F5F5F5;color:var(--text)}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px}
+.table-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.table-title{font-size:14px;font-weight:600}
+table{width:100%;border-collapse:collapse}
+thead th{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:10px 18px;text-align:left;border-bottom:1px solid var(--border);background:#FAFAFA;white-space:nowrap}
+tbody td{padding:11px 18px;border-bottom:1px solid #F5F5F5;font-size:13.5px;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#FAFAFA}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-green{background:var(--green-bg);color:#059669}
+.badge-red{background:var(--red-bg);color:#DC2626}
+.badge-blue{background:var(--blue-bg);color:var(--blue)}
+.badge-orange{background:var(--orange-light);color:var(--orange)}
+.badge-gray{background:#F3F4F6;color:var(--muted)}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px}
+.chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.chart-title{font-size:14px;font-weight:600}
+.chart-bars{display:flex;align-items:flex-end;gap:5px;height:160px}
+.bar-group{display:flex;flex-direction:column;align-items:center;flex:1;gap:0}
+.bar-pair{display:flex;gap:2px;align-items:flex-end;flex:1;width:100%}
+.bar{border-radius:3px 3px 0 0;flex:1;transition:opacity .2s;cursor:default}
+.bar:hover{opacity:.75}
+.bar-lbl{font-size:9px;color:var(--subtle);margin-top:5px}
+.chart-legend{display:flex;gap:16px;margin-top:12px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.legend-dot{width:8px;height:8px;border-radius:2px}
+.toggle-group{display:flex;background:#F3F4F6;border-radius:6px;padding:2px}
+.toggle-btn{padding:4px 12px;border-radius:4px;font-size:12px;cursor:pointer;color:var(--muted);transition:all .12s;font-weight:500}
+.toggle-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px}
+.client-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.name-cell{display:flex;align-items:center;gap:10px}
+.activity-list{list-style:none}
+.activity-item{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid #F5F5F5}
+.activity-item:last-child{border-bottom:none}
+.activity-dot{width:7px;height:7px;border-radius:50%;background:var(--orange);margin-top:5px;flex-shrink:0}
+.activity-text{font-size:13px}
+.activity-time{font-size:11px;color:var(--subtle);margin-top:1px}
+.insight-card{background:linear-gradient(135deg,#FFFBF7,#FFF3EB);border:1px solid var(--orange-mid);border-radius:10px;padding:16px}
+.insight-title{font-size:11px;font-weight:700;color:var(--orange);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.insight-text{font-size:12.5px;color:var(--text);line-height:1.55}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:flex;align-items:center;justify-content:center;animation:fadeIn .15s}
+.modal{background:var(--surface);border-radius:14px;padding:24px;width:460px;max-width:95vw;box-shadow:0 24px 60px rgba(0,0,0,.18);animation:slideUp .18s ease}
+@keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:20px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:5px;display:block}
+.form-input{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:6px;font-size:13.5px;background:var(--surface);color:var(--text);outline:none;font-family:inherit;transition:border-color .12s}
+.form-input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,106,0,.1)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:22px}
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:24px}
+.tab{padding:10px 20px;font-size:13.5px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s}
+.tab.active{color:var(--orange);border-bottom-color:var(--orange)}
+.tab:hover:not(.active){color:var(--text)}
+.back-btn{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:18px;transition:color .12s}
+.back-btn:hover{color:var(--text)}
+.client-hero{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px;margin-bottom:18px;display:flex;align-items:center;gap:18px}
+.client-hero-av{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;background-size:cover;background-position:center;background-repeat:no-repeat;position:relative;cursor:pointer;transition:transform .15s, box-shadow .15s;flex-shrink:0}
+.client-hero-av:hover{transform:scale(1.04);box-shadow:0 4px 12px rgba(255,106,0,.25)}
+.client-hero-av .av-cam{position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.15);pointer-events:none}
+.client-hero-av.has-photo{color:transparent;font-size:0}
+.client-avatar{background-size:cover;background-position:center;background-repeat:no-repeat}
+.client-avatar.has-photo{color:transparent;font-size:0}
+.file-item{display:flex;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid #F5F5F5;transition:background .1s}
+.file-item:hover{background:#FAFAFA}
+.file-item:last-child{border-bottom:none}
+.file-icon{width:32px;height:32px;border-radius:6px;background:#F3F4F6;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.file-info{flex:1;min-width:0}
+.file-name{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-meta{font-size:11px;color:var(--subtle);margin-top:2px}
+.upload-zone{border:2px dashed var(--border);border-radius:8px;padding:28px;text-align:center;cursor:pointer;transition:all .15s;margin-bottom:14px}
+.upload-zone:hover{border-color:var(--orange);background:var(--orange-light)}
+.progress-wrap{display:flex;align-items:center;gap:8px}
+.progress-bar-bg{flex:1;height:4px;background:#F3F4F6;border-radius:4px}
+.progress-bar{height:100%;border-radius:4px}
+.empty-state{padding:48px 20px;text-align:center;color:var(--muted)}
+.empty-icon{font-size:32px;margin-bottom:12px}
+.empty-text{font-size:13.5px}
+.toast{position:fixed;bottom:24px;right:24px;background:#0F0F0F;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;z-index:200;animation:slideUp .2s ease;display:flex;align-items:center;gap:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinning{animation:spin .7s linear infinite}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.page{animation:fadeIn .18s ease}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#E5E5E5;border-radius:4px}
+.search-input{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12.5px;color:var(--text);outline:none;font-family:inherit;width:200px;transition:border-color .12s}
+.search-input:focus{border-color:var(--orange)}
+.loading{padding:48px;text-align:center;color:var(--muted);font-size:13px}
+.section-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.section-title{font-size:14px;font-weight:600}
+.chart-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.select-input{padding:6px 28px 6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12.5px;color:var(--text);background:var(--surface) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M2 4l3 3 3-3' stroke='%236B7280' stroke-width='1.5' fill='none'/></svg>") no-repeat right 8px center;outline:none;font-family:inherit;cursor:pointer;appearance:none}
+.select-input:focus{border-color:var(--orange)}
+.area-chart{position:relative;width:100%;height:240px}
+.area-chart svg{width:100%;height:100%;overflow:visible;display:block}
+.chart-tooltip{position:absolute;background:#0F0F0F;color:#fff;padding:8px 10px;border-radius:6px;font-size:12px;pointer-events:none;opacity:0;transform:translate(-50%,-110%);transition:opacity .12s;white-space:nowrap;z-index:10}
+.chart-tooltip.show{opacity:1}
+.chart-tooltip .tt-label{color:#9CA3AF;font-size:10px;margin-bottom:2px;text-transform:uppercase;letter-spacing:.4px}
+.chart-tooltip .tt-row{display:flex;align-items:center;gap:6px;font-weight:500}
+.chart-tooltip .tt-dot{width:7px;height:7px;border-radius:50%}
+.chart-dot{cursor:pointer;transition:r .15s}
+.chart-dot:hover{r:6}
+@keyframes drawLine{from{stroke-dashoffset:1500}to{stroke-dashoffset:0}}
+.chart-line{stroke-dasharray:1500;stroke-dashoffset:1500;animation:drawLine .9s ease-out forwards}
+@keyframes fadeArea{from{opacity:0}to{opacity:1}}
+.chart-area-fill{animation:fadeArea .8s ease-out forwards .2s;opacity:0}
+@keyframes popDot{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.chart-dot{transform-origin:center;transform-box:fill-box;animation:popDot .35s ease-out forwards;opacity:0}
+.calendar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:20px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cal-title{font-size:15px;font-weight:600}
+.cal-nav{display:flex;gap:6px;align-items:center}
+.cal-nav-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:all .12s}
+.cal-nav-btn:hover{background:#F5F5F5;color:var(--text)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day-name{font-size:10px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:.5px;text-align:center;padding:6px 0}
+.cal-day{aspect-ratio:1;border:1px solid var(--border);border-radius:6px;padding:6px;cursor:pointer;display:flex;flex-direction:column;transition:all .12s;background:var(--surface);min-height:64px}
+.cal-day:hover{border-color:var(--orange);background:var(--orange-light)}
+.cal-day.empty{border:none;cursor:default;background:transparent}
+.cal-day.empty:hover{background:transparent}
+.cal-day.today{border-color:var(--orange);box-shadow:0 0 0 1px var(--orange)}
+.cal-day-num{font-size:12px;font-weight:500;color:var(--text)}
+.cal-day.today .cal-day-num{color:var(--orange);font-weight:700}
+.cal-day-tasks{display:flex;flex-wrap:wrap;gap:3px;margin-top:auto}
+.cal-task-dot{width:7px;height:7px;border-radius:50%}
+.quote-table{width:100%;border-collapse:collapse;margin-bottom:14px}
+.quote-table th{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:8px;text-align:left;border-bottom:1px solid var(--border);background:#FAFAFA}
+.quote-table td{padding:8px;border-bottom:1px solid #F5F5F5;font-size:13px;vertical-align:middle}
+.quote-table input{width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:5px;font-size:13px;font-family:inherit;outline:none}
+.quote-table input:focus{border-color:var(--orange)}
+.quote-totals{display:flex;flex-direction:column;gap:6px;padding:14px 16px;background:#FAFAFA;border-radius:8px;margin-top:8px}
+.quote-totals-row{display:flex;justify-content:space-between;font-size:13px}
+.quote-totals-row.grand{font-size:16px;font-weight:700;color:var(--orange);border-top:1px solid var(--border);padding-top:8px;margin-top:4px}
+.quote-preview{background:#fff;border:1px solid var(--border);border-radius:10px;padding:32px;font-family:'DM Sans',sans-serif}
+.quote-preview-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:18px;border-bottom:2px solid var(--orange)}
+.quote-preview-brand{display:flex;align-items:center;gap:10px}
+.quote-preview-brand .logo-mark{width:40px;height:40px;font-size:14px}
+.quote-preview-meta{text-align:right;font-size:12px;color:var(--muted)}
+.quote-preview-meta strong{color:var(--text);font-size:13px;display:block;margin-bottom:2px}
+.quote-preview-to{margin-bottom:18px;font-size:13px}
+.quote-preview-to strong{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px}
+.quote-preview table{width:100%;border-collapse:collapse;margin-bottom:18px}
+.quote-preview thead th{background:#FAFAFA;text-align:left;padding:10px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);border-bottom:2px solid var(--border)}
+.quote-preview tbody td{padding:10px;border-bottom:1px solid #F0F0F0;font-size:13px}
+.quote-preview-totals{margin-left:auto;width:280px}
+.quote-preview-totals .row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}
+.quote-preview-totals .row.grand{border-top:2px solid var(--orange);padding-top:10px;margin-top:6px;font-size:15px;font-weight:700;color:var(--orange)}
+.quote-preview-foot{margin-top:24px;padding-top:14px;border-top:1px dashed var(--border);font-size:11.5px;color:var(--muted);line-height:1.6}
+.modal-lg{width:680px;max-width:96vw}
+.modal-xl{width:820px;max-width:96vw;max-height:90vh;overflow-y:auto}
+@media print{
+  body *{visibility:hidden!important}
+  #print-area, #print-area *{visibility:visible!important}
+  #print-area{position:absolute;left:0;top:0;width:100%;padding:20px;background:#fff}
+  .no-print{display:none!important}
+}
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">WC</div>
+    <div>
+      <div class="logo-text">WeClick AI</div>
+      <div class="logo-sub">Marketing Agency</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav" id="sidebar-nav">
+    <div class="nav-section">Main</div>
+    <div class="nav-item" data-page="dashboard">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" data-page="clients">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.314 2.686-6 6-6s6 2.686 6 6"/></svg>
+      Clients
+    </div>
+    <div class="nav-item" data-page="campaigns">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8l4-5 4 3 4-4"/><path d="M2 14h12"/></svg>
+      Campaigns
+    </div>
+    <div class="nav-section">Tools</div>
+    <div class="nav-item" data-page="automations">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
+      Automations
+    </div>
+    <div class="nav-item" data-page="collaborations">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="2.5"/><circle cx="11" cy="5" r="2.5"/><path d="M1 14c0-2.21 1.79-4 4-4s4 1.79 4 4"/><path d="M9 12.2A4 4 0 0115 14"/></svg>
+      Collaborations
+    </div>
+    <div class="nav-section">Finance</div>
+    <div class="nav-item" data-page="revenue">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M11 5H6.5a2.5 2.5 0 000 5h3a2.5 2.5 0 010 5H5"/></svg>
+      Revenue
+    </div>
+    <div class="nav-section">System</div>
+    <div class="nav-item" data-page="settings">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.44 3.44l.71.71M11.85 11.85l.71.71M3.44 12.56l.71-.71M11.85 4.15l.71-.71"/></svg>
+      Settings
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="avatar-sm">A</div>
+    <div>
+      <div style="font-size:12.5px;font-weight:500">Admin</div>
+      <div style="font-size:11px;color:var(--muted)">Agency Owner</div>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div class="topbar-actions" id="topbar-actions"></div>
+  </div>
+  <div class="page-content" id="page-content">
+    <div class="loading">Loading...</div>
+  </div>
+</div>
+
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+
+<script>
+const API = '';
+let appState = { page:'dashboard', chartPeriod:'30', chartClientId:'all', financeTab:'company', selectedClientId:null, calendarMonth:null, clients:[], campaigns:[], automations:[], collaborations:[], users:[], syncing:false, quoteItems:[] };
+
+// ── UTILS ──────────────────────────────────────────────────────
+function fmt(n){
+  n = Math.round(n||0);
+  if(n<0) return '-' + fmt(-n);
+  const s = n.toString();
+  if(s.length<=3) return '₹'+s;
+  const last3 = s.slice(-3);
+  const rest = s.slice(0,-3);
+  const grps = [];
+  let tmp = rest;
+  while(tmp.length>2){grps.unshift(tmp.slice(-2));tmp=tmp.slice(0,-2);}
+  if(tmp) grps.unshift(tmp);
+  return '₹'+grps.join(',')+','+last3;
+}
+function ini(name){return (name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
+function avatarHtml(c, opts){
+  opts = opts || {};
+  const cls = opts.cls || 'client-avatar';
+  const size = opts.size || '';
+  const inline = size ? `width:${size}px;height:${size}px;font-size:${Math.max(9,Math.round(size*0.36))}px;` : '';
+  const initials = ini(c.name);
+  if(c.avatar_url){
+    return `<div class="${cls}" style="background:${c.color};${inline}position:relative;overflow:hidden">
+      <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">${initials}</span>
+      <img src="${c.avatar_url}" alt="" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%"/>
+    </div>`;
+  }
+  return `<div class="${cls}" style="background:${c.color};${inline}">${initials}</div>`;
+}
+function relTime(d){const days=Math.floor((Date.now()-new Date(d).getTime())/86400000);return days===0?'Today':days===1?'Yesterday':days+'d ago';}
+function toast(msg,type='success'){
+  const el=document.getElementById('toast-root');
+  const div=document.createElement('div');
+  div.className='toast';
+  div.innerHTML=`<span>${type==='success'?'✓':'✕'}</span>${msg}`;
+  el.appendChild(div);
+  setTimeout(()=>div.remove(),3000);
+}
+async function api(path,opts={}){
+  try{
+    const res=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error||'Request failed');
+    return data;
+  }catch(e){toast(e.message,'error');throw e;}
+}
+
+// ── SIDEBAR NAV ────────────────────────────────────────────────
+document.querySelectorAll('.nav-item[data-page]').forEach(el=>{
+  el.addEventListener('click',()=>navigate(el.dataset.page));
+});
+function setActiveNav(page){
+  document.querySelectorAll('.nav-item[data-page]').forEach(el=>{
+    el.classList.toggle('active',el.dataset.page===page);
+  });
+}
+
+// ── NAVIGATION ─────────────────────────────────────────────────
+async function navigate(page,id){
+  appState.page=page;
+  if(id!==undefined) appState.selectedClientId=id;
+  setActiveNav(page==='clientDetail'?'clients':page);
+  const titles={dashboard:'Dashboard',clients:'Clients',clientDetail:'Client Detail',campaigns:'Campaigns',automations:'Automations',collaborations:'Collaborations',revenue:'Revenue · Finance Hub',settings:'Settings'};
+  document.getElementById('topbar-title').textContent=titles[page]||page;
+  renderTopbarActions();
+  const content=document.getElementById('page-content');
+  content.innerHTML='<div class="loading">Loading...</div>';
+  await renderPage();
+}
+function renderTopbarActions(){
+  const el=document.getElementById('topbar-actions');
+  const p=appState.page;
+  if(p==='dashboard') el.innerHTML=`<button class="btn btn-sm" onclick="syncMeta()"><svg id="sync-icon" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 8A6 6 0 112 8"/><path d="M14 2v6h-6"/></svg> Sync Meta</button>`;
+  else if(p==='clients') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddClient()">+ Add Client</button>`;
+  else if(p==='campaigns') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddCampaign()">+ Add Campaign</button>`;
+  else if(p==='automations') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddAutomation()">+ Add Automation</button>`;
+  else if(p==='collaborations') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddCollab()">+ Add Partner</button>`;
+  else if(p==='revenue') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddRevenue()">+ Manual Revenue</button>`;
+  else el.innerHTML='';
+}
+
+// ── PAGE RENDER ────────────────────────────────────────────────
+async function renderPage(){
+  const el=document.getElementById('page-content');
+  el.innerHTML='';
+  const div=document.createElement('div');
+  div.className='page';
+  switch(appState.page){
+    case 'dashboard': div.innerHTML=await buildDashboard();break;
+    case 'clients': div.innerHTML=await buildClients();break;
+    case 'clientDetail': div.innerHTML=await buildClientDetail();break;
+    case 'campaigns': div.innerHTML=await buildCampaigns();break;
+    case 'automations': div.innerHTML=await buildAutomations();break;
+    case 'collaborations': div.innerHTML=await buildCollaborations();break;
+    case 'revenue': div.innerHTML=await buildRevenue();break;
+    case 'settings': div.innerHTML=buildSettings();break;
+    default: div.innerHTML='<p>Page not found</p>';
+  }
+  el.appendChild(div);
+  drawChart();
+}
+
+// ── DASHBOARD ──────────────────────────────────────────────────
+async function buildDashboard(){
+  const [stats,clients] = await Promise.all([api('/api/dashboard'),api('/api/clients')]);
+  appState.clients=clients;
+  return `
+  <div class="stats-grid">
+    <div class="stat-card accent"><div class="stat-label">Total Revenue</div><div class="stat-value">${fmt(stats.totalRevenue)}</div><div class="stat-sub" style="color:var(--green)">↑ 18.4% vs last month</div></div>
+    <div class="stat-card"><div class="stat-label">Total Ad Spend</div><div class="stat-value">${fmt(stats.totalSpend)}</div><div class="stat-sub" style="color:var(--muted)">↑ 9.2% vs last</div></div>
+    <div class="stat-card green-accent"><div class="stat-label">Profit</div><div class="stat-value" style="color:var(--green)">${fmt(stats.profit)}</div><div class="stat-sub" style="color:var(--green)">↑ 24.1% margin</div></div>
+    <div class="stat-card blue-accent"><div class="stat-label">Active Clients</div><div class="stat-value">${stats.activeClients}</div><div class="stat-sub">${stats.totalClients} total</div></div>
+    <div class="stat-card"><div class="stat-label">Active Automations</div><div class="stat-value">${stats.activeAutomations}</div></div>
+    <div class="stat-card accent"><div class="stat-label">Automation Rev</div><div class="stat-value">${fmt(stats.automationRevenue)}</div></div>
+    <div class="stat-card"><div class="stat-label">Collab Revenue</div><div class="stat-value">${fmt(stats.collaborationRevenue)}</div></div>
+    <div class="stat-card green-accent"><div class="stat-label">This Month</div><div class="stat-value">${fmt(stats.thisMonth)}</div></div>
+    <div class="stat-card blue-accent"><div class="stat-label">Projected</div><div class="stat-value">${fmt(stats.projected)}</div><div class="stat-sub" style="color:var(--blue)">Next 30 days</div></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-header">
+      <div class="chart-title">Revenue vs Ad Spend</div>
+      <div class="chart-controls">
+        <select class="select-input" id="chart-client" onchange="setChartClient(this.value)">
+          <option value="all" ${appState.chartClientId==='all'?'selected':''}>All Clients</option>
+          ${clients.map(c=>`<option value="${c.id}" ${String(appState.chartClientId)===String(c.id)?'selected':''}>${c.name} — ${c.company}</option>`).join('')}
+        </select>
+        <div class="toggle-group">
+          <div class="toggle-btn ${appState.chartPeriod==='30'?'active':''}" onclick="toggleChart('30')">30D</div>
+          <div class="toggle-btn ${appState.chartPeriod==='90'?'active':''}" onclick="toggleChart('90')">90D</div>
+        </div>
+      </div>
+    </div>
+    <div class="area-chart" id="chart-area"></div>
+    <div class="chart-tooltip" id="chart-tooltip"></div>
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>Revenue</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#9CA3AF"></div>Ad Spend</div>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="table-wrap">
+      <div class="table-header"><div class="table-title">Top Clients</div></div>
+      <table><thead><tr><th>Client</th><th>Revenue</th><th>Profit</th></tr></thead><tbody>
+      ${clients.slice(0,5).map(c=>`<tr onclick="navigate('clientDetail',${c.id})" style="cursor:pointer">
+        <td><div class="name-cell">${avatarHtml(c)}<div><div style="font-weight:500;font-size:13px">${c.name}</div><div style="font-size:11px;color:var(--muted)">${c.company}</div></div></div></td>
+        <td style="font-weight:500">${fmt(c.revenue)}</td>
+        <td style="color:var(--green);font-weight:500">${fmt(c.profit)}</td>
+      </tr>`).join('')}
+      </tbody></table>
+    </div>
+    <div class="table-wrap">
+      <div class="table-header"><div class="table-title">Recent Activity</div></div>
+      <div style="padding:0 18px">
+        <ul class="activity-list">
+          ${[['New campaign launched: Diwali Mega Sale','2h ago'],['Manual revenue added ₹50,000 from Growfast','5h ago'],['Lead Follow-up Bot automation resumed','Yesterday'],['StyleHive budget updated to ₹60,000','Yesterday'],['Meta Ads sync completed — 2 campaigns','2d ago'],['EduSpark onboarded as new client','3d ago']].map(([t,a])=>`
+          <li class="activity-item"><div class="activity-dot"></div><div><div class="activity-text">${t}</div><div class="activity-time">${a}</div></div></li>`).join('')}
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="three-col">
+    <div class="insight-card"><div class="insight-title">🏆 Top Client</div><div class="insight-text">${clients[0]?.name||'—'} is your highest revenue client at ${fmt(clients[0]?.revenue||0)}, contributing the most this month. Consider upselling automation packages.</div></div>
+    <div class="insight-card"><div class="insight-title">⚠️ Needs Attention</div><div class="insight-text">${clients[clients.length-1]?.name||'—'} has the lowest profit margin. Review ad spend allocation — high spend relative to returns may signal audience fatigue.</div></div>
+    <div class="insight-card"><div class="insight-title">📈 Growth Insight</div><div class="insight-text">Agency revenue grew 18.4% MoM. Automation revenue up 34% QoQ. Projected to cross ₹12L monthly run rate by June 2025.</div></div>
+  </div>`;
+}
+
+// Generate a deterministic seeded series for a client so the chart is stable
+function seriesFor(clientId, period, baseRev, baseSpend){
+  const n = period==='30' ? 30 : 12;
+  let seed = (parseInt(clientId,10) || 7) * 13 + (period==='30'?1:2);
+  const rand = () => { seed = (seed*9301 + 49297) % 233280; return seed/233280; };
+  const rev=[], sp=[];
+  for(let i=0;i<n;i++){
+    const t = i/(n-1);
+    const wave = 0.65 + 0.45*Math.sin(t*Math.PI*1.6) + (rand()-0.5)*0.25;
+    const trend = 0.8 + t*0.45;
+    rev.push(Math.max(0, Math.round(baseRev * wave * trend)));
+    sp.push(Math.max(0, Math.round(baseSpend * (0.7 + (rand()-0.4)*0.5) * (0.85 + t*0.3))));
+  }
+  return { rev, sp };
+}
+function chartLabels(period){
+  if(period==='30'){
+    const out=[]; const today=new Date();
+    for(let i=29;i>=0;i--){ const d=new Date(today); d.setDate(d.getDate()-i); out.push(d.getDate()); }
+    return out;
+  }
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const out=[]; const today=new Date();
+  for(let i=11;i>=0;i--){ const d=new Date(today.getFullYear(),today.getMonth()-i,1); out.push(months[d.getMonth()]); }
+  return out;
+}
+function smoothPath(points){
+  if(points.length<2) return '';
+  let d=`M ${points[0].x} ${points[0].y}`;
+  for(let i=0;i<points.length-1;i++){
+    const p0=points[i-1]||points[i], p1=points[i], p2=points[i+1], p3=points[i+2]||p2;
+    const cp1x=p1.x+(p2.x-p0.x)/6, cp1y=p1.y+(p2.y-p0.y)/6;
+    const cp2x=p2.x-(p3.x-p1.x)/6, cp2y=p2.y-(p3.y-p1.y)/6;
+    d+=` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+  }
+  return d;
+}
+function drawChart(){
+  const area=document.getElementById('chart-area');
+  if(!area) return;
+  const period=appState.chartPeriod;
+  const labels=chartLabels(period);
+
+  let rev, sp;
+  if(appState.chartClientId==='all'){
+    const totalRev = appState.clients.reduce((s,c)=>s+(c.revenue||0),0);
+    const totalSp  = appState.clients.reduce((s,c)=>s+(c.spend||0),0);
+    const baseRev = (totalRev/labels.length) || 250000;
+    const baseSp  = (totalSp/labels.length) || 80000;
+    ({rev, sp} = seriesFor('all', period, baseRev, baseSp));
+  } else {
+    const c = appState.clients.find(x=>String(x.id)===String(appState.chartClientId));
+    const baseRev = ((c?.revenue)||100000)/labels.length;
+    const baseSp  = ((c?.spend)||30000)/labels.length;
+    ({rev, sp} = seriesFor(c?.id||1, period, baseRev, baseSp));
+  }
+
+  const W=area.clientWidth||820, H=240;
+  const padL=44, padR=16, padT=14, padB=28;
+  const innerW=W-padL-padR, innerH=H-padT-padB;
+  const max=Math.max(...rev, ...sp, 1);
+  const niceMax=Math.ceil(max/100000)*100000 || max;
+  const x=i=>padL + (labels.length===1?innerW/2:i*innerW/(labels.length-1));
+  const y=v=>padT + innerH - (v/niceMax)*innerH;
+
+  const revPts=rev.map((v,i)=>({x:x(i),y:y(v),v}));
+  const spPts =sp.map((v,i)=>({x:x(i),y:y(v),v}));
+  const revPath=smoothPath(revPts);
+  const spPath =smoothPath(spPts);
+  const revArea=`${revPath} L ${revPts[revPts.length-1].x} ${padT+innerH} L ${revPts[0].x} ${padT+innerH} Z`;
+  const spArea =`${spPath} L ${spPts[spPts.length-1].x} ${padT+innerH} L ${spPts[0].x} ${padT+innerH} Z`;
+
+  // Gridlines (4 horizontal)
+  const gridLines=[]; const gridLabels=[];
+  for(let i=0;i<=4;i++){
+    const yy=padT + innerH*i/4;
+    const val=Math.round(niceMax*(1-i/4));
+    gridLines.push(`<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="#F0F0F0" stroke-width="1"/>`);
+    gridLabels.push(`<text x="${padL-8}" y="${yy+4}" text-anchor="end" font-size="10" fill="#9CA3AF" font-family="DM Sans">${val>=1000?Math.round(val/1000)+'k':val}</text>`);
+  }
+
+  // X labels (sample ~7 ticks)
+  const step=Math.max(1, Math.ceil(labels.length/7));
+  const xLabels=labels.map((l,i)=> (i%step===0||i===labels.length-1) ? `<text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="10" fill="#9CA3AF" font-family="DM Sans">${l}</text>` : '').join('');
+
+  area.innerHTML=`
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="revGrad" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#FF6A00" stop-opacity="0.32"/>
+          <stop offset="100%" stop-color="#FF6A00" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="spGrad" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#9CA3AF" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#9CA3AF" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      ${gridLines.join('')}
+      ${gridLabels.join('')}
+      ${xLabels}
+      <path class="chart-area-fill" d="${spArea}" fill="url(#spGrad)"/>
+      <path class="chart-line" d="${spPath}" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation-delay:.05s"/>
+      <path class="chart-area-fill" d="${revArea}" fill="url(#revGrad)" style="animation-delay:.1s"/>
+      <path class="chart-line" d="${revPath}" fill="none" stroke="#FF6A00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      ${spPts.map((p,i)=>`<circle class="chart-dot" cx="${p.x}" cy="${p.y}" r="3.5" fill="#fff" stroke="#9CA3AF" stroke-width="2" data-i="${i}" data-kind="sp" style="animation-delay:${0.5+i*0.02}s"/>`).join('')}
+      ${revPts.map((p,i)=>`<circle class="chart-dot" cx="${p.x}" cy="${p.y}" r="4" fill="#fff" stroke="#FF6A00" stroke-width="2.5" data-i="${i}" data-kind="rev" style="animation-delay:${0.6+i*0.02}s"/>`).join('')}
+    </svg>`;
+
+  const tt=document.getElementById('chart-tooltip');
+  area.querySelectorAll('.chart-dot').forEach(dot=>{
+    dot.addEventListener('mouseenter',(e)=>{
+      const i=parseInt(dot.dataset.i,10);
+      const cx=parseFloat(dot.getAttribute('cx'));
+      const cy=parseFloat(dot.getAttribute('cy'));
+      const rect=area.getBoundingClientRect();
+      const scaleX=rect.width/W, scaleY=rect.height/H;
+      tt.style.left=(cx*scaleX)+'px';
+      tt.style.top=(cy*scaleY)+'px';
+      tt.innerHTML=`<div class="tt-label">${labels[i]}</div>
+        <div class="tt-row"><span class="tt-dot" style="background:#FF6A00"></span>Revenue ${fmt(rev[i])}</div>
+        <div class="tt-row"><span class="tt-dot" style="background:#9CA3AF"></span>Ad Spend ${fmt(sp[i])}</div>`;
+      tt.classList.add('show');
+    });
+    dot.addEventListener('mouseleave',()=>tt.classList.remove('show'));
+  });
+}
+function toggleChart(p){appState.chartPeriod=p;document.querySelectorAll('.toggle-btn').forEach(b=>{b.classList.toggle('active',b.textContent.trim().startsWith(p==='30'?'30':'90'))});drawChart();}
+function setChartClient(id){appState.chartClientId=id;drawChart();}
+
+// ── CLIENTS ────────────────────────────────────────────────────
+async function buildClients(){
+  const clients=await api('/api/clients');
+  appState.clients=clients;
+  return `
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="table-title">All Clients <span style="color:var(--muted);font-weight:400;font-size:12px">${clients.length} total</span></div>
+      <input class="search-input" placeholder="Search…" oninput="filterTable(this,'clients-tbody')" />
+    </div>
+    <table><thead><tr><th>Client</th><th>Company</th><th>Status</th><th>Revenue</th><th>Ad Spend</th><th>Profit</th><th></th></tr></thead>
+    <tbody id="clients-tbody">
+    ${clients.map(c=>`<tr data-search="${c.name.toLowerCase()} ${c.company.toLowerCase()}" onclick="navigate('clientDetail',${c.id})" style="cursor:pointer">
+      <td><div class="name-cell">${avatarHtml(c)}<span style="font-weight:500">${c.name}</span></div></td>
+      <td style="color:var(--muted)">${c.company}</td>
+      <td><span class="badge ${c.status==='Active'?'badge-green':'badge-gray'}">${c.status}</span></td>
+      <td style="font-weight:500">${fmt(c.revenue)}</td>
+      <td>${fmt(c.spend)}</td>
+      <td style="color:var(--green);font-weight:500">${fmt(c.profit)}</td>
+      <td style="white-space:nowrap" onclick="event.stopPropagation()">
+        <button class="btn btn-ghost btn-sm" onclick="navigate('clientDetail',${c.id})">View →</button>
+        <button class="btn btn-ghost btn-sm" onclick="openEditClient(${c.id})">Edit</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteClient(${c.id})">Delete</button>
+      </td>
+    </tr>`).join('')}
+    </tbody></table>
+  </div>`;
+}
+function filterTable(input,tbodyId){
+  const q=input.value.toLowerCase();
+  document.querySelectorAll(`#${tbodyId} tr`).forEach(r=>{r.style.display=!q||(r.dataset.search||r.textContent).toLowerCase().includes(q)?'':'none';});
+}
+
+// ── CLIENT DETAIL ──────────────────────────────────────────────
+async function buildClientDetail(){
+  const c=await api(`/api/clients/${appState.selectedClientId}`);
+  const typeEmoji={calendar:'📅',quotation:'📄',creative:'🎨',report:'📊'};
+  return `
+  <div class="back-btn" onclick="navigate('clients')">← Back to Clients</div>
+  <div class="client-hero">
+    <div class="client-hero-av" style="background:${c.color};position:relative;overflow:hidden" onclick="document.getElementById('avatar-input').click()" title="Click to change photo">
+      <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">${ini(c.name)}</span>
+      ${c.avatar_url?`<img src="${c.avatar_url}" alt="" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"/>`:''}
+      <div class="av-cam">📷</div>
+    </div>
+    <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadAvatar(${c.id}, this)"/>
+    <div style="flex:1">
+      <div style="font-size:20px;font-weight:600;letter-spacing:-0.3px">${c.name}</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:3px">${c.company} · <span class="badge ${c.status==='Active'?'badge-green':'badge-gray'}">${c.status}</span></div>
+    </div>
+    <button class="btn btn-sm" onclick="openSendReport(${c.id})">📧 Send Report</button>
+    <button class="btn btn-sm" onclick="openEditClient(${c.id})">Edit Client</button>
+  </div>
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat-card accent"><div class="stat-label">Revenue</div><div class="stat-value">${fmt(c.revenue)}</div></div>
+    <div class="stat-card"><div class="stat-label">Ad Spend</div><div class="stat-value">${fmt(c.spend)}</div></div>
+    <div class="stat-card green-accent"><div class="stat-label">Profit</div><div class="stat-value" style="color:var(--green)">${fmt(c.profit)}</div></div>
+    <div class="stat-card blue-accent"><div class="stat-label">Expected Revenue</div><div class="stat-value">${fmt(c.expected_revenue)}</div></div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="table-title">Client Files</div>
+      <button class="btn btn-primary btn-sm" onclick="openUploadFile(${c.id})">+ Upload File</button>
+    </div>
+    ${c.files.length===0?`<div class="empty-state"><div class="empty-icon">📁</div><div class="empty-text">No files yet. Upload a calendar, quotation, creative or report.</div></div>`:
+    c.files.map(f=>`<div class="file-item">
+      <div class="file-icon">${typeEmoji[f.file_type]||'📎'}</div>
+      <div class="file-info">
+        <div class="file-name">${f.file_name}</div>
+        <div class="file-meta"><span class="badge badge-${f.file_type==='report'?'blue':f.file_type==='calendar'?'green':'orange'}" style="font-size:10px;padding:1px 6px">${f.file_type}</span> · ${f.file_size} · ${relTime(f.uploaded_at)}</div>
+      </div>
+      <a href="${f.file_url}" download class="btn btn-ghost btn-sm">↓ Download</a>
+      <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteFile(${c.id},${f.id})">Delete</button>
+    </div>`).join('')}
+  </div>
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">Campaigns</div></div>
+    ${c.campaigns.length===0?`<div class="empty-state"><div class="empty-text">No campaigns for this client.</div></div>`:`
+    <table><thead><tr><th>Campaign</th><th>Channel</th><th>Budget</th><th>Spend</th><th>Progress</th><th>Status</th></tr></thead><tbody>
+    ${c.campaigns.map(camp=>{const p=camp.budget>0?Math.round(camp.spend/camp.budget*100):0;return`<tr>
+      <td style="font-weight:500">${camp.name}</td>
+      <td><span class="badge badge-blue">${camp.channel}</span></td>
+      <td>${fmt(camp.budget)}</td>
+      <td>${fmt(camp.spend)}</td>
+      <td><div class="progress-wrap"><div class="progress-bar-bg"><div class="progress-bar" style="width:${Math.min(p,100)}%;background:${p>90?'var(--red)':p>70?'var(--orange)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--muted);min-width:28px">${p}%</span></div></td>
+      <td><span class="badge ${camp.status==='Active'?'badge-green':camp.status==='Paused'?'badge-orange':'badge-gray'}">${camp.status}</span></td>
+    </tr>`}).join('')}
+    </tbody></table>`}
+  </div>
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="table-title">Quotations <span style="color:var(--muted);font-weight:400;font-size:12px">${(c.quotations||[]).length} total</span></div>
+      <button class="btn btn-primary btn-sm" onclick="openCreateQuotation(${c.id},'${c.name.replace(/'/g,"\\'")}','${c.company.replace(/'/g,"\\'")}')">+ Create Quotation</button>
+    </div>
+    ${(c.quotations||[]).length===0?`<div class="empty-state"><div class="empty-icon">📄</div><div class="empty-text">No quotations yet. Create one to send to this client.</div></div>`:`
+    <table><thead><tr><th>Quote #</th><th>Items</th><th>Subtotal</th><th>GST</th><th>Total</th><th>Valid Until</th><th></th></tr></thead><tbody>
+    ${c.quotations.map(q=>`<tr>
+      <td style="font-weight:500">${q.quotation_no||('#'+q.id)}</td>
+      <td style="color:var(--muted)">${q.items.length} item${q.items.length!==1?'s':''}</td>
+      <td>${fmt(q.subtotal)}</td>
+      <td>${fmt(q.gst_amount)} <span style="color:var(--subtle);font-size:11px">(${q.gst_pct}%)</span></td>
+      <td style="font-weight:600;color:var(--orange)">${fmt(q.total)}</td>
+      <td style="color:var(--muted)">${q.valid_until||'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" onclick='viewQuotation(${q.id},${JSON.stringify(c.name).replace(/'/g,"&#39;")},${JSON.stringify(c.company).replace(/'/g,"&#39;")})'>View</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteQuotation(${c.id},${q.id})">Delete</button>
+      </td>
+    </tr>`).join('')}
+    </tbody></table>`}
+  </div>
+  <div class="calendar" id="calendar-${c.id}">
+    ${renderCalendar(c)}
+  </div>`;
+}
+
+// ── CONTENT CALENDAR ──────────────────────────────────────────
+function platformColor(p){
+  return {Instagram:'#E1306C',Meta:'#1877F2',LinkedIn:'#0A66C2',YouTube:'#FF0000'}[p]||'#888';
+}
+function renderCalendar(client){
+  if(!appState.calendarMonth){
+    const d=new Date();
+    appState.calendarMonth={year:d.getFullYear(),month:d.getMonth()};
+  }
+  const {year,month}=appState.calendarMonth;
+  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const first=new Date(year,month,1);
+  const lastDay=new Date(year,month+1,0).getDate();
+  const startWeekday=first.getDay();
+  const today=new Date();
+  const isToday=(d)=> today.getFullYear()===year && today.getMonth()===month && today.getDate()===d;
+
+  const tasks=client.contentTasks||[];
+  const tasksByDay={};
+  tasks.forEach(t=>{
+    const td=new Date(t.date);
+    if(td.getFullYear()===year && td.getMonth()===month){
+      const k=td.getDate();
+      if(!tasksByDay[k]) tasksByDay[k]=[];
+      tasksByDay[k].push(t);
+    }
+  });
+
+  let cells='';
+  for(let i=0;i<startWeekday;i++) cells+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=lastDay;d++){
+    const dayTasks=tasksByDay[d]||[];
+    const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dots=dayTasks.slice(0,6).map(t=>`<span class="cal-task-dot" style="background:${platformColor(t.platform)}" title="${t.platform} · ${t.content_type}"></span>`).join('');
+    cells+=`<div class="cal-day ${isToday(d)?'today':''}" onclick="openAddContentTask(${client.id},'${dateStr}')">
+      <div class="cal-day-num">${d}</div>
+      <div class="cal-day-tasks">${dots}</div>
+    </div>`;
+  }
+  const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(n=>`<div class="cal-day-name">${n}</div>`).join('');
+
+  const taskList=tasks.length===0?'':`
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">Scheduled this month</div>
+      ${tasks.filter(t=>{const td=new Date(t.date);return td.getFullYear()===year && td.getMonth()===month;}).map(t=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13px;border-bottom:1px solid #F5F5F5">
+          <span class="cal-task-dot" style="background:${platformColor(t.platform)};width:9px;height:9px"></span>
+          <span style="font-weight:500;min-width:90px">${new Date(t.date).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span>
+          <span style="color:var(--muted)">${t.platform} · ${t.content_type}</span>
+          ${t.notes?`<span style="color:var(--subtle);font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">— ${t.notes}</span>`:'<span style="flex:1"></span>'}
+          <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteContentTask(${client.id},${t.id})">×</button>
+        </div>`).join('')}
+    </div>`;
+
+  return `
+    <div class="cal-head">
+      <div class="cal-title">Content Calendar — ${monthNames[month]} ${year}</div>
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="changeMonth(-1)" title="Previous">‹</button>
+        <button class="cal-nav-btn" onclick="changeMonth(0)" title="Today">●</button>
+        <button class="cal-nav-btn" onclick="changeMonth(1)" title="Next">›</button>
+      </div>
+    </div>
+    <div class="cal-grid">${dayNames}${cells}</div>
+    ${taskList}`;
+}
+async function changeMonth(delta){
+  if(delta===0){ const d=new Date(); appState.calendarMonth={year:d.getFullYear(),month:d.getMonth()}; }
+  else {
+    const m=appState.calendarMonth.month+delta;
+    appState.calendarMonth={
+      year: appState.calendarMonth.year + Math.floor(m/12),
+      month: ((m%12)+12)%12
+    };
+  }
+  navigate('clientDetail',appState.selectedClientId);
+}
+function openAddContentTask(clientId,dateStr){
+  openModal(`<div class="modal-title">Add Content Task — ${new Date(dateStr).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Platform</label>
+        <select class="form-input" id="m-plat"><option>Instagram</option><option>Meta</option><option>LinkedIn</option><option>YouTube</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Content Type</label>
+        <select class="form-input" id="m-ctype"><option>Reel</option><option>Post</option><option>Story</option><option>Ad</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="m-notes" rows="3" placeholder="Caption ideas, links, briefing…"></textarea></div>
+    <input type="hidden" id="m-date" value="${dateStr}">
+    <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveContentTask(${clientId})">Add Task</button></div>`);
+}
+async function saveContentTask(clientId){
+  await api(`/api/clients/${clientId}/content-tasks`,{method:'POST',body:JSON.stringify({
+    date: document.getElementById('m-date').value,
+    platform: document.getElementById('m-plat').value,
+    content_type: document.getElementById('m-ctype').value,
+    notes: document.getElementById('m-notes').value
+  })});
+  toast('Task added'); closeModal(); navigate('clientDetail',clientId);
+}
+async function deleteContentTask(clientId,id){
+  if(!confirm('Delete this task?')) return;
+  await api(`/api/clients/${clientId}/content-tasks/${id}`,{method:'DELETE'});
+  toast('Task removed'); navigate('clientDetail',clientId);
+}
+
+// ── QUOTATIONS ────────────────────────────────────────────────
+function openCreateQuotation(clientId,clientName,clientCompany){
+  appState.quoteItems=[{service:'',description:'',qty:1,rate:0}];
+  const validDate=new Date(); validDate.setDate(validDate.getDate()+30);
+  openModal(`<div class="modal modal-lg" style="all:unset"></div>
+    <div class="modal-title">Create Quotation — ${clientName}</div>
+    <div id="quote-items-wrap"></div>
+    <button class="btn btn-sm" style="margin:6px 0 14px" onclick="addQuoteItem()">+ Add Line Item</button>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">GST %</label><input class="form-input" id="m-gst" type="number" value="18" oninput="renderQuoteItems()"></div>
+      <div class="form-group"><label class="form-label">Valid Until</label><input class="form-input" id="m-valid" type="date" value="${validDate.toISOString().split('T')[0]}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes / Terms</label><textarea class="form-input" id="m-notes" rows="2" placeholder="Payment terms, scope, exclusions…"></textarea></div>
+    <div id="quote-totals-wrap"></div>
+    <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveQuotation(${clientId})">Save Quotation</button></div>`);
+  // Make the modal wider
+  document.querySelector('.modal').classList.add('modal-lg');
+  renderQuoteItems();
+}
+function addQuoteItem(){
+  appState.quoteItems.push({service:'',description:'',qty:1,rate:0});
+  renderQuoteItems();
+}
+function removeQuoteItem(i){
+  appState.quoteItems.splice(i,1);
+  if(appState.quoteItems.length===0) appState.quoteItems.push({service:'',description:'',qty:1,rate:0});
+  renderQuoteItems();
+}
+function updateQuoteItem(i,field,val){
+  appState.quoteItems[i][field]=val;
+  renderQuoteTotals();
+}
+function renderQuoteItems(){
+  const wrap=document.getElementById('quote-items-wrap');
+  if(!wrap) return;
+  wrap.innerHTML=`<table class="quote-table">
+    <thead><tr><th style="width:24%">Service</th><th>Description</th><th style="width:70px">Qty</th><th style="width:110px">Rate (₹)</th><th style="width:110px">Amount</th><th style="width:36px"></th></tr></thead>
+    <tbody>${appState.quoteItems.map((it,i)=>`<tr>
+      <td><input value="${it.service||''}" placeholder="Service name" oninput="updateQuoteItem(${i},'service',this.value)"></td>
+      <td><input value="${it.description||''}" placeholder="Brief description" oninput="updateQuoteItem(${i},'description',this.value)"></td>
+      <td><input type="number" value="${it.qty}" min="0" step="1" oninput="updateQuoteItem(${i},'qty',parseFloat(this.value)||0)"></td>
+      <td><input type="number" value="${it.rate}" min="0" oninput="updateQuoteItem(${i},'rate',parseFloat(this.value)||0)"></td>
+      <td style="font-weight:500">${fmt((it.qty||0)*(it.rate||0))}</td>
+      <td><button class="btn btn-ghost btn-sm" style="color:var(--red);padding:4px 8px" onclick="removeQuoteItem(${i})">×</button></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+  renderQuoteTotals();
+}
+function renderQuoteTotals(){
+  const wrap=document.getElementById('quote-totals-wrap');
+  if(!wrap) return;
+  const subtotal=appState.quoteItems.reduce((s,i)=>s+(i.qty||0)*(i.rate||0),0);
+  const gstPct=parseFloat(document.getElementById('m-gst')?.value)||0;
+  const gstAmt=subtotal*gstPct/100;
+  const total=subtotal+gstAmt;
+  wrap.innerHTML=`<div class="quote-totals">
+    <div class="quote-totals-row"><span style="color:var(--muted)">Subtotal</span><span>${fmt(subtotal)}</span></div>
+    <div class="quote-totals-row"><span style="color:var(--muted)">GST (${gstPct}%)</span><span>${fmt(gstAmt)}</span></div>
+    <div class="quote-totals-row grand"><span>Grand Total</span><span>${fmt(total)}</span></div>
+  </div>`;
+}
+async function saveQuotation(clientId){
+  const items=appState.quoteItems.filter(i=>(i.service||'').trim() && i.qty>0 && i.rate>0);
+  if(items.length===0){ toast('Add at least one valid line item','error'); return; }
+  await api(`/api/clients/${clientId}/quotations`,{method:'POST',body:JSON.stringify({
+    items, gst_pct: parseFloat(document.getElementById('m-gst').value)||0,
+    valid_until: document.getElementById('m-valid').value,
+    notes: document.getElementById('m-notes').value
+  })});
+  toast('Quotation created'); closeModal(); navigate('clientDetail',clientId);
+}
+async function deleteQuotation(clientId,id){
+  if(!confirm('Delete this quotation?')) return;
+  await api(`/api/clients/${clientId}/quotations/${id}`,{method:'DELETE'});
+  toast('Quotation deleted'); navigate('clientDetail',clientId);
+}
+function viewQuotation(qid,clientName,clientCompany){
+  // Find quotation in current page state via DOM-stored data (refetch is simplest)
+  api(`/api/clients/${appState.selectedClientId}/quotations`).then(rows=>{
+    const q=rows.find(r=>r.id===qid);
+    if(!q){ toast('Not found','error'); return; }
+    const issued=new Date(q.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+    const validTxt=q.valid_until?new Date(q.valid_until).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}):'—';
+    openModal(`<div class="modal-title no-print" style="display:flex;justify-content:space-between;align-items:center">
+        <span>Quotation Preview</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" onclick="closeModal()">Close</button>
+          <button class="btn btn-primary btn-sm" onclick="window.print()">↓ Download PDF</button>
+        </div>
+      </div>
+      <div id="print-area">
+        <div class="quote-preview">
+          <div class="quote-preview-head">
+            <div class="quote-preview-brand">
+              <div class="logo-mark">WC</div>
+              <div>
+                <div style="font-size:18px;font-weight:600">WeClick AI</div>
+                <div style="font-size:11px;color:var(--muted)">Marketing Agency · India</div>
+              </div>
+            </div>
+            <div class="quote-preview-meta">
+              <strong>Quotation</strong>
+              <div>${q.quotation_no||('#'+q.id)}</div>
+              <div>Issued: ${issued}</div>
+              <div>Valid until: ${validTxt}</div>
+            </div>
+          </div>
+          <div class="quote-preview-to">
+            <strong>Billed To</strong>
+            <div style="font-weight:500;font-size:14px">${clientName}</div>
+            <div style="color:var(--muted)">${clientCompany}</div>
+          </div>
+          <table>
+            <thead><tr><th>Service</th><th>Description</th><th style="text-align:right">Qty</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th></tr></thead>
+            <tbody>${q.items.map(i=>`<tr>
+              <td style="font-weight:500">${i.service||''}</td>
+              <td style="color:var(--muted)">${i.description||''}</td>
+              <td style="text-align:right">${i.qty}</td>
+              <td style="text-align:right">${fmt(i.rate)}</td>
+              <td style="text-align:right;font-weight:500">${fmt((i.qty||0)*(i.rate||0))}</td>
+            </tr>`).join('')}</tbody>
+          </table>
+          <div class="quote-preview-totals">
+            <div class="row"><span>Subtotal</span><span>${fmt(q.subtotal)}</span></div>
+            <div class="row"><span>GST @ ${q.gst_pct}%</span><span>${fmt(q.gst_amount)}</span></div>
+            <div class="row grand"><span>Grand Total</span><span>${fmt(q.total)}</span></div>
+          </div>
+          ${q.notes?`<div class="quote-preview-foot"><strong style="color:var(--text)">Notes:</strong> ${q.notes}</div>`:''}
+          <div class="quote-preview-foot">Thank you for choosing WeClick AI. This quotation is computer-generated and valid until the date mentioned above. Payment terms: 50% advance, 50% on delivery unless otherwise agreed.</div>
+        </div>
+      </div>`);
+    document.querySelector('.modal').classList.add('modal-xl');
+  });
+}
+
+// ── SEND REPORT ───────────────────────────────────────────────
+function openSendReport(clientId){
+  api(`/api/clients/${clientId}`).then(c=>{
+    const subject=`WeClick AI — Performance Report for ${c.company}`;
+    const body=`Hi ${c.name.split(' ')[0]},\n\nPlease find attached your latest performance report.\n\nKey highlights this period:\n• Revenue: ${fmt(c.revenue)}\n• Ad Spend: ${fmt(c.spend)}\n• Profit: ${fmt(c.profit)}\n\nLet us know if you'd like to discuss the next steps.\n\nBest,\nWeClick AI Team`;
+    const quotations = Array.isArray(c.quotations) ? c.quotations : [];
+    const quotationOptions = quotations.length
+      ? `<option value="">None</option>` + quotations.map(q=>`<option value="${q.id}">${q.quotation_no} — ₹${Number(q.total).toLocaleString('en-IN')}</option>`).join('')
+      : `<option value="">No quotations yet</option>`;
+    openModal(`<div class="modal-title">Send Report — ${c.name}</div>
+      <div class="form-group"><label class="form-label">To</label><input class="form-input" id="m-to" type="email" placeholder="client@company.com"></div>
+      <div class="form-group"><label class="form-label">Subject</label><input class="form-input" id="m-subj" value="${subject}"></div>
+      <div class="form-group"><label class="form-label">Message</label><textarea class="form-input" id="m-body" rows="8" style="resize:vertical">${body}</textarea></div>
+      <div class="form-group"><label class="form-label">Attach Quotation (PDF)</label><select class="form-input" id="m-quotation">${quotationOptions}</select></div>
+      <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="sendReport(${clientId})">📧 Send Report</button></div>`);
+  });
+}
+async function sendReport(clientId){
+  const to=document.getElementById('m-to').value.trim();
+  if(!to){ toast('Recipient email required','error'); return; }
+  const quotation_id=document.getElementById('m-quotation')?.value||null;
+  const btn=document.querySelector('#modal .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Sending...';}
+  try{
+    const result=await api(`/api/clients/${clientId}/send-report`,{method:'POST',body:JSON.stringify({
+      to, subject: document.getElementById('m-subj').value, body: document.getElementById('m-body').value,
+      quotation_id: quotation_id||undefined
+    })});
+    if(result&&result.success){ toast('Report sent successfully'+(quotation_id?' with quotation PDF':'')); closeModal(); }
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='📧 Send Report';}
+  }
+}
+
+// ── CAMPAIGNS ──────────────────────────────────────────────────
+async function buildCampaigns(){
+  const [camps,clients]=await Promise.all([api('/api/campaigns'),api('/api/clients')]);
+  appState.clients=clients;
+  return `
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="table-title">All Campaigns <span style="color:var(--muted);font-weight:400;font-size:12px">${camps.length} total</span></div>
+      <input class="search-input" placeholder="Search…" oninput="filterTable(this,'camps-tbody')" />
+    </div>
+    <table><thead><tr><th>Campaign</th><th>Client</th><th>Channel</th><th>Budget</th><th>Spend</th><th>Progress</th><th>Status</th><th></th></tr></thead>
+    <tbody id="camps-tbody">
+    ${camps.map(c=>{const p=c.budget>0?Math.round(c.spend/c.budget*100):0;return`<tr data-search="${c.name.toLowerCase()} ${(c.client_name||'').toLowerCase()}">
+      <td style="font-weight:500">${c.name}</td>
+      <td style="color:var(--muted)">${c.client_name||'—'}</td>
+      <td><span class="badge badge-blue">${c.channel}</span></td>
+      <td>${fmt(c.budget)}</td>
+      <td>${fmt(c.spend)}</td>
+      <td><div class="progress-wrap"><div class="progress-bar-bg"><div class="progress-bar" style="width:${Math.min(p,100)}%;background:${p>90?'var(--red)':p>70?'var(--orange)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--muted);min-width:28px">${p}%</span></div></td>
+      <td><span class="badge ${c.status==='Active'?'badge-green':c.status==='Paused'?'badge-orange':'badge-gray'}">${c.status}</span></td>
+      <td><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteCampaign(${c.id})">Delete</button></td>
+    </tr>`;}).join('')}
+    </tbody></table>
+  </div>`;
+}
+
+// ── AUTOMATIONS ────────────────────────────────────────────────
+async function buildAutomations(){
+  const autos=await api('/api/automations');
+  const totalRev=autos.reduce((a,x)=>a+(x.revenue||0),0);
+  const running=autos.filter(a=>a.status==='Running').length;
+  return `
+  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="stat-card accent"><div class="stat-label">Total Auto Revenue</div><div class="stat-value">${fmt(totalRev)}</div></div>
+    <div class="stat-card green-accent"><div class="stat-label">Running</div><div class="stat-value">${running}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Automations</div><div class="stat-value">${autos.length}</div></div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">All Automations</div></div>
+    <table><thead><tr><th>Name</th><th>Client</th><th>Status</th><th>Revenue</th><th>Notes</th><th></th></tr></thead><tbody>
+    ${autos.map(a=>`<tr>
+      <td style="font-weight:500">${a.name}</td>
+      <td style="color:var(--muted)">${a.client_name||'—'}</td>
+      <td><span class="badge ${a.status==='Running'?'badge-green':'badge-orange'}">${a.status}</span></td>
+      <td style="font-weight:500;color:var(--green)">${fmt(a.revenue)}</td>
+      <td style="color:var(--muted);font-size:12.5px">${a.notes||'—'}</td>
+      <td><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteAutomation(${a.id})">Delete</button></td>
+    </tr>`).join('')}
+    </tbody></table>
+  </div>`;
+}
+
+// ── COLLABORATIONS ─────────────────────────────────────────────
+async function buildCollaborations(){
+  const collabs=await api('/api/collaborations');
+  const totalRev=collabs.reduce((a,c)=>a+(c.revenue||0),0);
+  return `
+  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="stat-card accent"><div class="stat-label">Total Collab Revenue</div><div class="stat-value">${fmt(totalRev)}</div></div>
+    <div class="stat-card green-accent"><div class="stat-label">Active Partners</div><div class="stat-value">${collabs.filter(c=>c.status==='Active').length}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Partners</div><div class="stat-value">${collabs.length}</div></div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">Collaborations</div></div>
+    <table><thead><tr><th>Partner</th><th>Revenue</th><th>Status</th><th>Notes</th><th></th></tr></thead><tbody>
+    ${collabs.map(c=>`<tr>
+      <td style="font-weight:500">${c.partner}</td>
+      <td style="font-weight:500;color:var(--green)">${fmt(c.revenue)}</td>
+      <td><span class="badge ${c.status==='Active'?'badge-green':'badge-gray'}">${c.status}</span></td>
+      <td style="color:var(--muted);font-size:12.5px">${c.notes||'—'}</td>
+      <td><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteCollab(${c.id})">Delete</button></td>
+    </tr>`).join('')}
+    </tbody></table>
+  </div>`;
+}
+
+// ── REVENUE ─────────────────────────────────────────────────────
+async function buildRevenue(){
+  return `
+  <div class="tabs">
+    <div class="tab ${appState.financeTab==='company'?'active':''}" onclick="setFinanceTab('company')">Company Finance</div>
+    <div class="tab ${appState.financeTab==='personal'?'active':''}" onclick="setFinanceTab('personal')">Personal & Team Finance</div>
+  </div>
+  <div id="finance-content">${await buildFinanceTab()}</div>`;
+}
+async function setFinanceTab(tab){
+  appState.financeTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.textContent.includes(tab==='company'?'Company':'Personal')));
+  document.getElementById('finance-content').innerHTML=await buildFinanceTab();
+}
+async function buildFinanceTab(){
+  if(appState.financeTab==='company') return buildCompanyFinance();
+  return buildPersonalFinance();
+}
+async function buildCompanyFinance(){
+  const [stats,rev,clients]=await Promise.all([api('/api/dashboard'),api('/api/revenue'),api('/api/clients')]);
+  appState.clients=clients;
+  const entries=rev.entries||[];
+  return `
+  <div class="stats-grid">
+    <div class="stat-card accent"><div class="stat-label">Total Revenue</div><div class="stat-value">${fmt(stats.totalRevenue)}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Spend</div><div class="stat-value">${fmt(stats.totalSpend)}</div></div>
+    <div class="stat-card green-accent"><div class="stat-label">Profit</div><div class="stat-value" style="color:var(--green)">${fmt(stats.profit)}</div></div>
+    <div class="stat-card blue-accent"><div class="stat-label">This Month</div><div class="stat-value">${fmt(stats.thisMonth)}</div></div>
+    <div class="stat-card"><div class="stat-label">Projected</div><div class="stat-value">${fmt(stats.projected)}</div></div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="table-title">Revenue Entries <span style="color:var(--muted);font-weight:400;font-size:12px">Auto + Manual</span></div>
+    </div>
+    <table><thead><tr><th>Client</th><th>Amount</th><th>Date</th><th>Source</th><th>Notes</th><th></th></tr></thead><tbody>
+    ${clients.map(c=>`<tr>
+      <td><div class="name-cell">${avatarHtml(c,{size:24})}${c.name}</div></td>
+      <td style="font-weight:500">${fmt(c.revenue)}</td>
+      <td style="color:var(--muted)">Apr 2025</td>
+      <td><span class="badge badge-blue">Auto</span></td>
+      <td style="color:var(--muted);font-size:12px">Campaign revenue</td>
+      <td></td>
+    </tr>`).join('')}
+    ${entries.map(r=>{
+      const c=clients.find(x=>x.id===r.client_id)||{name:'General',color:'#888'};
+      return`<tr>
+        <td><div class="name-cell">${avatarHtml(c,{size:24})}${c.name}</div></td>
+        <td style="font-weight:500;color:var(--orange)">${fmt(r.amount)}</td>
+        <td style="color:var(--muted)">${r.date}</td>
+        <td><span class="badge badge-orange">Manual</span></td>
+        <td style="color:var(--muted);font-size:12px">${r.notes||'—'}</td>
+        <td><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteRevEntry(${r.id})">Delete</button></td>
+      </tr>`;}).join('')}
+    </tbody></table>
+  </div>`;
+}
+async function buildPersonalFinance(){
+  const data=await api('/api/finance/personal');
+  return `
+  <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+    <button class="btn btn-primary btn-sm" onclick="openAddTransaction()">+ Add Transaction</button>
+    <button class="btn btn-sm" onclick="openAddSalary()">+ Add Salary</button>
+  </div>
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat-card accent"><div class="stat-label">Personal Income</div><div class="stat-value">${fmt(data.totalIncome)}</div></div>
+    <div class="stat-card"><div class="stat-label">Expenses</div><div class="stat-value" style="color:var(--red)">${fmt(data.totalExpenses)}</div></div>
+    <div class="stat-card green-accent"><div class="stat-label">Net Balance</div><div class="stat-value" style="color:var(--green)">${fmt(data.netBalance)}</div></div>
+    <div class="stat-card blue-accent"><div class="stat-label">Salaries Paid</div><div class="stat-value">${fmt(data.totalSalaries)}</div></div>
+  </div>
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">Transactions</div></div>
+    <table><thead><tr><th>User</th><th>Type</th><th>Category</th><th>Amount</th><th>Date</th><th></th></tr></thead><tbody>
+    ${data.transactions.map(t=>`<tr>
+      <td style="font-weight:500">${t.user_name||'—'}</td>
+      <td><span class="badge ${t.type==='income'?'badge-green':'badge-red'}">${t.type}</span></td>
+      <td style="color:var(--muted)">${t.category}</td>
+      <td style="font-weight:500;color:${t.type==='income'?'var(--green)':'var(--red)'}">${t.type==='expense'?'-':''}${fmt(t.amount)}</td>
+      <td style="color:var(--muted)">${t.date}</td>
+      <td><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteTx(${t.id})">Delete</button></td>
+    </tr>`).join('')}
+    </tbody></table>
+  </div>
+  <div class="two-col">
+    <div class="table-wrap">
+      <div class="table-header"><div class="table-title">Salary Payments</div></div>
+      <table><thead><tr><th>User</th><th>Amount</th><th>Date</th><th>Notes</th></tr></thead><tbody>
+      ${data.salaries.map(s=>`<tr>
+        <td style="font-weight:500">${s.user_name||'—'}</td>
+        <td style="font-weight:500;color:var(--orange)">${fmt(s.amount)}</td>
+        <td style="color:var(--muted)">${s.date}</td>
+        <td style="color:var(--muted);font-size:12px">${s.notes||'—'}</td>
+      </tr>`).join('')}
+      </tbody></table>
+    </div>
+    <div class="table-wrap">
+      <div class="table-header"><div class="table-title">Team Summary</div></div>
+      <table><thead><tr><th>User</th><th>Income</th><th>Expenses</th><th>Net</th></tr></thead><tbody>
+      ${data.summary.map(s=>`<tr>
+        <td style="font-weight:500">${s.user_name}</td>
+        <td style="color:var(--green)">${fmt(s.income)}</td>
+        <td style="color:var(--red)">${fmt(s.expenses)}</td>
+        <td style="font-weight:500;color:${s.net>=0?'var(--green)':'var(--red)'}">${fmt(s.net)}</td>
+      </tr>`).join('')}
+      </tbody></table>
+    </div>
+  </div>`;
+}
+
+// ── SETTINGS ───────────────────────────────────────────────────
+function buildSettings(){
+  return `
+  <div style="max-width:520px">
+    <div class="table-wrap">
+      <div class="table-header"><div class="table-title">Agency Settings</div></div>
+      <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div class="form-group"><label class="form-label">Agency Name</label><input class="form-input" value="WeClick AI"></div>
+        <div class="form-group"><label class="form-label">Owner Name</label><input class="form-input" value="Admin"></div>
+        <div class="form-group"><label class="form-label">Default Currency</label><input class="form-input" value="INR (₹)" readonly></div>
+        <div class="form-group"><label class="form-label">Fiscal Year Start</label><input class="form-input" value="April"></div>
+        <div class="form-group"><label class="form-label">Meta Ads Account ID</label><input class="form-input" placeholder="act_XXXXXXXX"></div>
+        <div class="form-group"><label class="form-label">Google Ads CID</label><input class="form-input" placeholder="XXX-XXX-XXXX"></div>
+        <button class="btn btn-primary" style="width:fit-content" onclick="toast('Settings saved')">Save Settings</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── MODALS ──────────────────────────────────────────────────────
+function openModal(html){
+  document.getElementById('modal-root').innerHTML=`<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="modal">${html}</div></div>`;
+}
+function closeModal(){document.getElementById('modal-root').innerHTML='';}
+
+async function openAddClient(){
+  openModal(`<div class="modal-title">Add New Client</div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="m-name" placeholder="Priya Sharma"></div><div class="form-group"><label class="form-label">Company</label><input class="form-input" id="m-company" placeholder="Growfast Retail"></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Revenue (₹)</label><input class="form-input" id="m-rev" type="number" placeholder="0"></div><div class="form-group"><label class="form-label">Ad Spend (₹)</label><input class="form-input" id="m-spend" type="number" placeholder="0"></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Expected Revenue (₹)</label><input class="form-input" id="m-exp" type="number" placeholder="0"></div><div class="form-group"><label class="form-label">Status</label><select class="form-input" id="m-status"><option>Active</option><option>Paused</option></select></div></div>
+  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveClient()">Add Client</button></div>`);
+}
+async function saveClient(){
+  const colors=['#FF6A00','#3B82F6','#10B981','#8B5CF6','#F59E0B','#EC4899','#06B6D4'];
+  const rev=parseFloat(document.getElementById('m-rev').value)||0;
+  const spend=parseFloat(document.getElementById('m-spend').value)||0;
+  await api('/api/clients',{method:'POST',body:JSON.stringify({name:document.getElementById('m-name').value,company:document.getElementById('m-company').value,status:document.getElementById('m-status').value,revenue:rev,spend,expected_revenue:parseFloat(document.getElementById('m-exp').value)||0,color:colors[Math.floor(Math.random()*colors.length)]})});
+  toast('Client added');closeModal();navigate('clients');
+}
+
+async function openEditClient(id){
+  const c=await api(`/api/clients/${id}`);
+  openModal(`<div class="modal-title">Edit Client</div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="m-name" value="${c.name}"></div><div class="form-group"><label class="form-label">Company</label><input class="form-input" id="m-company" value="${c.company}"></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Revenue (₹)</label><input class="form-input" id="m-rev" type="number" value="${c.revenue}"></div><div class="form-group"><label class="form-label">Spend (₹)</label><input class="form-input" id="m-spend" type="number" value="${c.spend}"></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Expected Revenue</label><input class="form-input" id="m-exp" type="number" value="${c.expected_revenue}"></div><div class="form-group"><label class="form-label">Status</label><select class="form-input" id="m-status"><option ${c.status==='Active'?'selected':''}>Active</option><option ${c.status==='Paused'?'selected':''}>Paused</option></select></div></div>
+  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="updateClient(${id})">Save Changes</button></div>`);
+}
+async function updateClient(id){
+  await api(`/api/clients/${id}`,{method:'PUT',body:JSON.stringify({name:document.getElementById('m-name').value,company:document.getElementById('m-company').value,revenue:parseFloat(document.getElementById('m-rev').value)||0,spend:parseFloat(document.getElementById('m-spend').value)||0,expected_revenue:parseFloat(document.getElementById('m-exp').value)||0,status:document.getElementById('m-status').value,color:'#FF6A00'})});
+  toast('Client updated');closeModal();navigate(appState.page==='clientDetail'?'clientDetail':'clients',appState.selectedClientId);
+}
+async function deleteClient(id){
+  if(!confirm('Delete this client?')) return;
+  await api(`/api/clients/${id}`,{method:'DELETE'});
+  toast('Client deleted');navigate('clients');
+}
+
+async function openAddCampaign(){
+  const clients=await api('/api/clients');
+  openModal(`<div class="modal-title">Add Campaign</div>
+  <div class="form-group"><label class="form-label">Campaign Name</label><input class="form-input" id="m-name" placeholder="Diwali Sale 2025"></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Client</label><select class="form-input" id="m-client">${clients.map(c=>`<option value="${c.id}">${c.name} — ${c.company}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Channel</label><select class="form-input" id="m-ch"><option>Meta Ads</option><option>Google Ads</option><option>Instagram</option><option>LinkedIn</option><option>YouTube</option></select></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Budget (₹)</label><input class="form-input" id="m-bgt" type="number"></div><div class="form-group"><label class="form-label">Status</label><select class="form-input" id="m-status"><option>Active</option><option>Paused</option><option>Draft</option></select></div></div>
+  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveCampaign()">Add Campaign</button></div>`);
+}
+async function saveCampaign(){
+  await api('/api/campaigns',{method:'POST',body:JSON.stringify({name:document.getElementById('m-name').value,client_id:parseInt(document.getElementById('m-client').value),channel:document.getElementById('m-ch').value,budget:parseFloat(document.getElementById('m-bgt').value)||0,spend:0,status:document.getElementById('m-status').value})});
+  toast('Campaign added');closeModal();navigate('campaigns');
+}
+async function deleteCampaign(id){
+  if(!confirm('Delete campaign?')) return;
+  await api(`/api/campaigns/${id}`,{method:'DELETE'});
+  toast('Campaign deleted');navigate('campaigns');
+}
+
+async function openAddAutomation(){
+  const clients=await api('/api/clients');
+  openModal(`<div class="modal-title">Add Automation</div>
+  <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="m-name" placeholder="Lead Follow-up Bot"></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Client</label><select class="form-input" id="m-client">${clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Status</label><select class="form-input" id="m-status"><option>Running</option><option>Paused</option></select></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Revenue (₹)</label><input class="form-input" id="m-rev" type="number" placeholder="0"></div><div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="m-notes" placeholder="Description…"></div></div>
+  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveAutomation()">Add</button></div>`);
+}
+async function saveAutomation(){
+  await api('/api/automations',{method:'POST',body:JSON.stringify({name:document.getElementById('m-name').value,client_id:parseInt(document.getElementById('m-client').value),status:document.getElementById('m-status').value,revenue:parseFloat(document.getElementById('m-rev').value)||0,notes:document.getElementById('m-notes').value})});
+  toast('Automation added');closeModal();navigate('automations');
+}
+async function deleteAutomation(id){
+  if(!confirm('Delete automation?')) return;
+  await api(`/api/automations/${id}`,{method:'DELETE'});
+  toast('Deleted');navigate('automations');
+}
+
+async function openAddCollab(){
+  openModal(`<div class="modal-title">Add Collaboration</div>
+  <div class="form-group"><label class="form-label">Partner Name</label><input class="form-input" id="m-partner" placeholder="Agency / Studio name"></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Revenue (₹)</label><input class="form-input" id="m-rev" type="number" placeholder="0"></div><div class="form-group"><label class="form-label">Status</label><select class="form-input" id="m-status"><option>Active</option><option>Ended</option></select></div></div>
+  <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="m-notes" placeholder="White-label, content, SEO…"></div>
+  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveCollab()">Add Partner</button></div>`);
+}
+async function saveCollab(){
+  await api('/api/collaborations',{method:'POST',body:JSON.stringify({partner:document.getElementById('m-partner').value,revenue:parseFloat(document.getElementById('m-rev').value)||0,status:document.getElementById('m-status').value,notes:document.getElementById('m-notes').value})});
+  toast('Partner added');closeModal();navigate('collaborations');
+}
+async function deleteCollab(id){
+  if(!confirm('Delete collaboration?')) return;
+  await api(`/api/collaborations/${id}`,{method:'DELETE'});
+  toast('Deleted');navigate('collaborations');
+}
+
+async function openAddRevenue(){
+  const clients=await api('/api/clients');
+  openModal(`<div class="modal-title">Add Manual Revenue</div>
+  <div class="form-group"><label class="form-label">Client</label><select class="form-input" id="m-client"><option value="">— General / No Client —</option>${clients.map(c=>`<option value="${c.id}">${c.name} — ${c.company}</option>`).join('')}</select></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" id="m-amount" type="number" placeholder="50000"></div><div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div></div>
+  <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="m-notes" placeholder="Consulting, retainer…"></div>
+  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveRevenue()">Add Revenue</button></div>`);
+}
+async function saveRevenue(){
+  const amount=parseFloat(document.getElementById('m-amount').value);
+  if(!amount||isNaN(amount)){toast('Enter a valid amount','error');return;}
+  const clientId=document.getElementById('m-client').value;
+  await api('/api/revenue',{method:'POST',body:JSON.stringify({client_id:clientId?parseInt(clientId):null,amount,date:document.getElementById('m-date').value,source:'manual',notes:document.getElementById('m-notes').value})});
+  toast('Revenue added');closeModal();navigate('revenue');
+}
+async function deleteRevEntry(id){
+  await api(`/api/revenue/${id}`,{method:'DELETE'});
+  toast('Entry removed');navigate('revenue');
+}
+
+async function openAddTransaction(){
+  const users=await api('/api/users');
+  openModal(`<div class="modal-title">Add Transaction</div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Team Member</label><select class="form-input" id="m-uid">${users.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Type</label><select class="form-input" id="m-type"><option value="income">Income</option><option value="expense">Expense</option></select></div></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Category</label><input class="form-input" id="m-cat" placeholder="Salary, Software, Travel…"></div><div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" id="m-amt" type="number" placeholder="0"></div></div>
+  <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-dt" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTx()">Add Transaction</button></div>`);
+}
+async function saveTx(){
+  const amount=parseFloat(document.getElementById('m-amt').value);
+  if(!amount||isNaN(amount)){toast('Enter valid amount','error');return;}
+  await api('/api/transactions',{method:'POST',body:JSON.stringify({user_id:parseInt(document.getElementById('m-uid').value),type:document.getElementById('m-type').value,category:document.getElementById('m-cat').value||'Other',amount,date:document.getElementById('m-dt').value})});
+  toast('Transaction added');closeModal();navigate('revenue');
+}
+async function deleteTx(id){
+  await api(`/api/transactions/${id}`,{method:'DELETE'});
+  toast('Deleted');navigate('revenue');
+}
+
+async function openAddSalary(){
+  const users=await api('/api/users');
+  openModal(`<div class="modal-title">Add Salary Payment</div>
+  <div class="form-group"><label class="form-label">Team Member</label><select class="form-input" id="m-uid">${users.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select></div>
+  <div class="form-row"><div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" id="m-amt" type="number" placeholder="0"></div><div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-dt" type="date" value="${new Date().toISOString().split('T')[0]}"></div></div>
+  <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="m-notes" placeholder="May salary…"></div>
+  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveSalary()">Add</button></div>`);
+}
+async function saveSalary(){
+  const amount=parseFloat(document.getElementById('m-amt').value);
+  if(!amount||isNaN(amount)){toast('Enter valid amount','error');return;}
+  await api('/api/salaries',{method:'POST',body:JSON.stringify({user_id:parseInt(document.getElementById('m-uid').value),amount,date:document.getElementById('m-dt').value,notes:document.getElementById('m-notes').value})});
+  toast('Salary added');closeModal();navigate('revenue');
+}
+
+// ── FILE UPLOAD ─────────────────────────────────────────────────
+let pendingFile=null;
+function openUploadFile(clientId){
+  pendingFile=null;
+  openModal(`<div class="modal-title">Upload File</div>
+  <div class="upload-zone" onclick="document.getElementById('fu').click()">
+    <div style="font-size:28px;margin-bottom:8px">📎</div>
+    <div style="font-weight:500;margin-bottom:4px">Click to browse</div>
+    <div style="font-size:12px;color:var(--muted)">PDF, images, docs · Max 20MB</div>
+    <input type="file" id="fu" style="display:none" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.xlsx,.csv" onchange="onFileSelect(this,${clientId})">
+  </div>
+  <div class="form-group"><label class="form-label">File Type</label><select class="form-input" id="m-ftype"><option value="report">Report</option><option value="calendar">Calendar</option><option value="quotation">Quotation</option><option value="creative">Creative</option></select></div>
+  <div id="file-preview" style="display:none;background:#F9F9F9;border-radius:6px;padding:10px;font-size:13px;margin-bottom:4px"></div>
+  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="upload-btn" onclick="confirmUpload(${clientId})" disabled>Upload</button></div>`);
+}
+function onFileSelect(input,clientId){
+  const file=input.files[0];
+  if(!file) return;
+  if(file.size>20*1024*1024){toast('File too large. Max 20MB','error');return;}
+  pendingFile=file;
+  const p=document.getElementById('file-preview');
+  p.style.display='block';
+  p.innerHTML=`📎 <strong>${file.name}</strong> &nbsp;·&nbsp; ${(file.size/1024/1024).toFixed(1)} MB`;
+  document.getElementById('upload-btn').disabled=false;
+}
+async function confirmUpload(clientId){
+  if(!pendingFile){toast('Select a file first','error');return;}
+  const fd=new FormData();
+  fd.append('file',pendingFile);
+  fd.append('file_type',document.getElementById('m-ftype').value);
+  try{
+    const res=await fetch(`/api/clients/${clientId}/files`,{method:'POST',body:fd});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error||'Upload failed');
+    toast('File uploaded');pendingFile=null;closeModal();navigate('clientDetail',clientId);
+  }catch(e){toast(e.message,'error');}
+}
+async function deleteFile(clientId,fileId){
+  if(!confirm('Delete this file?')) return;
+  await api(`/api/clients/${clientId}/files/${fileId}`,{method:'DELETE'});
+  toast('File deleted');navigate('clientDetail',clientId);
+}
+async function uploadAvatar(clientId,input){
+  const file=input.files&&input.files[0];if(!file)return;
+  const allowed=['image/jpeg','image/png','image/webp'];
+  if(!allowed.includes(file.type)){toast('Only JPG, PNG or WEBP allowed','error');input.value='';return;}
+  if(file.size>2*1024*1024){toast('File too large (max 2MB)','error');input.value='';return;}
+  const fd=new FormData();fd.append('avatar',file);
+  try{
+    const res=await fetch(`/api/clients/${clientId}/avatar`,{method:'POST',body:fd});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||'Upload failed');
+    toast('Photo updated');
+    navigate('clientDetail',clientId);
+  }catch(e){toast(e.message,'error');}
+  input.value='';
+}
+
+// ── META SYNC ───────────────────────────────────────────────────
+async function syncMeta(){
+  if(appState.syncing) return;
+  appState.syncing=true;
+  const icon=document.getElementById('sync-icon');
+  if(icon) icon.classList.add('spinning');
+  try{
+    const data=await api('/api/meta/sync',{method:'POST',body:JSON.stringify({})});
+    toast(`Meta synced — ${data.synced} campaigns updated`);
+  }finally{
+    appState.syncing=false;
+    const i2=document.getElementById('sync-icon');
+    if(i2) i2.classList.remove('spinning');
+  }
+}
+
+// ── BOOT ────────────────────────────────────────────────────────
+navigate('dashboard');
+</script>
+</body>
+</html>
