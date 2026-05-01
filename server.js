@@ -11,8 +11,31 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ── PASSWORD PROTECTION ───────────────────────────────────────
+const PASS = process.env.DASHBOARD_PASSWORD || 'weclick2025';
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
+  if (req.path === '/login') return next();
+  const cookie = req.headers.cookie || '';
+  if (cookie.includes(`auth=${PASS}`)) return next();
+  res.send(`<!DOCTYPE html><html><head><title>WeClick AI</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:sans-serif;background:#FAFAFA;display:flex;align-items:center;justify-content:center;height:100vh}.box{background:#fff;border:1px solid #E5E5E5;border-radius:14px;padding:40px;width:340px;text-align:center}.logo{width:48px;height:48px;background:#FF6A00;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;margin:0 auto 16px}h2{margin-bottom:6px}p{font-size:13px;color:#6B7280;margin-bottom:24px}input{width:100%;padding:10px 14px;border:1px solid #E5E5E5;border-radius:8px;font-size:14px;margin-bottom:14px;outline:none}button{width:100%;padding:10px;background:#FF6A00;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}</style>
+  </head><body><div class="box"><div class="logo">WC</div><h2>WeClick AI</h2><p>Enter your password to continue</p>
+  <form method="POST" action="/login"><input type="password" name="password" placeholder="Password" autofocus/><button>Login →</button></form>
+  </div></body></html>`);
+});
+app.post('/login', (req, res) => {
+  if (req.body.password === PASS) {
+    res.setHeader('Set-Cookie', `auth=${PASS}; Path=/; HttpOnly; Max-Age=2592000`);
+    res.redirect('/');
+  } else {
+    res.send('<script>alert("Wrong password");history.back()</script>');
+  }
+});
 
 // Multer storage
 const storage = multer.diskStorage({
@@ -28,7 +51,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024 } });
 
-// Avatar storage: /uploads/clients/:id/avatar.<ext>
 const avatarStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = path.join(__dirname, 'uploads', 'clients', String(req.params.id));
@@ -108,13 +130,14 @@ app.delete('/api/clients/:cid/content-tasks/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// ── SEND REPORT (stub) ────────────────────────────────────────
+// ── SEND REPORT ───────────────────────────────────────────────
 app.post('/api/clients/:id/send-report', (req, res) => {
   const { to, subject, body } = req.body;
   if (!to) return res.status(400).json({ error: 'Recipient email required' });
   console.log(`[Send Report stub] to=${to} subject="${subject}"`);
   res.json({ success: true, message: 'Report queued (SMTP not configured)' });
 });
+
 app.post('/api/clients', (req, res) => {
   const { name, company, status='Active', revenue=0, spend=0, expected_revenue=0, color='#FF6A00' } = req.body;
   if (!name || !company) return res.status(400).json({ error: 'name and company required' });
@@ -133,7 +156,6 @@ app.delete('/api/clients/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// Avatar upload — JPG/PNG/WEBP only, max 2MB
 app.post('/api/clients/:id/avatar', (req, res) => {
   avatarUpload.single('avatar')(req, res, (err) => {
     if (err) {
@@ -214,10 +236,7 @@ app.delete('/api/collaborations/:id', (req, res) => {
 // ── REVENUE ───────────────────────────────────────────────────
 app.get('/api/revenue', (req, res) => {
   const entries = db.prepare(`SELECT r.*,c.name as client_name,c.color FROM revenue_entries r LEFT JOIN clients cl ON r.client_id=cl.id LEFT JOIN clients c ON r.client_id=c.id ORDER BY r.date DESC`).all();
-  const totals = db.prepare(`SELECT 
-    SUM(CASE WHEN source='manual' THEN amount ELSE 0 END) as manual_total,
-    SUM(amount) as grand_total
-    FROM revenue_entries`).get();
+  const totals = db.prepare(`SELECT SUM(CASE WHEN source='manual' THEN amount ELSE 0 END) as manual_total, SUM(amount) as grand_total FROM revenue_entries`).get();
   const clientRevenue = db.prepare('SELECT SUM(revenue) as total FROM clients').get();
   res.json({ entries, totals, clientRevenue });
 });
@@ -242,8 +261,7 @@ app.get('/api/dashboard', (req, res) => {
   const totalRevenue = (clientStats.revenue || 0) + (manualRev.total || 0);
   const totalSpend = clientStats.spend || 0;
   res.json({
-    totalRevenue,
-    totalSpend,
+    totalRevenue, totalSpend,
     profit: totalRevenue - totalSpend,
     activeClients: clientStats.active,
     totalClients: clientStats.total,
