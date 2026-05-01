@@ -1,0 +1,5 @@
+node_modules/
+weclick.db
+uploads/
+.env
+*.log
