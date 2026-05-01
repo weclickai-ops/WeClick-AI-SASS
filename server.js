@@ -12,6 +12,29 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// ── PASSWORD PROTECTION ───────────────────────────────────────
+const PASS = process.env.DASHBOARD_PASSWORD || 'weclick2025';
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
+  if (req.path === '/login') return next();
+  const cookie = req.headers.cookie || '';
+  if (cookie.includes(`auth=${PASS}`)) return next();
+  res.send(`<!DOCTYPE html><html><head><title>WeClick AI</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:sans-serif;background:#FAFAFA;display:flex;align-items:center;justify-content:center;height:100vh}.box{background:#fff;border:1px solid #E5E5E5;border-radius:14px;padding:40px;width:340px;text-align:center}.logo{width:48px;height:48px;background:#FF6A00;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;margin:0 auto 16px}h2{margin-bottom:6px}p{font-size:13px;color:#6B7280;margin-bottom:24px}input{width:100%;padding:10px 14px;border:1px solid #E5E5E5;border-radius:8px;font-size:14px;margin-bottom:14px;outline:none}button{width:100%;padding:10px;background:#FF6A00;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}</style>
+  </head><body><div class="box"><div class="logo">WC</div><h2>WeClick AI</h2><p>Enter your password to continue</p>
+  <form method="POST" action="/login"><input type="password" name="password" placeholder="Password" autofocus/><button>Login →</button></form>
+  </div></body></html>`);
+});
+app.post('/login', (req, res) => {
+  if (req.body.password === PASS) {
+    res.setHeader('Set-Cookie', `auth=${PASS}; Path=/; HttpOnly; Max-Age=2592000`);
+    res.redirect('/');
+  } else {
+    res.send('<script>alert("Wrong password");history.back()</script>');
+  }
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
