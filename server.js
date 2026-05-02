@@ -4,6 +4,8 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const axios = require('axios');
+const cron = require('node-cron');
 const db = require('./database');
 
 const app = express();
@@ -78,7 +80,14 @@ const avatarUpload = multer({
 
 // ── CLIENTS ──────────────────────────────────────────────────
 app.get('/api/clients', (req, res) => {
-  const clients = db.prepare('SELECT * FROM clients ORDER BY revenue DESC').all();
+  const clients = db.prepare(`
+    SELECT c.*,
+      CASE WHEN m.id IS NOT NULL THEN 1 ELSE 0 END as meta_connected,
+      m.balance as meta_balance,
+      m.currency as meta_currency
+    FROM clients c LEFT JOIN client_meta_accounts m ON m.client_id = c.id
+    ORDER BY c.revenue DESC
+  `).all();
   res.json(clients);
 });
 app.get('/api/clients/:id', (req, res) => {
@@ -90,7 +99,10 @@ app.get('/api/clients/:id', (req, res) => {
   const quotations = db.prepare('SELECT * FROM quotations WHERE client_id=? ORDER BY created_at DESC').all(client.id)
     .map(q => ({ ...q, items: JSON.parse(q.items || '[]') }));
   const contentTasks = db.prepare('SELECT * FROM content_tasks WHERE client_id=? ORDER BY date ASC').all(client.id);
-  res.json({ ...client, campaigns, files, automations, quotations, contentTasks });
+  const metaAccountRaw = db.prepare('SELECT id,client_id,ad_account_id,is_active,balance,currency,last_synced,created_at FROM client_meta_accounts WHERE client_id=?').get(client.id) || null;
+  const metaAccount = metaAccountRaw ? { ...metaAccountRaw, low_funds: metaAccountRaw.balance !== null && metaAccountRaw.balance < 200 } : null;
+  const metaInsights = db.prepare('SELECT * FROM meta_ad_insights WHERE client_id=? ORDER BY date ASC LIMIT 30').all(client.id);
+  res.json({ ...client, campaigns, files, automations, quotations, contentTasks, metaAccount, metaInsights });
 });
 
 // ── QUOTATIONS ────────────────────────────────────────────────
@@ -133,11 +145,75 @@ app.delete('/api/clients/:cid/content-tasks/:id', (req, res) => {
 });
 
 // ── SEND REPORT ───────────────────────────────────────────────
-app.post('/api/clients/:id/send-report', (req, res) => {
-  const { to, subject, body } = req.body;
+const nodemailer = require('nodemailer');
+const PDFDocument = require('pdfkit');
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+
+function generateQuotationPDF(q, clientName) {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ margin: 50 });
+    const chunks = [];
+    doc.on('data', chunk => chunks.push(chunk));
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+    const fmt = n => '₹' + Number(n || 0).toLocaleString('en-IN');
+    doc.fontSize(20).fillColor('#FF6A00').text('WeClick AI', { align: 'right' });
+    doc.fontSize(10).fillColor('#555').text('Marketing Agency', { align: 'right' });
+    doc.moveDown();
+    doc.fontSize(16).fillColor('#111').text(`Quotation — ${q.quotation_no}`);
+    doc.fontSize(10).fillColor('#555').text(`Client: ${clientName}`);
+    if (q.valid_until) doc.text(`Valid until: ${q.valid_until}`);
+    doc.text(`Date: ${new Date(q.created_at).toLocaleDateString('en-IN')}`);
+    doc.moveDown();
+    const items = Array.isArray(q.items) ? q.items : JSON.parse(q.items || '[]');
+    items.forEach(item => {
+      const amt = (parseFloat(item.qty) || 0) * (parseFloat(item.rate) || 0);
+      doc.fontSize(9).fillColor('#222').text(`${item.service || ''} — ${item.description || ''} | Qty: ${item.qty} | Rate: ${fmt(item.rate)} | Amount: ${fmt(amt)}`);
+    });
+    doc.moveDown();
+    doc.fontSize(10).fillColor('#555').text(`Subtotal: ${fmt(q.subtotal)}`, { align: 'right' });
+    doc.text(`GST (${q.gst_pct}%): ${fmt(q.gst_amount)}`, { align: 'right' });
+    doc.fontSize(12).fillColor('#FF6A00').text(`Total: ${fmt(q.total)}`, { align: 'right' });
+    if (q.notes) { doc.moveDown(); doc.fontSize(9).fillColor('#555').text(`Notes: ${q.notes}`); }
+    doc.end();
+  });
+}
+
+app.post('/api/clients/:id/send-report', async (req, res) => {
+  const { to, subject, body, quotation_id } = req.body;
   if (!to) return res.status(400).json({ error: 'Recipient email required' });
-  console.log(`[Send Report stub] to=${to} subject="${subject}"`);
-  res.json({ success: true, message: 'Report queued (SMTP not configured)' });
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    return res.status(500).json({ error: 'Email not configured on server' });
+  }
+  try {
+    const mailOptions = {
+      from: `"WeClick AI" <${process.env.SMTP_USER}>`,
+      to, subject: subject || 'Client Report',
+      text: body || '',
+      html: `<pre style="font-family:sans-serif;white-space:pre-wrap">${body || ''}</pre>`,
+      attachments: [],
+    };
+    if (quotation_id) {
+      const client = db.prepare('SELECT * FROM clients WHERE id=?').get(req.params.id);
+      const q = db.prepare('SELECT * FROM quotations WHERE id=? AND client_id=?').get(quotation_id, req.params.id);
+      if (q) {
+        q.items = JSON.parse(q.items || '[]');
+        const pdfBuffer = await generateQuotationPDF(q, client ? client.company : '');
+        mailOptions.attachments.push({ filename: `${q.quotation_no}.pdf`, content: pdfBuffer, contentType: 'application/pdf' });
+      }
+    }
+    await transporter.sendMail(mailOptions);
+    res.json({ success: true, message: `Report sent to ${to}` });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to send email: ' + err.message });
+  }
 });
 
 app.post('/api/clients', (req, res) => {
@@ -256,22 +332,48 @@ app.delete('/api/revenue/:id', (req, res) => {
 
 // ── DASHBOARD STATS ───────────────────────────────────────────
 app.get('/api/dashboard', (req, res) => {
+  const { period = 'all' } = req.query;
+  const now = new Date();
+  let fromDate = null;
+  if (period === 'today') {
+    fromDate = now.toISOString().slice(0, 10);
+  } else if (period === '7d') {
+    const d = new Date(now); d.setDate(d.getDate() - 7);
+    fromDate = d.toISOString().slice(0, 10);
+  } else if (period === '30d') {
+    const d = new Date(now); d.setDate(d.getDate() - 30);
+    fromDate = d.toISOString().slice(0, 10);
+  } else if (period === 'month') {
+    fromDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  }
   const clientStats = db.prepare("SELECT SUM(revenue) as revenue, SUM(spend) as spend, SUM(profit) as profit, COUNT(*) as total, SUM(CASE WHEN status='Active' THEN 1 ELSE 0 END) as active FROM clients").get();
   const autoStats = db.prepare("SELECT SUM(revenue) as revenue, COUNT(*) as total, SUM(CASE WHEN status='Running' THEN 1 ELSE 0 END) as running FROM automations").get();
   const colabStats = db.prepare('SELECT SUM(revenue) as revenue FROM collaborations').get();
-  const manualRev = db.prepare("SELECT SUM(amount) as total FROM revenue_entries WHERE source='manual'").get();
-  const totalRevenue = (clientStats.revenue || 0) + (manualRev.total || 0);
-  const totalSpend = clientStats.spend || 0;
+  let totalRevenue, totalSpend, profit;
+  if (fromDate) {
+    const revRow = db.prepare('SELECT SUM(amount) as total FROM revenue_entries WHERE date >= ?').get(fromDate);
+    const spendRow = db.prepare("SELECT SUM(amount) as total FROM transactions WHERE type='expense' AND date >= ?").get(fromDate);
+    totalRevenue = revRow.total || 0;
+    totalSpend = spendRow.total || 0;
+    profit = totalRevenue - totalSpend;
+  } else {
+    const manualRev = db.prepare("SELECT SUM(amount) as total FROM revenue_entries WHERE source='manual'").get();
+    totalRevenue = (clientStats.revenue || 0) + (manualRev.total || 0);
+    totalSpend = clientStats.spend || 0;
+    profit = totalRevenue - totalSpend;
+  }
+  const thisMonthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  const thisMonthRow = db.prepare('SELECT SUM(amount) as total FROM revenue_entries WHERE date >= ?').get(thisMonthStart);
   res.json({
-    totalRevenue, totalSpend,
-    profit: totalRevenue - totalSpend,
+    totalRevenue, totalSpend, profit,
     activeClients: clientStats.active,
     totalClients: clientStats.total,
     automationRevenue: autoStats.revenue || 0,
     activeAutomations: autoStats.running,
     collaborationRevenue: colabStats.revenue || 0,
-    thisMonth: 316400,
-    projected: Math.round(totalRevenue * 1.24)
+    thisMonth: thisMonthRow.total || 0,
+    projected: Math.round((clientStats.revenue || 0) * 1.24),
+    period
   });
 });
 
@@ -284,6 +386,10 @@ app.post('/api/users', (req, res) => {
   if (!name) return res.status(400).json({ error: 'name required' });
   const r = db.prepare('INSERT INTO users (name,email,role) VALUES (?,?,?)').run(name, email||null, role);
   res.json(db.prepare('SELECT * FROM users WHERE id=?').get(r.lastInsertRowid));
+});
+app.delete('/api/users/:id', (req, res) => {
+  db.prepare('DELETE FROM users WHERE id=?').run(req.params.id);
+  res.json({ success: true });
 });
 
 // ── TRANSACTIONS ──────────────────────────────────────────────
@@ -321,6 +427,10 @@ app.post('/api/salaries', (req, res) => {
   if (!userExists) return res.status(400).json({ error: 'User not found' });
   const r = db.prepare('INSERT INTO salaries (user_id,amount,date,notes) VALUES (?,?,?,?)').run(user_id, parseFloat(amount), date, notes);
   res.json(db.prepare('SELECT s.*,u.name as user_name FROM salaries s LEFT JOIN users u ON s.user_id=u.id WHERE s.id=?').get(r.lastInsertRowid));
+});
+app.delete('/api/salaries/:id', (req, res) => {
+  db.prepare('DELETE FROM salaries WHERE id=?').run(req.params.id);
+  res.json({ success: true });
 });
 
 // ── PERSONAL FINANCE SUMMARY ──────────────────────────────────
@@ -361,7 +471,80 @@ app.delete('/api/clients/:clientId/files/:fileId', (req, res) => {
   res.json({ success: true });
 });
 
-// ── META SYNC (mock) ──────────────────────────────────────────
+// ── META ADS INTEGRATION ──────────────────────────────────────
+async function fetchMetaBalance(adAccountId, accessToken) {
+  const url = `https://graph.facebook.com/v18.0/${adAccountId}?fields=balance,currency&access_token=${accessToken}`;
+  const resp = await axios.get(url, { timeout: 15000 });
+  return { balance: parseFloat(resp.data.balance || 0), currency: resp.data.currency || 'USD' };
+}
+
+async function fetchMetaInsights(adAccountId, accessToken) {
+  const today = new Date();
+  const since = new Date(today);
+  since.setDate(since.getDate() - 30);
+  const sinceStr = since.toISOString().split('T')[0];
+  const untilStr = today.toISOString().split('T')[0];
+  const url = `https://graph.facebook.com/v18.0/${adAccountId}/insights?fields=spend,impressions,clicks,ctr,cpc,reach&time_range={"since":"${sinceStr}","until":"${untilStr}"}&access_token=${accessToken}`;
+  const resp = await axios.get(url, { timeout: 15000 });
+  const data = resp.data.data?.[0] || {};
+  return {
+    spend: parseFloat(data.spend || 0),
+    impressions: parseInt(data.impressions || 0),
+    clicks: parseInt(data.clicks || 0),
+    ctr: parseFloat(data.ctr || 0),
+    cpc: parseFloat(data.cpc || 0),
+    reach: parseInt(data.reach || 0),
+  };
+}
+
+async function syncClientMeta(clientId) {
+  const acct = db.prepare('SELECT * FROM client_meta_accounts WHERE client_id=? AND is_active=1').get(clientId);
+  if (!acct) return { error: 'No active Meta account' };
+  try {
+    const metrics = await fetchMetaInsights(acct.ad_account_id, acct.access_token);
+    const today = new Date().toISOString().slice(0, 10);
+    db.prepare(`INSERT OR IGNORE INTO meta_ad_insights (client_id,date,spend,impressions,clicks,ctr,cpc,reach) VALUES (?,?,?,?,?,?,?,?)`)
+      .run(clientId, today, metrics.spend, metrics.impressions, metrics.clicks, metrics.ctr, metrics.cpc, metrics.reach);
+    let balanceData = { balance: null, currency: null };
+    try { balanceData = await fetchMetaBalance(acct.ad_account_id, acct.access_token); } catch(_) {}
+    db.prepare('UPDATE client_meta_accounts SET last_synced=CURRENT_TIMESTAMP, balance=?, currency=? WHERE client_id=?')
+      .run(balanceData.balance, balanceData.currency, clientId);
+    return { success: true, metrics, balance: balanceData.balance, currency: balanceData.currency };
+  } catch (err) {
+    return { error: err.response?.data?.error?.message || err.message };
+  }
+}
+
+app.get('/api/clients/:id/meta-account', (req, res) => {
+  const acct = db.prepare('SELECT id,client_id,ad_account_id,is_active,balance,currency,last_synced,created_at FROM client_meta_accounts WHERE client_id=?').get(req.params.id);
+  res.json(acct || null);
+});
+app.post('/api/clients/:id/meta-account', async (req, res) => {
+  let { ad_account_id, access_token } = req.body;
+  if (!ad_account_id) return res.status(400).json({ error: 'ad_account_id required' });
+  if (access_token === '__keep__' || !access_token) {
+    const existing = db.prepare('SELECT access_token FROM client_meta_accounts WHERE client_id=?').get(req.params.id);
+    if (!existing) return res.status(400).json({ error: 'No existing token found' });
+    access_token = existing.access_token;
+  }
+  db.prepare(`INSERT INTO client_meta_accounts (client_id, ad_account_id, access_token, is_active) VALUES (?, ?, ?, 1) ON CONFLICT(client_id) DO UPDATE SET ad_account_id=excluded.ad_account_id, access_token=excluded.access_token, is_active=1`)
+    .run(req.params.id, ad_account_id, access_token);
+  const result = await syncClientMeta(req.params.id);
+  const acct = db.prepare('SELECT id,client_id,ad_account_id,is_active,last_synced FROM client_meta_accounts WHERE client_id=?').get(req.params.id);
+  res.json({ ...acct, syncResult: result });
+});
+app.post('/api/clients/:id/meta-sync', async (req, res) => {
+  const result = await syncClientMeta(req.params.id);
+  if (result.error) return res.status(400).json({ error: result.error });
+  const insights = db.prepare('SELECT * FROM meta_ad_insights WHERE client_id=? ORDER BY date DESC LIMIT 1').get(req.params.id);
+  res.json({ success: true, insights });
+});
+app.delete('/api/clients/:id/meta-account', (req, res) => {
+  db.prepare('DELETE FROM client_meta_accounts WHERE client_id=?').run(req.params.id);
+  res.json({ success: true });
+});
+
+// ── META SYNC MOCK ────────────────────────────────────────────
 app.post('/api/meta/sync', (req, res) => {
   const mockData = [
     { campaign_name: 'Diwali Mega Sale', spend: 89000, date: new Date().toISOString().split('T')[0] },
@@ -371,6 +554,16 @@ app.post('/api/meta/sync', (req, res) => {
   mockData.forEach(d => insert.run(d.campaign_name, d.spend, d.date));
   res.json({ success: true, synced: mockData.length, data: mockData });
 });
+
+// ── CRON: daily 8AM IST ───────────────────────────────────────
+cron.schedule('30 2 * * *', async () => {
+  console.log('[Cron] Starting daily Meta Ads sync...');
+  const accounts = db.prepare('SELECT client_id FROM client_meta_accounts WHERE is_active=1').all();
+  for (const { client_id } of accounts) {
+    const result = await syncClientMeta(client_id);
+    console.log(`[Cron] client ${client_id}:`, result.error || 'synced');
+  }
+}, { timezone: 'Asia/Kolkata' });
 
 // ── CATCH ALL → SPA ───────────────────────────────────────────
 app.get('*', (req, res) => {
