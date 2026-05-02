@@ -1,225 +1,227 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+const { Pool, types } = require('pg');
 
-const db = new Database(path.join(__dirname, 'weclick.db'));
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+types.setTypeParser(20,   val => parseInt(val, 10));
+types.setTypeParser(1700, val => parseFloat(val));
+types.setTypeParser(700,  val => parseFloat(val));
+types.setTypeParser(701,  val => parseFloat(val));
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS clients (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    company TEXT NOT NULL,
-    email TEXT,
-    status TEXT DEFAULT 'Active',
-    revenue REAL DEFAULT 0,
-    spend REAL DEFAULT 0,
-    profit REAL DEFAULT 0,
-    expected_revenue REAL DEFAULT 0,
-    color TEXT DEFAULT '#FF6A00',
-    avatar_url TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS campaigns (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
-    channel TEXT NOT NULL,
-    budget REAL DEFAULT 0,
-    spend REAL DEFAULT 0,
-    status TEXT DEFAULT 'Draft',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS automations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
-    status TEXT DEFAULT 'Running',
-    notes TEXT,
-    revenue REAL DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS collaborations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    partner TEXT NOT NULL,
-    revenue REAL DEFAULT 0,
-    status TEXT DEFAULT 'Active',
-    notes TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS revenue_entries (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
-    amount REAL NOT NULL,
-    date TEXT NOT NULL,
-    source TEXT DEFAULT 'manual',
-    notes TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT UNIQUE,
-    role TEXT DEFAULT 'member',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS transactions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    type TEXT NOT NULL CHECK(type IN ('income','expense')),
-    category TEXT DEFAULT 'Other',
-    amount REAL NOT NULL,
-    date TEXT NOT NULL,
-    notes TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS salaries (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    amount REAL NOT NULL,
-    date TEXT NOT NULL,
-    notes TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS client_files (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
-    file_name TEXT NOT NULL,
-    file_url TEXT NOT NULL,
-    file_size TEXT,
-    file_type TEXT DEFAULT 'report',
-    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS meta_spend (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    campaign_name TEXT,
-    spend REAL DEFAULT 0,
-    date TEXT,
-    synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS quotations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
-    quotation_no TEXT,
-    items TEXT NOT NULL,
-    subtotal REAL DEFAULT 0,
-    gst_pct REAL DEFAULT 18,
-    gst_amount REAL DEFAULT 0,
-    total REAL DEFAULT 0,
-    notes TEXT,
-    valid_until TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS content_tasks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
-    date TEXT NOT NULL,
-    platform TEXT NOT NULL,
-    content_type TEXT NOT NULL,
-    notes TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS client_meta_accounts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    client_id INTEGER UNIQUE REFERENCES clients(id) ON DELETE CASCADE,
-    ad_account_id TEXT NOT NULL,
-    access_token TEXT NOT NULL,
-    daily_budget REAL DEFAULT 0,
-    total_funds REAL DEFAULT 0,
-    alert_threshold REAL DEFAULT 500,
-    balance REAL DEFAULT NULL,
-    currency TEXT DEFAULT 'INR',
-    balance_synced_at DATETIME,
-    is_active INTEGER DEFAULT 1,
-    last_synced DATETIME,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS client_meta_metrics (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
-    date TEXT NOT NULL,
-    spend REAL DEFAULT 0,
-    impressions INTEGER DEFAULT 0,
-    clicks INTEGER DEFAULT 0,
-    ctr REAL DEFAULT 0,
-    cpc REAL DEFAULT 0,
-    reach INTEGER DEFAULT 0,
-    leads INTEGER DEFAULT 0,
-    roas REAL DEFAULT 0,
-    synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(client_id, date)
-  );
-`);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+});
 
-// ── MIGRATIONS ────────────────────────────────────────────────
-try {
-  const cols = db.prepare("PRAGMA table_info(clients)").all().map(c => c.name);
-  if (!cols.includes('avatar_url')) db.exec("ALTER TABLE clients ADD COLUMN avatar_url TEXT");
-  if (!cols.includes('email')) db.exec("ALTER TABLE clients ADD COLUMN email TEXT");
-} catch (e) { console.error('Client migration:', e.message); }
-
-try {
-  const mc = db.prepare("PRAGMA table_info(client_meta_accounts)").all().map(c => c.name);
-  if (!mc.includes('total_funds')) db.exec("ALTER TABLE client_meta_accounts ADD COLUMN total_funds REAL DEFAULT 0");
-  if (!mc.includes('alert_threshold')) db.exec("ALTER TABLE client_meta_accounts ADD COLUMN alert_threshold REAL DEFAULT 500");
-  if (!mc.includes('balance')) db.exec("ALTER TABLE client_meta_accounts ADD COLUMN balance REAL DEFAULT NULL");
-  if (!mc.includes('currency')) db.exec("ALTER TABLE client_meta_accounts ADD COLUMN currency TEXT DEFAULT 'INR'");
-  if (!mc.includes('balance_synced_at')) db.exec("ALTER TABLE client_meta_accounts ADD COLUMN balance_synced_at DATETIME");
-} catch (e) { console.error('Meta migration:', e.message); }
-
-// ── SEED (only if empty) ──────────────────────────────────────
-const clientCount = db.prepare('SELECT COUNT(*) as count FROM clients').get();
-if (clientCount.count === 0) {
+async function initDb() {
+  const client = await pool.connect();
   try {
-    const u1 = db.prepare('INSERT INTO users (name,email,role) VALUES (?,?,?)').run('Arjun Kapoor','arjun@weclick.ai','owner');
-    const u2 = db.prepare('INSERT INTO users (name,email,role) VALUES (?,?,?)').run('Siya Verma','siya@weclick.ai','manager');
-    const u3 = db.prepare('INSERT INTO users (name,email,role) VALUES (?,?,?)').run('Karan Singh','karan@weclick.ai','analyst');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS clients (
+        id               SERIAL PRIMARY KEY,
+        name             TEXT NOT NULL,
+        company          TEXT NOT NULL,
+        email            TEXT,
+        status           TEXT DEFAULT 'Active',
+        revenue          NUMERIC DEFAULT 0,
+        spend            NUMERIC DEFAULT 0,
+        profit           NUMERIC DEFAULT 0,
+        expected_revenue NUMERIC DEFAULT 0,
+        color            TEXT DEFAULT '#FF6A00',
+        avatar_url       TEXT,
+        created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS campaigns (
+        id         SERIAL PRIMARY KEY,
+        name       TEXT NOT NULL,
+        client_id  INT REFERENCES clients(id) ON DELETE CASCADE,
+        channel    TEXT NOT NULL,
+        budget     NUMERIC DEFAULT 0,
+        spend      NUMERIC DEFAULT 0,
+        status     TEXT DEFAULT 'Draft',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS automations (
+        id         SERIAL PRIMARY KEY,
+        name       TEXT NOT NULL,
+        client_id  INT REFERENCES clients(id) ON DELETE CASCADE,
+        status     TEXT DEFAULT 'Running',
+        notes      TEXT,
+        revenue    NUMERIC DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS collaborations (
+        id         SERIAL PRIMARY KEY,
+        partner    TEXT NOT NULL,
+        revenue    NUMERIC DEFAULT 0,
+        status     TEXT DEFAULT 'Active',
+        notes      TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS revenue_entries (
+        id         SERIAL PRIMARY KEY,
+        client_id  INT REFERENCES clients(id) ON DELETE SET NULL,
+        amount     NUMERIC NOT NULL,
+        date       TEXT NOT NULL,
+        source     TEXT DEFAULT 'manual',
+        notes      TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS users (
+        id         SERIAL PRIMARY KEY,
+        name       TEXT NOT NULL,
+        email      TEXT UNIQUE,
+        role       TEXT DEFAULT 'member',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS transactions (
+        id         SERIAL PRIMARY KEY,
+        user_id    INT REFERENCES users(id) ON DELETE CASCADE,
+        type       TEXT NOT NULL CHECK(type IN ('income','expense')),
+        category   TEXT DEFAULT 'Other',
+        amount     NUMERIC NOT NULL,
+        date       TEXT NOT NULL,
+        notes      TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS salaries (
+        id         SERIAL PRIMARY KEY,
+        user_id    INT REFERENCES users(id) ON DELETE CASCADE,
+        amount     NUMERIC NOT NULL,
+        date       TEXT NOT NULL,
+        notes      TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS client_files (
+        id          SERIAL PRIMARY KEY,
+        client_id   INT REFERENCES clients(id) ON DELETE CASCADE,
+        file_name   TEXT NOT NULL,
+        file_url    TEXT NOT NULL,
+        file_size   TEXT,
+        file_type   TEXT DEFAULT 'report',
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS meta_spend (
+        id            SERIAL PRIMARY KEY,
+        campaign_name TEXT,
+        spend         NUMERIC DEFAULT 0,
+        date          TEXT,
+        synced_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS quotations (
+        id           SERIAL PRIMARY KEY,
+        client_id    INT REFERENCES clients(id) ON DELETE CASCADE,
+        quotation_no TEXT,
+        items        TEXT NOT NULL,
+        subtotal     NUMERIC DEFAULT 0,
+        gst_pct      NUMERIC DEFAULT 18,
+        gst_amount   NUMERIC DEFAULT 0,
+        total        NUMERIC DEFAULT 0,
+        notes        TEXT,
+        valid_until  TEXT,
+        created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS content_tasks (
+        id           SERIAL PRIMARY KEY,
+        client_id    INT REFERENCES clients(id) ON DELETE CASCADE,
+        date         TEXT NOT NULL,
+        platform     TEXT NOT NULL,
+        content_type TEXT NOT NULL,
+        notes        TEXT,
+        created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS client_meta_accounts (
+        id                SERIAL PRIMARY KEY,
+        client_id         INT UNIQUE REFERENCES clients(id) ON DELETE CASCADE,
+        ad_account_id     TEXT NOT NULL,
+        access_token      TEXT NOT NULL,
+        daily_budget      NUMERIC DEFAULT 0,
+        total_funds       NUMERIC DEFAULT 0,
+        alert_threshold   NUMERIC DEFAULT 1000,
+        balance           NUMERIC,
+        currency          TEXT DEFAULT 'INR',
+        balance_synced_at TIMESTAMP,
+        is_active         INT DEFAULT 1,
+        last_synced       TIMESTAMP,
+        created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS client_meta_metrics (
+        id          SERIAL PRIMARY KEY,
+        client_id   INT REFERENCES clients(id) ON DELETE CASCADE,
+        date        TEXT NOT NULL,
+        spend       NUMERIC DEFAULT 0,
+        impressions INT DEFAULT 0,
+        clicks      INT DEFAULT 0,
+        ctr         NUMERIC DEFAULT 0,
+        cpc         NUMERIC DEFAULT 0,
+        reach       INT DEFAULT 0,
+        leads       INT DEFAULT 0,
+        roas        NUMERIC DEFAULT 0,
+        synced_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
 
-    const ic = db.prepare('INSERT INTO clients (name,company,email,status,revenue,spend,profit,expected_revenue,color) VALUES (?,?,?,?,?,?,?,?,?)');
-    const c1 = ic.run('Priya Sharma','Growfast Retail','priya@growfast.in','Active',316400,89000,227400,380000,'#FF6A00');
-    const c2 = ic.run('Ravi Mehta','TechNova Labs','ravi@technova.in','Active',245000,72000,173000,290000,'#3B82F6');
-    const c3 = ic.run('Ananya Iyer','StyleHive','ananya@stylehive.in','Active',198500,58000,140500,210000,'#10B981');
-    const c4 = ic.run('Suresh Kumar','FoodBox India','suresh@foodbox.in','Paused',145000,51000,94000,160000,'#8B5CF6');
-    const c5 = ic.run('Neha Gupta','EduSpark','neha@eduspark.in','Active',82000,38000,44000,95000,'#F59E0B');
+    const migrations = [
+      `ALTER TABLE clients ADD COLUMN IF NOT EXISTS avatar_url TEXT`,
+      `ALTER TABLE clients ADD COLUMN IF NOT EXISTS email TEXT`,
+      `ALTER TABLE client_meta_accounts ADD COLUMN IF NOT EXISTS total_funds NUMERIC DEFAULT 0`,
+      `ALTER TABLE client_meta_accounts ADD COLUMN IF NOT EXISTS alert_threshold NUMERIC DEFAULT 1000`,
+      `ALTER TABLE client_meta_accounts ADD COLUMN IF NOT EXISTS balance NUMERIC`,
+      `ALTER TABLE client_meta_accounts ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'INR'`,
+      `ALTER TABLE client_meta_accounts ADD COLUMN IF NOT EXISTS balance_synced_at TIMESTAMP`,
+    ];
+    for (const sql of migrations) {
+      await client.query(sql).catch(() => {});
+    }
 
-    const icamp = db.prepare('INSERT INTO campaigns (name,client_id,channel,budget,spend,status) VALUES (?,?,?,?,?,?)');
-    icamp.run('Diwali Mega Sale',c1.lastInsertRowid,'Meta Ads',120000,89000,'Active');
-    icamp.run('Product Launch Q2',c2.lastInsertRowid,'Google Ads',80000,72000,'Active');
-    icamp.run('Brand Awareness',c3.lastInsertRowid,'Instagram',60000,42000,'Active');
-    icamp.run('Summer Campaign',c4.lastInsertRowid,'Meta Ads',55000,51000,'Paused');
-    icamp.run('Admission Drive',c5.lastInsertRowid,'LinkedIn',40000,28000,'Draft');
+    const { rows } = await client.query('SELECT COUNT(*) as count FROM clients');
+    if (parseInt(rows[0].count) === 0 && process.env.SEED_DEMO !== 'false') {
+      try {
+        const u1 = (await client.query('INSERT INTO users (name,email,role) VALUES ($1,$2,$3) RETURNING id', ['Arjun Kapoor','arjun@weclick.ai','owner'])).rows[0].id;
+        const u2 = (await client.query('INSERT INTO users (name,email,role) VALUES ($1,$2,$3) RETURNING id', ['Siya Verma','siya@weclick.ai','manager'])).rows[0].id;
+        const u3 = (await client.query('INSERT INTO users (name,email,role) VALUES ($1,$2,$3) RETURNING id', ['Karan Singh','karan@weclick.ai','analyst'])).rows[0].id;
 
-    const ia = db.prepare('INSERT INTO automations (name,client_id,status,notes,revenue) VALUES (?,?,?,?,?)');
-    ia.run('Lead Follow-up Bot',c1.lastInsertRowid,'Running','WhatsApp + Email sequence',28000);
-    ia.run('Retargeting Flow',c2.lastInsertRowid,'Running','7-day cart abandon',22000);
-    ia.run('Review Collector',c3.lastInsertRowid,'Paused','Post-purchase review ask',15000);
-    ia.run('Appointment Bot',c5.lastInsertRowid,'Running','Demo booking automation',18000);
+        const c1 = (await client.query('INSERT INTO clients (name,company,status,revenue,spend,profit,expected_revenue,color) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id', ['Priya Sharma','Growfast Retail','Active',316400,89000,227400,380000,'#FF6A00'])).rows[0].id;
+        const c2 = (await client.query('INSERT INTO clients (name,company,status,revenue,spend,profit,expected_revenue,color) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id', ['Ravi Mehta','TechNova Labs','Active',245000,72000,173000,290000,'#3B82F6'])).rows[0].id;
+        const c3 = (await client.query('INSERT INTO clients (name,company,status,revenue,spend,profit,expected_revenue,color) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id', ['Ananya Iyer','StyleHive','Active',198500,58000,140500,210000,'#10B981'])).rows[0].id;
+        const c4 = (await client.query('INSERT INTO clients (name,company,status,revenue,spend,profit,expected_revenue,color) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id', ['Suresh Kumar','FoodBox India','Paused',145000,51000,94000,160000,'#8B5CF6'])).rows[0].id;
+        const c5 = (await client.query('INSERT INTO clients (name,company,status,revenue,spend,profit,expected_revenue,color) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id', ['Neha Gupta','EduSpark','Active',82000,38000,44000,95000,'#F59E0B'])).rows[0].id;
 
-    const ico = db.prepare('INSERT INTO collaborations (partner,revenue,status,notes) VALUES (?,?,?,?)');
-    ico.run('Digital Nest Agency',95000,'Active','White-label campaigns');
-    ico.run('Spark Creative Studio',68000,'Active','Content production');
-    ico.run('GrowthHackers Co.',42000,'Ended','SEO project Q1');
+        await client.query('INSERT INTO campaigns (name,client_id,channel,budget,spend,status) VALUES ($1,$2,$3,$4,$5,$6)', ['Diwali Mega Sale',c1,'Meta Ads',120000,89000,'Active']);
+        await client.query('INSERT INTO campaigns (name,client_id,channel,budget,spend,status) VALUES ($1,$2,$3,$4,$5,$6)', ['Product Launch Q2',c2,'Google Ads',80000,72000,'Active']);
+        await client.query('INSERT INTO campaigns (name,client_id,channel,budget,spend,status) VALUES ($1,$2,$3,$4,$5,$6)', ['Brand Awareness',c3,'Instagram',60000,42000,'Active']);
+        await client.query('INSERT INTO campaigns (name,client_id,channel,budget,spend,status) VALUES ($1,$2,$3,$4,$5,$6)', ['Summer Campaign',c4,'Meta Ads',55000,51000,'Paused']);
+        await client.query('INSERT INTO campaigns (name,client_id,channel,budget,spend,status) VALUES ($1,$2,$3,$4,$5,$6)', ['Admission Drive',c5,'LinkedIn',40000,28000,'Draft']);
 
-    const ir = db.prepare('INSERT INTO revenue_entries (client_id,amount,date,source,notes) VALUES (?,?,?,?,?)');
-    ir.run(c1.lastInsertRowid,50000,'2025-04-10','manual','Strategy consulting');
-    ir.run(c3.lastInsertRowid,35000,'2025-04-18','manual','Monthly retainer');
+        await client.query('INSERT INTO automations (name,client_id,status,notes,revenue) VALUES ($1,$2,$3,$4,$5)', ['Lead Follow-up Bot',c1,'Running','WhatsApp + Email sequence',28000]);
+        await client.query('INSERT INTO automations (name,client_id,status,notes,revenue) VALUES ($1,$2,$3,$4,$5)', ['Retargeting Flow',c2,'Running','7-day cart abandon',22000]);
+        await client.query('INSERT INTO automations (name,client_id,status,notes,revenue) VALUES ($1,$2,$3,$4,$5)', ['Review Collector',c3,'Paused','Post-purchase review ask',15000]);
+        await client.query('INSERT INTO automations (name,client_id,status,notes,revenue) VALUES ($1,$2,$3,$4,$5)', ['Appointment Bot',c5,'Running','Demo booking automation',18000]);
 
-    const it = db.prepare('INSERT INTO transactions (user_id,type,category,amount,date) VALUES (?,?,?,?,?)');
-    it.run(u1.lastInsertRowid,'income','Salary',85000,'2025-04-01');
-    it.run(u1.lastInsertRowid,'expense','Software',12000,'2025-04-05');
-    it.run(u2.lastInsertRowid,'income','Bonus',30000,'2025-04-08');
-    it.run(u1.lastInsertRowid,'expense','Travel',8500,'2025-04-12');
-    it.run(u2.lastInsertRowid,'expense','Equipment',22000,'2025-04-15');
+        await client.query('INSERT INTO collaborations (partner,revenue,status,notes) VALUES ($1,$2,$3,$4)', ['Digital Nest Agency',95000,'Active','White-label campaigns']);
+        await client.query('INSERT INTO collaborations (partner,revenue,status,notes) VALUES ($1,$2,$3,$4)', ['Spark Creative Studio',68000,'Active','Content production']);
+        await client.query('INSERT INTO collaborations (partner,revenue,status,notes) VALUES ($1,$2,$3,$4)', ['GrowthHackers Co.',42000,'Ended','SEO project Q1']);
 
-    const is = db.prepare('INSERT INTO salaries (user_id,amount,date,notes) VALUES (?,?,?,?)');
-    is.run(u1.lastInsertRowid,85000,'2025-04-01','April salary');
-    is.run(u2.lastInsertRowid,65000,'2025-04-01','April salary');
-    is.run(u3.lastInsertRowid,55000,'2025-04-01','April salary');
+        await client.query('INSERT INTO revenue_entries (client_id,amount,date,source,notes) VALUES ($1,$2,$3,$4,$5)', [c1,50000,'2025-04-10','manual','Strategy consulting']);
+        await client.query('INSERT INTO revenue_entries (client_id,amount,date,source,notes) VALUES ($1,$2,$3,$4,$5)', [c3,35000,'2025-04-18','manual','Monthly retainer']);
 
-    console.log('✅ Database seeded');
-  } catch (err) {
-    console.error('❌ Seed failed:', err);
+        await client.query('INSERT INTO transactions (user_id,type,category,amount,date) VALUES ($1,$2,$3,$4,$5)', [u1,'income','Salary',85000,'2025-04-01']);
+        await client.query('INSERT INTO transactions (user_id,type,category,amount,date) VALUES ($1,$2,$3,$4,$5)', [u1,'expense','Software',12000,'2025-04-05']);
+        await client.query('INSERT INTO transactions (user_id,type,category,amount,date) VALUES ($1,$2,$3,$4,$5)', [u2,'income','Bonus',30000,'2025-04-08']);
+        await client.query('INSERT INTO transactions (user_id,type,category,amount,date) VALUES ($1,$2,$3,$4,$5)', [u1,'expense','Travel',8500,'2025-04-12']);
+        await client.query('INSERT INTO transactions (user_id,type,category,amount,date) VALUES ($1,$2,$3,$4,$5)', [u2,'expense','Equipment',22000,'2025-04-15']);
+
+        await client.query('INSERT INTO salaries (user_id,amount,date,notes) VALUES ($1,$2,$3,$4)', [u1,85000,'2025-04-01','April salary']);
+        await client.query('INSERT INTO salaries (user_id,amount,date,notes) VALUES ($1,$2,$3,$4)', [u2,65000,'2025-04-01','April salary']);
+        await client.query('INSERT INTO salaries (user_id,amount,date,notes) VALUES ($1,$2,$3,$4)', [u3,55000,'2025-04-01','April salary']);
+
+        console.log('✅ Database seeded');
+      } catch (err) {
+        console.error('❌ Seed failed:', err.message);
+      }
+    }
+
+    console.log('✅ PostgreSQL schema ready');
+  } finally {
+    client.release();
   }
 }
 
-module.exports = db;
+module.exports = { pool, initDb };
