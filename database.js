@@ -118,6 +118,30 @@ db.exec(`
     notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+  CREATE TABLE IF NOT EXISTS client_meta_accounts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id INTEGER UNIQUE REFERENCES clients(id) ON DELETE CASCADE,
+    ad_account_id TEXT NOT NULL,
+    access_token TEXT NOT NULL,
+    is_active INTEGER DEFAULT 1,
+    balance REAL DEFAULT NULL,
+    currency TEXT DEFAULT NULL,
+    low_funds_alerted_at DATETIME DEFAULT NULL,
+    last_synced DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS meta_ad_insights (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
+    date TEXT NOT NULL,
+    spend REAL DEFAULT 0,
+    impressions INTEGER DEFAULT 0,
+    clicks INTEGER DEFAULT 0,
+    ctr REAL DEFAULT 0,
+    cpc REAL DEFAULT 0,
+    reach INTEGER DEFAULT 0,
+    synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // Migrations for existing databases
@@ -125,6 +149,20 @@ try {
   const cols = db.prepare("PRAGMA table_info(clients)").all().map(c => c.name);
   if (!cols.includes('avatar_url')) {
     db.exec("ALTER TABLE clients ADD COLUMN avatar_url TEXT");
+  }
+  const insightCols = db.prepare("PRAGMA table_info(meta_ad_insights)").all().map(c => c.name);
+  if (!insightCols.includes('reach')) {
+    db.exec("ALTER TABLE meta_ad_insights ADD COLUMN reach INTEGER DEFAULT 0");
+  }
+  const metaCols = db.prepare("PRAGMA table_info(client_meta_accounts)").all().map(c => c.name);
+  if (!metaCols.includes('balance')) {
+    db.exec("ALTER TABLE client_meta_accounts ADD COLUMN balance REAL DEFAULT NULL");
+  }
+  if (!metaCols.includes('currency')) {
+    db.exec("ALTER TABLE client_meta_accounts ADD COLUMN currency TEXT DEFAULT NULL");
+  }
+  if (!metaCols.includes('low_funds_alerted_at')) {
+    db.exec("ALTER TABLE client_meta_accounts ADD COLUMN low_funds_alerted_at DATETIME DEFAULT NULL");
   }
 } catch (err) {
   console.error('Migration failed:', err);
