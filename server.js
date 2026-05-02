@@ -6,6 +6,8 @@ const fs = require('fs');
 const multer = require('multer');
 const axios = require('axios');
 const cron = require('node-cron');
+const nodemailer = require('nodemailer');
+const PDFDocument = require('pdfkit');
 const db = require('./database');
 
 const app = express();
@@ -15,7 +17,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// ── PASSWORD PROTECTION ───────────────────────────────────────
+// ── PASSWORD PROTECTION (MUST be before static files) ────────
 const PASS = process.env.DASHBOARD_PASSWORD || 'weclick2025';
 app.use((req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
@@ -41,7 +43,7 @@ app.post('/login', (req, res) => {
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Multer storage
+// ── MULTER STORAGE ────────────────────────────────────────────
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = path.join(__dirname, 'uploads', String(req.params.clientId));
@@ -78,7 +80,7 @@ const avatarUpload = multer({
   }
 });
 
-// ── CLIENTS ──────────────────────────────────────────────────
+// ── CLIENTS ───────────────────────────────────────────────────
 app.get('/api/clients', (req, res) => {
   const clients = db.prepare(`
     SELECT c.*,
@@ -90,6 +92,7 @@ app.get('/api/clients', (req, res) => {
   `).all();
   res.json(clients);
 });
+
 app.get('/api/clients/:id', (req, res) => {
   const client = db.prepare('SELECT * FROM clients WHERE id=?').get(req.params.id);
   if (!client) return res.status(404).json({ error: 'Not found' });
@@ -105,12 +108,48 @@ app.get('/api/clients/:id', (req, res) => {
   res.json({ ...client, campaigns, files, automations, quotations, contentTasks, metaAccount, metaInsights });
 });
 
+app.post('/api/clients', (req, res) => {
+  const { name, company, status='Active', revenue=0, spend=0, expected_revenue=0, color='#FF6A00' } = req.body;
+  if (!name || !company) return res.status(400).json({ error: 'name and company required' });
+  const profit = revenue - spend;
+  const r = db.prepare('INSERT INTO clients (name,company,status,revenue,spend,profit,expected_revenue,color) VALUES (?,?,?,?,?,?,?,?)').run(name, company, status, revenue, spend, profit, expected_revenue, color);
+  res.json(db.prepare('SELECT * FROM clients WHERE id=?').get(r.lastInsertRowid));
+});
+
+app.put('/api/clients/:id', (req, res) => {
+  const { name, company, status, revenue, spend, expected_revenue, color } = req.body;
+  const profit = (revenue || 0) - (spend || 0);
+  db.prepare('UPDATE clients SET name=?,company=?,status=?,revenue=?,spend=?,profit=?,expected_revenue=?,color=? WHERE id=?').run(name, company, status, revenue, spend, profit, expected_revenue, color, req.params.id);
+  res.json(db.prepare('SELECT * FROM clients WHERE id=?').get(req.params.id));
+});
+
+app.delete('/api/clients/:id', (req, res) => {
+  db.prepare('DELETE FROM clients WHERE id=?').run(req.params.id);
+  res.json({ success: true });
+});
+
+app.post('/api/clients/:id/avatar', (req, res) => {
+  avatarUpload.single('avatar')(req, res, (err) => {
+    if (err) {
+      const msg = err.code === 'LIMIT_FILE_SIZE' ? 'File too large (max 2MB)' : err.message;
+      return res.status(400).json({ error: msg });
+    }
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const client = db.prepare('SELECT id FROM clients WHERE id=?').get(req.params.id);
+    if (!client) return res.status(404).json({ error: 'Client not found' });
+    const avatar_url = `/uploads/clients/${req.params.id}/${req.file.filename}?v=${Date.now()}`;
+    db.prepare('UPDATE clients SET avatar_url=? WHERE id=?').run(avatar_url, req.params.id);
+    res.json({ success: true, avatar_url });
+  });
+});
+
 // ── QUOTATIONS ────────────────────────────────────────────────
 app.get('/api/clients/:id/quotations', (req, res) => {
   const rows = db.prepare('SELECT * FROM quotations WHERE client_id=? ORDER BY created_at DESC').all(req.params.id)
     .map(q => ({ ...q, items: JSON.parse(q.items || '[]') }));
   res.json(rows);
 });
+
 app.post('/api/clients/:id/quotations', (req, res) => {
   const { items=[], gst_pct=18, notes='', valid_until=null } = req.body;
   if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'At least one item required' });
@@ -123,6 +162,7 @@ app.post('/api/clients/:id/quotations', (req, res) => {
   const row = db.prepare('SELECT * FROM quotations WHERE id=?').get(r.lastInsertRowid);
   res.json({ ...row, items: JSON.parse(row.items) });
 });
+
 app.delete('/api/clients/:cid/quotations/:id', (req, res) => {
   db.prepare('DELETE FROM quotations WHERE id=? AND client_id=?').run(req.params.id, req.params.cid);
   res.json({ success: true });
@@ -132,6 +172,7 @@ app.delete('/api/clients/:cid/quotations/:id', (req, res) => {
 app.get('/api/clients/:id/content-tasks', (req, res) => {
   res.json(db.prepare('SELECT * FROM content_tasks WHERE client_id=? ORDER BY date ASC').all(req.params.id));
 });
+
 app.post('/api/clients/:id/content-tasks', (req, res) => {
   const { date, platform, content_type, notes='' } = req.body;
   if (!date || !platform || !content_type) return res.status(400).json({ error: 'date, platform, content_type required' });
@@ -139,15 +180,13 @@ app.post('/api/clients/:id/content-tasks', (req, res) => {
     .run(req.params.id, date, platform, content_type, notes);
   res.json(db.prepare('SELECT * FROM content_tasks WHERE id=?').get(r.lastInsertRowid));
 });
+
 app.delete('/api/clients/:cid/content-tasks/:id', (req, res) => {
   db.prepare('DELETE FROM content_tasks WHERE id=? AND client_id=?').run(req.params.id, req.params.cid);
   res.json({ success: true });
 });
 
-// ── SEND REPORT ───────────────────────────────────────────────
-const nodemailer = require('nodemailer');
-const PDFDocument = require('pdfkit');
-
+// ── EMAIL / PDF REPORT ────────────────────────────────────────
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -216,55 +255,25 @@ app.post('/api/clients/:id/send-report', async (req, res) => {
   }
 });
 
-app.post('/api/clients', (req, res) => {
-  const { name, company, status='Active', revenue=0, spend=0, expected_revenue=0, color='#FF6A00' } = req.body;
-  if (!name || !company) return res.status(400).json({ error: 'name and company required' });
-  const profit = revenue - spend;
-  const r = db.prepare('INSERT INTO clients (name,company,status,revenue,spend,profit,expected_revenue,color) VALUES (?,?,?,?,?,?,?,?)').run(name, company, status, revenue, spend, profit, expected_revenue, color);
-  res.json(db.prepare('SELECT * FROM clients WHERE id=?').get(r.lastInsertRowid));
-});
-app.put('/api/clients/:id', (req, res) => {
-  const { name, company, status, revenue, spend, expected_revenue, color } = req.body;
-  const profit = (revenue || 0) - (spend || 0);
-  db.prepare('UPDATE clients SET name=?,company=?,status=?,revenue=?,spend=?,profit=?,expected_revenue=?,color=? WHERE id=?').run(name, company, status, revenue, spend, profit, expected_revenue, color, req.params.id);
-  res.json(db.prepare('SELECT * FROM clients WHERE id=?').get(req.params.id));
-});
-app.delete('/api/clients/:id', (req, res) => {
-  db.prepare('DELETE FROM clients WHERE id=?').run(req.params.id);
-  res.json({ success: true });
-});
-
-app.post('/api/clients/:id/avatar', (req, res) => {
-  avatarUpload.single('avatar')(req, res, (err) => {
-    if (err) {
-      const msg = err.code === 'LIMIT_FILE_SIZE' ? 'File too large (max 2MB)' : err.message;
-      return res.status(400).json({ error: msg });
-    }
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    const client = db.prepare('SELECT id FROM clients WHERE id=?').get(req.params.id);
-    if (!client) return res.status(404).json({ error: 'Client not found' });
-    const avatar_url = `/uploads/clients/${req.params.id}/${req.file.filename}?v=${Date.now()}`;
-    db.prepare('UPDATE clients SET avatar_url=? WHERE id=?').run(avatar_url, req.params.id);
-    res.json({ success: true, avatar_url });
-  });
-});
-
 // ── CAMPAIGNS ─────────────────────────────────────────────────
 app.get('/api/campaigns', (req, res) => {
   const rows = db.prepare(`SELECT c.*,cl.name as client_name,cl.company FROM campaigns c LEFT JOIN clients cl ON c.client_id=cl.id ORDER BY c.created_at DESC`).all();
   res.json(rows);
 });
+
 app.post('/api/campaigns', (req, res) => {
   const { name, client_id, channel, budget=0, spend=0, status='Draft' } = req.body;
   if (!name || !client_id) return res.status(400).json({ error: 'name and client_id required' });
   const r = db.prepare('INSERT INTO campaigns (name,client_id,channel,budget,spend,status) VALUES (?,?,?,?,?,?)').run(name, client_id, channel, budget, spend, status);
   res.json(db.prepare('SELECT * FROM campaigns WHERE id=?').get(r.lastInsertRowid));
 });
+
 app.put('/api/campaigns/:id', (req, res) => {
   const { name, client_id, channel, budget, spend, status } = req.body;
   db.prepare('UPDATE campaigns SET name=?,client_id=?,channel=?,budget=?,spend=?,status=? WHERE id=?').run(name, client_id, channel, budget, spend, status, req.params.id);
   res.json(db.prepare('SELECT * FROM campaigns WHERE id=?').get(req.params.id));
 });
+
 app.delete('/api/campaigns/:id', (req, res) => {
   db.prepare('DELETE FROM campaigns WHERE id=?').run(req.params.id);
   res.json({ success: true });
@@ -275,17 +284,20 @@ app.get('/api/automations', (req, res) => {
   const rows = db.prepare(`SELECT a.*,cl.name as client_name,cl.company FROM automations a LEFT JOIN clients cl ON a.client_id=cl.id ORDER BY a.created_at DESC`).all();
   res.json(rows);
 });
+
 app.post('/api/automations', (req, res) => {
   const { name, client_id, status='Running', notes='', revenue=0 } = req.body;
   if (!name || !client_id) return res.status(400).json({ error: 'name and client_id required' });
   const r = db.prepare('INSERT INTO automations (name,client_id,status,notes,revenue) VALUES (?,?,?,?,?)').run(name, client_id, status, notes, revenue);
   res.json(db.prepare('SELECT * FROM automations WHERE id=?').get(r.lastInsertRowid));
 });
+
 app.put('/api/automations/:id', (req, res) => {
   const { name, client_id, status, notes, revenue } = req.body;
   db.prepare('UPDATE automations SET name=?,client_id=?,status=?,notes=?,revenue=? WHERE id=?').run(name, client_id, status, notes, revenue, req.params.id);
   res.json(db.prepare('SELECT * FROM automations WHERE id=?').get(req.params.id));
 });
+
 app.delete('/api/automations/:id', (req, res) => {
   db.prepare('DELETE FROM automations WHERE id=?').run(req.params.id);
   res.json({ success: true });
@@ -295,17 +307,20 @@ app.delete('/api/automations/:id', (req, res) => {
 app.get('/api/collaborations', (req, res) => {
   res.json(db.prepare('SELECT * FROM collaborations ORDER BY created_at DESC').all());
 });
+
 app.post('/api/collaborations', (req, res) => {
   const { partner, revenue=0, status='Active', notes='' } = req.body;
   if (!partner) return res.status(400).json({ error: 'partner required' });
   const r = db.prepare('INSERT INTO collaborations (partner,revenue,status,notes) VALUES (?,?,?,?)').run(partner, revenue, status, notes);
   res.json(db.prepare('SELECT * FROM collaborations WHERE id=?').get(r.lastInsertRowid));
 });
+
 app.put('/api/collaborations/:id', (req, res) => {
   const { partner, revenue, status, notes } = req.body;
   db.prepare('UPDATE collaborations SET partner=?,revenue=?,status=?,notes=? WHERE id=?').run(partner, revenue, status, notes, req.params.id);
   res.json(db.prepare('SELECT * FROM collaborations WHERE id=?').get(req.params.id));
 });
+
 app.delete('/api/collaborations/:id', (req, res) => {
   db.prepare('DELETE FROM collaborations WHERE id=?').run(req.params.id);
   res.json({ success: true });
@@ -318,6 +333,7 @@ app.get('/api/revenue', (req, res) => {
   const clientRevenue = db.prepare('SELECT SUM(revenue) as total FROM clients').get();
   res.json({ entries, totals, clientRevenue });
 });
+
 app.post('/api/revenue', (req, res) => {
   const { client_id, amount, date, source='manual', notes='' } = req.body;
   if (!amount || isNaN(parseFloat(amount))) return res.status(400).json({ error: 'Valid amount required' });
@@ -325,6 +341,7 @@ app.post('/api/revenue', (req, res) => {
   const r = db.prepare('INSERT INTO revenue_entries (client_id,amount,date,source,notes) VALUES (?,?,?,?,?)').run(client_id||null, parseFloat(amount), date, source, notes);
   res.json(db.prepare('SELECT * FROM revenue_entries WHERE id=?').get(r.lastInsertRowid));
 });
+
 app.delete('/api/revenue/:id', (req, res) => {
   db.prepare('DELETE FROM revenue_entries WHERE id=?').run(req.params.id);
   res.json({ success: true });
@@ -381,12 +398,14 @@ app.get('/api/dashboard', (req, res) => {
 app.get('/api/users', (req, res) => {
   res.json(db.prepare('SELECT * FROM users ORDER BY id').all());
 });
+
 app.post('/api/users', (req, res) => {
   const { name, email, role='member' } = req.body;
   if (!name) return res.status(400).json({ error: 'name required' });
   const r = db.prepare('INSERT INTO users (name,email,role) VALUES (?,?,?)').run(name, email||null, role);
   res.json(db.prepare('SELECT * FROM users WHERE id=?').get(r.lastInsertRowid));
 });
+
 app.delete('/api/users/:id', (req, res) => {
   db.prepare('DELETE FROM users WHERE id=?').run(req.params.id);
   res.json({ success: true });
@@ -397,6 +416,7 @@ app.get('/api/transactions', (req, res) => {
   const rows = db.prepare(`SELECT t.*,u.name as user_name FROM transactions t LEFT JOIN users u ON t.user_id=u.id ORDER BY t.date DESC`).all();
   res.json(rows);
 });
+
 app.post('/api/transactions', (req, res) => {
   const { user_id, type, category='Other', amount, date, notes='' } = req.body;
   if (!user_id) return res.status(400).json({ error: 'user_id required' });
@@ -408,6 +428,7 @@ app.post('/api/transactions', (req, res) => {
   const r = db.prepare('INSERT INTO transactions (user_id,type,category,amount,date,notes) VALUES (?,?,?,?,?,?)').run(user_id, type, category, parseFloat(amount), date, notes);
   res.json(db.prepare('SELECT t.*,u.name as user_name FROM transactions t LEFT JOIN users u ON t.user_id=u.id WHERE t.id=?').get(r.lastInsertRowid));
 });
+
 app.delete('/api/transactions/:id', (req, res) => {
   db.prepare('DELETE FROM transactions WHERE id=?').run(req.params.id);
   res.json({ success: true });
@@ -418,6 +439,7 @@ app.get('/api/salaries', (req, res) => {
   const rows = db.prepare(`SELECT s.*,u.name as user_name FROM salaries s LEFT JOIN users u ON s.user_id=u.id ORDER BY s.date DESC`).all();
   res.json(rows);
 });
+
 app.post('/api/salaries', (req, res) => {
   const { user_id, amount, date, notes='' } = req.body;
   if (!user_id) return res.status(400).json({ error: 'user_id required' });
@@ -428,6 +450,7 @@ app.post('/api/salaries', (req, res) => {
   const r = db.prepare('INSERT INTO salaries (user_id,amount,date,notes) VALUES (?,?,?,?)').run(user_id, parseFloat(amount), date, notes);
   res.json(db.prepare('SELECT s.*,u.name as user_name FROM salaries s LEFT JOIN users u ON s.user_id=u.id WHERE s.id=?').get(r.lastInsertRowid));
 });
+
 app.delete('/api/salaries/:id', (req, res) => {
   db.prepare('DELETE FROM salaries WHERE id=?').run(req.params.id);
   res.json({ success: true });
@@ -454,6 +477,7 @@ app.get('/api/clients/:clientId/files', (req, res) => {
   const files = db.prepare('SELECT * FROM client_files WHERE client_id=? ORDER BY uploaded_at DESC').all(req.params.clientId);
   res.json(files);
 });
+
 app.post('/api/clients/:clientId/files', upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
   const { file_type = 'report' } = req.body;
@@ -462,6 +486,7 @@ app.post('/api/clients/:clientId/files', upload.single('file'), (req, res) => {
   const r = db.prepare('INSERT INTO client_files (client_id,file_name,file_url,file_size,file_type) VALUES (?,?,?,?,?)').run(req.params.clientId, req.file.originalname, file_url, file_size, file_type);
   res.json(db.prepare('SELECT * FROM client_files WHERE id=?').get(r.lastInsertRowid));
 });
+
 app.delete('/api/clients/:clientId/files/:fileId', (req, res) => {
   const file = db.prepare('SELECT * FROM client_files WHERE id=? AND client_id=?').get(req.params.fileId, req.params.clientId);
   if (!file) return res.status(404).json({ error: 'File not found' });
@@ -519,6 +544,7 @@ app.get('/api/clients/:id/meta-account', (req, res) => {
   const acct = db.prepare('SELECT id,client_id,ad_account_id,is_active,balance,currency,last_synced,created_at FROM client_meta_accounts WHERE client_id=?').get(req.params.id);
   res.json(acct || null);
 });
+
 app.post('/api/clients/:id/meta-account', async (req, res) => {
   let { ad_account_id, access_token } = req.body;
   if (!ad_account_id) return res.status(400).json({ error: 'ad_account_id required' });
@@ -533,12 +559,14 @@ app.post('/api/clients/:id/meta-account', async (req, res) => {
   const acct = db.prepare('SELECT id,client_id,ad_account_id,is_active,last_synced FROM client_meta_accounts WHERE client_id=?').get(req.params.id);
   res.json({ ...acct, syncResult: result });
 });
+
 app.post('/api/clients/:id/meta-sync', async (req, res) => {
   const result = await syncClientMeta(req.params.id);
   if (result.error) return res.status(400).json({ error: result.error });
   const insights = db.prepare('SELECT * FROM meta_ad_insights WHERE client_id=? ORDER BY date DESC LIMIT 1').get(req.params.id);
   res.json({ success: true, insights });
 });
+
 app.delete('/api/clients/:id/meta-account', (req, res) => {
   db.prepare('DELETE FROM client_meta_accounts WHERE client_id=?').run(req.params.id);
   res.json({ success: true });
