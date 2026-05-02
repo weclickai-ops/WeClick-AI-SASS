@@ -1,6 +1,7 @@
 {
   "name": "weclick-ai",
   "version": "1.0.0",
+  "description": "WeClick AI Marketing Agency Dashboard",
   "main": "server.js",
   "engines": { "node": "20" },
   "scripts": {
@@ -8,7 +9,6 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "axios": "^1.6.0",
     "better-sqlite3": "^9.6.0",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
@@ -16,7 +16,6 @@
     "multer": "^2.1.1",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.0",
-    "pdfkit": "^0.14.0",
     "pg": "^8.20.0"
   },
   "devDependencies": {
