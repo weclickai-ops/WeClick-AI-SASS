@@ -64,7 +64,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// ── PASSWORD PROTECTION (MUST be before static files) ─────────
+// ── PASSWORD PROTECTION ────────────────────────────────────────
 const PASS = process.env.DASHBOARD_PASSWORD || 'weclick2025';
 app.use((req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
@@ -86,7 +86,7 @@ app.post('/login', (req, res) => {
   }
 });
 
-// ── STATIC FILES (AFTER password check) ───────────────────────
+// ── STATIC FILES ───────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -892,6 +892,13 @@ app.get('*', (req, res) => {
 });
 
 // ── START ──────────────────────────────────────────────────────
-initDb()
-  .then(() => app.listen(PORT, () => console.log(`✅ WeClick AI running on http://localhost:${PORT}`)))
-  .catch(err => { console.error('❌ Failed to init DB:', err.message); process.exit(1); });
+// Initialize DB (non-blocking for Vercel)
+initDb().catch(err => console.error('❌ DB init error:', err.message));
+
+// Only listen when running locally (not on Vercel)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => console.log(`✅ WeClick AI running on http://localhost:${PORT}`));
+}
+
+// Export for Vercel serverless
+module.exports = app;
