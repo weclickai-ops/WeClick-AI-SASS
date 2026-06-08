@@ -584,7 +584,7 @@ function renderTopbarActions(){
 // ── PAGE RENDER ────────────────────────────────────────────────
 async function renderPage(){
   const el=document.getElementById('page-content');
-  el.innerHTML='';
+  el.innerHTML='<div class="loading" style="padding:60px;text-align:center;color:var(--text3)">Loading...</div>';
   const div=document.createElement('div');
   div.className='page';
   switch(appState.page){
@@ -637,7 +637,7 @@ async function buildDashboard(){
     {label:'Automations',value:String(s.activeAutomations||0),icon:'⚡',color:'#FF6B00',bg:'#FFF4EE',trend:fmt(s.automationRevenue||0),up:null},
   ];
 
-  const kpiHtml=kpis.map(k=>`<div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg}">
+  const kpiHtml=kpis.map(k=>`<div class="kpi-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;transition:all .13s" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,.08)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='none';this.style.transform='none'" style="--kpi-color:${k.color};--kpi-bg:${k.bg}">
     <div class="kpi-icon" style="background:${k.bg}">${k.icon}</div>
     <div class="kpi-label">${k.label}</div>
     <div class="kpi-value">${k.value}</div>
@@ -646,24 +646,24 @@ async function buildDashboard(){
 
   const activity=s.recentActivity||[];
   const actHtml=activity.length===0
-    ?`<div class="empty-state" style="padding:32px"><div class="empty-icon">⚡</div><div class="empty-label">No activity yet</div><div class="empty-text">Add clients or sync Meta to see events.</div></div>`
-    :activity.slice(0,8).map(a=>`<li class="activity-item" onclick="${a.client_id?('navigate(\'clientDetail\','+a.client_id+')'):'void(0)'}" style="${a.client_id?'cursor:pointer':''}">
-      <div class="act-dot" style="background:${activityColor(a.type)}"></div>
-      <div class="act-body"><div class="act-text">${activityIcon(a.type)} ${a.title}</div>${a.details?'<div class="act-time">'+a.details+'</div>':''}<div class="act-time">${timeAgo(a.created_at)}</div></div>
+    ?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4" style="padding:32px"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">⚡</div><div class="empty-label" style="font-size:14px;font-weight:500;color:#6F6F6B;margin-bottom:3px">No activity yet</div><div class="empty-text" style="font-size:12.5px;line-height:1.5">Add clients or sync Meta to see events.</div></div>`
+    :activity.slice(0,8).map(a=>`<li class="activity-item" style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #ECECEA;list-style:none" onclick="${a.client_id?('navigate(\'clientDetail\','+a.client_id+')'):'void(0)'}" style="${a.client_id?'cursor:pointer':''}">
+      <div class="act-dot" style="width:7px;height:7px;border-radius:50%;background:#E96800;flex-shrink:0;margin-top:4px" style="background:${activityColor(a.type)}"></div>
+      <div class="act-body"><div class="act-text" style="font-size:12.5px;color:#111110;line-height:1.4">${activityIcon(a.type)} ${a.title}</div>${a.details?'<div class="act-time" style="font-size:10.5px;color:#A8A8A4;margin-top:2px">'+a.details+'</div>':''}<div class="act-time" style="font-size:10.5px;color:#A8A8A4;margin-top:2px">${timeAgo(a.created_at)}</div></div>
     </li>`).join('');
 
   const topClients=clients.slice(0,5).map(cl=>`<tr onclick="navigate('clientDetail',${cl.id})" style="cursor:pointer">
-    <td><div class="name-cell">${avatarHtml(cl)}<div><div style="font-weight:500">${cl.name}</div><div style="font-size:11px;color:var(--text3)">${cl.company}</div></div></div></td>
+    <td><div class="name-cell" style="display:flex;align-items:center;gap:9px">${avatarHtml(cl)}<div><div style="font-weight:500">${cl.name}</div><div style="font-size:11px;color:var(--text3)">${cl.company}</div></div></div></td>
     <td style="font-weight:600;color:var(--orange)">${fmt(cl.revenue)}</td>
     <td style="color:var(--green)">${fmt(cl.profit)}</td>
     <td><span class="badge ${cl.status==='Active'?'badge-green':cl.status==='Paused'?'badge-yellow':'badge-gray'}">${cl.status}</span></td>
   </tr>`).join('');
 
   return `${alertsHtml}
-  <div class="welcome-bar">
+  <div class="welcome-bar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px">
     <div>
-      <div class="welcome-heading">${greet}, Admin 👋</div>
-      <div class="welcome-sub">${today} · ${(s.activeClients||0)} active clients · ${(s.activeAutomations||0)} automations running</div>
+      <div class="welcome-heading" style="font-size:19px;font-weight:700;letter-spacing:-0.5px;color:#111110">${greet}, Admin 👋</div>
+      <div class="welcome-sub" style="font-size:12.5px;color:#A8A8A4;margin-top:2px">${today} · ${(s.activeClients||0)} active clients · ${(s.activeAutomations||0)} automations running</div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-sm" onclick="syncMeta()"><svg id="sync-icon" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 8A6 6 0 112 8"/><path d="M14 2v6h-6"/></svg> Sync Meta</button>
@@ -671,17 +671,17 @@ async function buildDashboard(){
     </div>
   </div>
   <div class="quick-actions">
-    <div class="qa-chip" onclick="navigate('campaigns');setTimeout(openAddCampaign,300)"><span class="chip-icon">📣</span>New Campaign</div>
-    <div class="qa-chip" onclick="navigate('meetings');setTimeout(openAddMeeting,300)"><span class="chip-icon">📅</span>Schedule Meeting</div>
-    <div class="qa-chip" onclick="navigate('revenue');setTimeout(openAddRevenue,300)"><span class="chip-icon">💰</span>Add Revenue</div>
-    <div class="qa-chip" onclick="navigate('tally');setTimeout(openAddSpend,300)"><span class="chip-icon">💸</span>Log Expense</div>
-    <div class="qa-chip" onclick="navigate('adanalytics')"><span class="chip-icon">📊</span>Ad Analytics</div>
+    <div class="qa-chip" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1px solid #E5E5E3;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;color:#6F6F6B;transition:all .1s" onmouseover="this.style.borderColor='#E96800';this.style.color='#E96800';this.style.background='#FFF3EA'" onmouseout="this.style.borderColor='#E5E5E3';this.style.color='#6F6F6B';this.style.background='#fff'" onclick="navigate('campaigns');setTimeout(openAddCampaign,300)"><span class="chip-icon">📣</span>New Campaign</div>
+    <div class="qa-chip" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1px solid #E5E5E3;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;color:#6F6F6B;transition:all .1s" onmouseover="this.style.borderColor='#E96800';this.style.color='#E96800';this.style.background='#FFF3EA'" onmouseout="this.style.borderColor='#E5E5E3';this.style.color='#6F6F6B';this.style.background='#fff'" onclick="navigate('meetings');setTimeout(openAddMeeting,300)"><span class="chip-icon">📅</span>Schedule Meeting</div>
+    <div class="qa-chip" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1px solid #E5E5E3;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;color:#6F6F6B;transition:all .1s" onmouseover="this.style.borderColor='#E96800';this.style.color='#E96800';this.style.background='#FFF3EA'" onmouseout="this.style.borderColor='#E5E5E3';this.style.color='#6F6F6B';this.style.background='#fff'" onclick="navigate('revenue');setTimeout(openAddRevenue,300)"><span class="chip-icon">💰</span>Add Revenue</div>
+    <div class="qa-chip" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1px solid #E5E5E3;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;color:#6F6F6B;transition:all .1s" onmouseover="this.style.borderColor='#E96800';this.style.color='#E96800';this.style.background='#FFF3EA'" onmouseout="this.style.borderColor='#E5E5E3';this.style.color='#6F6F6B';this.style.background='#fff'" onclick="navigate('tally');setTimeout(openAddSpend,300)"><span class="chip-icon">💸</span>Log Expense</div>
+    <div class="qa-chip" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1px solid #E5E5E3;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;color:#6F6F6B;transition:all .1s" onmouseover="this.style.borderColor='#E96800';this.style.color='#E96800';this.style.background='#FFF3EA'" onmouseout="this.style.borderColor='#E5E5E3';this.style.color='#6F6F6B';this.style.background='#fff'" onclick="navigate('adanalytics')"><span class="chip-icon">📊</span>Ad Analytics</div>
   </div>
-  <div class="kpi-grid">${kpiHtml}</div>
-  <div class="col-7-5">
-    <div class="chart-card" style="margin-bottom:0">
-      <div class="chart-header">
-        <div><div class="chart-title">Revenue vs Ad Spend</div><div style="font-size:11.5px;color:var(--text3);margin-top:2px">Performance over time</div></div>
+  <div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">${kpiHtml}</div>
+  <div class="col-7-5" style="display:grid;grid-template-columns:7fr 5fr;gap:14px;margin-bottom:16px">
+    <div class="chart-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:18px;margin-bottom:16px" style="margin-bottom:0">
+      <div class="chart-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div><div class="chart-title" style="font-size:13px;font-weight:600;color:#111110">Revenue vs Ad Spend</div><div style="font-size:11.5px;color:var(--text3);margin-top:2px">Performance over time</div></div>
         <div style="display:flex;gap:8px;align-items:center">
           <select class="select-input" id="chart-client" onchange="setChartClient(this.value)"><option value="all">All Clients</option>${clients.map(cl=>`<option value="${cl.id}">${cl.name}</option>`).join('')}</select>
           <div class="toggle-group"><div class="toggle-btn ${appState.chartPeriod==='30'?'active':''}" onclick="toggleChart('30')">30D</div><div class="toggle-btn ${appState.chartPeriod==='90'?'active':''}" onclick="toggleChart('90')">90D</div></div>
@@ -694,19 +694,19 @@ async function buildDashboard(){
         <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2)"><div style="width:10px;height:3px;background:var(--text3);border-radius:2px"></div>Ad Spend</div>
       </div>
     </div>
-    <div class="table-wrap" style="margin-bottom:0">
-      <div class="table-header"><div class="table-title">Recent Activity</div></div>
+    <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px" style="margin-bottom:0">
+      <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Recent Activity</div></div>
       <ul class="activity-list">${actHtml}</ul>
     </div>
   </div>
-  <div class="col-5-7" style="margin-top:18px">
-    <div class="table-wrap" style="margin-bottom:0">
-      <div class="table-header"><div class="table-title">Top Clients</div><button class="btn btn-ghost btn-sm" onclick="navigate('clients')">View all →</button></div>
+  <div class="col-5-7" style="display:grid;grid-template-columns:5fr 7fr;gap:14px;margin-bottom:16px" style="margin-top:18px">
+    <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px" style="margin-bottom:0">
+      <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Top Clients</div><button class="btn btn-ghost btn-sm" onclick="navigate('clients')">View all →</button></div>
       <table><thead><tr><th>Client</th><th>Revenue</th><th>Profit</th><th>Status</th></tr></thead><tbody>${topClients}</tbody></table>
     </div>
-    <div class="chart-card" style="margin-bottom:0">
-      <div class="chart-header" style="margin-bottom:14px">
-        <div class="chart-title">Client Performance</div>
+    <div class="chart-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:18px;margin-bottom:16px" style="margin-bottom:0">
+      <div class="chart-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px" style="margin-bottom:14px">
+        <div class="chart-title" style="font-size:13px;font-weight:600;color:#111110">Client Performance</div>
         <div class="toggle-group" id="perf-period-toggle"><div class="toggle-btn active" onclick="switchPerfPeriod('month',this)">Month</div><div class="toggle-btn" onclick="switchPerfPeriod('30d',this)">30D</div></div>
       </div>
       <div style="position:relative;height:200px"><canvas id="clientPerfChart"></canvas></div>
@@ -716,10 +716,10 @@ async function buildDashboard(){
       </div>
     </div>
   </div>
-  <div class="three-col" style="margin-top:18px">
-    <div class="insight-card"><div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">🏆 Top Client</div><div style="font-size:13px;line-height:1.5">${clients[0]?.name||'—'} leads at <b>${fmt(clients[0]?.revenue||0)}</b>.</div></div>
-    <div class="insight-card"><div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">⚠️ Needs Attention</div><div style="font-size:13px;line-height:1.5">${clients[clients.length-1]?.name||'—'} has the lowest margin. Review ad spend.</div></div>
-    <div class="insight-card"><div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">📈 Growth</div><div style="font-size:13px;line-height:1.5">Automation revenue up 34% QoQ. Projected ₹12L run rate.</div></div>
+  <div class="three-col" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px" style="margin-top:18px">
+    <div class="insight-card" style="background:linear-gradient(135deg,#FFF3EA,#FFF8F2);border:1px solid #FFD4AA;border-radius:12px;padding:14px 16px"><div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">🏆 Top Client</div><div style="font-size:13px;line-height:1.5">${clients[0]?.name||'—'} leads at <b>${fmt(clients[0]?.revenue||0)}</b>.</div></div>
+    <div class="insight-card" style="background:linear-gradient(135deg,#FFF3EA,#FFF8F2);border:1px solid #FFD4AA;border-radius:12px;padding:14px 16px"><div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">⚠️ Needs Attention</div><div style="font-size:13px;line-height:1.5">${clients[clients.length-1]?.name||'—'} has the lowest margin. Review ad spend.</div></div>
+    <div class="insight-card" style="background:linear-gradient(135deg,#FFF3EA,#FFF8F2);border:1px solid #FFD4AA;border-radius:12px;padding:14px 16px"><div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">📈 Growth</div><div style="font-size:13px;line-height:1.5">Automation revenue up 34% QoQ. Projected ₹12L run rate.</div></div>
   </div>`;
 }
 
@@ -777,9 +777,9 @@ async function buildClients(){
   const clients=await api('/api/clients').catch(()=>[]);
   appState.clients=clients;
   return `
-  <div class="table-wrap">
-    <div class="table-header">
-      <div class="table-title">All Clients <span style="color:var(--text2);font-weight:400;font-size:12px">${clients.length} total</span></div>
+  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
+    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div class="table-title" style="font-size:13px;font-weight:600;color:#111110">All Clients <span style="color:var(--text2);font-weight:400;font-size:12px">${clients.length} total</span></div>
       <div style="display:flex;gap:8px;align-items:center">
         <input class="search-input" placeholder="Search…" oninput="filterTable(this,'clients-tbody')" />
       </div>
@@ -789,7 +789,7 @@ async function buildClients(){
     ${clients.map(c=>{
       const metaBadge=c.meta_connected?(c.meta_balance!==null&&c.meta_balance<500?`<span class="meta-badge" style="background:#FEE2E2;color:#991B1B;border-color:#FECACA">⚠️ Low Funds</span>`:`<span class="meta-badge">Meta ✓</span>`):'';
       return `<tr data-search="${c.name.toLowerCase()} ${c.company.toLowerCase()}" onclick="navigate('clientDetail',${c.id})" style="cursor:pointer">
-      <td><div class="name-cell">${avatarHtml(c)}<span style="font-weight:500">${c.name}${metaBadge}</span></div></td>
+      <td><div class="name-cell" style="display:flex;align-items:center;gap:9px">${avatarHtml(c)}<span style="font-weight:500">${c.name}${metaBadge}</span></div></td>
       <td style="color:var(--text2)">${c.company}</td>
       <td><span class="badge ${clientStatusBadgeClass(c.status)}">${c.status}</span></td>
       <td style="font-weight:500">${fmt(c.revenue)}</td>
@@ -868,12 +868,12 @@ async function buildClientDetail(){
   </div>`;
 
   const filesHtml=`
-  <div class="cd-card">
-    <div class="cd-card-head">
-      <div class="cd-card-title">Client Files</div>
+  <div class="cd-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:14px">
+    <div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">Client Files</div>
       <button class="btn btn-primary btn-sm" onclick="openUploadFile(${c.id})">+ Upload File</button>
     </div>
-    ${c.files.length===0?`<div class="empty-state"><div class="empty-icon">📁</div><div class="empty-text">No files yet. Upload a calendar, quotation, creative or report.</div></div>`:
+    ${c.files.length===0?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">📁</div><div class="empty-text" style="font-size:12.5px;line-height:1.5">No files yet. Upload a calendar, quotation, creative or report.</div></div>`:
     c.files.map(f=>`<div class="file-item">
       <div class="file-icon">${typeEmoji[f.file_type]||'📎'}</div>
       <div class="file-info">
@@ -886,27 +886,27 @@ async function buildClientDetail(){
   </div>`;
 
   const campHtml=`
-  <div class="cd-card">
-    <div class="cd-card-head"><div class="cd-card-title">Campaigns</div></div>
-    ${c.campaigns.length===0?`<div class="empty-state" style="padding:32px 20px"><div class="empty-text">No campaigns for this client.</div></div>`:`
+  <div class="cd-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:14px">
+    <div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">Campaigns</div></div>
+    ${c.campaigns.length===0?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4" style="padding:32px 20px"><div class="empty-text" style="font-size:12.5px;line-height:1.5">No campaigns for this client.</div></div>`:`
     <table><thead><tr><th>Campaign</th><th>Channel</th><th>Budget</th><th>Spend</th><th>Progress</th><th>Status</th></tr></thead><tbody>
     ${c.campaigns.map(camp=>{const p=camp.budget>0?Math.round(camp.spend/camp.budget*100):0;return`<tr>
       <td style="font-weight:500">${camp.name}</td>
-      <td><span class="badge badge-blue">${camp.channel}</span></td>
+      <td><span class="badge badge-blue" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#EFF6FF;color:#2563EB">${camp.channel}</span></td>
       <td>${fmt(camp.budget)}</td><td>${fmt(camp.spend)}</td>
-      <td><div class="progress-wrap"><div class="progress-bar-bg"><div class="progress-bar" style="width:${Math.min(p,100)}%;background:${p>90?'var(--red)':p>70?'var(--orange)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2);min-width:28px">${p}%</span></div></td>
+      <td><div class="progress-wrap" style="display:flex;align-items:center;gap:7px"><div class="progress-bar-bg" style="flex:1;height:4px;background:#ECECEA;border-radius:4px"><div class="progress-bar" style="width:${Math.min(p,100)}%;background:${p>90?'var(--red)':p>70?'var(--orange)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2);min-width:28px">${p}%</span></div></td>
       <td><span class="badge ${camp.status==='Active'?'badge-green':camp.status==='Paused'?'badge-orange':'badge-gray'}">${camp.status}</span></td>
     </tr>`}).join('')}
     </tbody></table>`}
   </div>`;
 
   const quotHtml=`
-  <div class="cd-card">
-    <div class="cd-card-head">
-      <div class="cd-card-title">Quotations <span style="color:var(--text2);font-weight:400;font-size:12px">${(c.quotations||[]).length} total</span></div>
+  <div class="cd-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:14px">
+    <div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">Quotations <span style="color:var(--text2);font-weight:400;font-size:12px">${(c.quotations||[]).length} total</span></div>
       <button class="btn btn-primary btn-sm" onclick="openCreateQuotation(${c.id},'${c.name.replace(/'/g,"\\'")}','${c.company.replace(/'/g,"\\'")}')">+ Create</button>
     </div>
-    ${(c.quotations||[]).length===0?`<div class="empty-state" style="padding:32px 20px"><div class="empty-icon">📄</div><div class="empty-text">No quotations yet. Create one to send to this client.</div></div>`:`
+    ${(c.quotations||[]).length===0?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4" style="padding:32px 20px"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">📄</div><div class="empty-text" style="font-size:12.5px;line-height:1.5">No quotations yet. Create one to send to this client.</div></div>`:`
     <table><thead><tr><th>Quote #</th><th>Items</th><th>Subtotal</th><th>GST</th><th>Total</th><th>Valid Until</th><th></th></tr></thead><tbody>
     ${c.quotations.map(q=>`<tr>
       <td style="font-weight:500">${q.quotation_no||('#'+q.id)}</td>
@@ -946,21 +946,21 @@ function buildMetaSection(c){
       <div style="font-size:12px;color:${balanceCritical?'#B91C1C':'#B45309'}">Only <strong>₹${balance.toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0})}</strong> left in this Meta Ads account.</div></div>
     </div>`:'';
     const metricsGrid=m?`<div class="meta-metrics">
-      <div class="meta-metric"><div class="meta-metric-label">Funds Remaining</div><div class="meta-metric-value" style="color:${balance===null?'var(--muted)':balanceCritical?'var(--red)':balanceLow?'#D97706':'var(--green)'}">${balance!==null?'₹'+balance.toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0}):'—'}</div></div>
-      <div class="meta-metric"><div class="meta-metric-label">Spend (30d)</div><div class="meta-metric-value orange">₹${(m.spend||0).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0})}</div></div>
-      <div class="meta-metric"><div class="meta-metric-label">Impressions</div><div class="meta-metric-value">${(m.impressions||0).toLocaleString()}</div></div>
-      <div class="meta-metric"><div class="meta-metric-label">Clicks</div><div class="meta-metric-value">${(m.clicks||0).toLocaleString()}</div></div>
-      <div class="meta-metric"><div class="meta-metric-label">CTR</div><div class="meta-metric-value ${(m.ctr||0)<1?'':'green'}" style="${(m.ctr||0)<1?'color:var(--red)':''}">${(m.ctr||0).toFixed(2)}%</div></div>
-      <div class="meta-metric"><div class="meta-metric-label">CPC</div><div class="meta-metric-value">₹${(m.cpc||0).toFixed(2)}</div></div>
-      <div class="meta-metric"><div class="meta-metric-label">Reach</div><div class="meta-metric-value">${(m.reach||0).toLocaleString()}</div></div>
-      <div class="meta-metric"><div class="meta-metric-label">Leads</div><div class="meta-metric-value green">${(m.leads||0).toLocaleString()}</div></div>
+      <div class="meta-metric" style="background:#F9F9F8;border:1px solid #ECECEA;border-radius:8px;padding:10px 12px"><div class="meta-metric-label" style="font-size:9.5px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Funds Remaining</div><div class="meta-metric-value" style="font-size:17px;font-weight:700;color:#111110" style="color:${balance===null?'var(--muted)':balanceCritical?'var(--red)':balanceLow?'#D97706':'var(--green)'}">${balance!==null?'₹'+balance.toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0}):'—'}</div></div>
+      <div class="meta-metric" style="background:#F9F9F8;border:1px solid #ECECEA;border-radius:8px;padding:10px 12px"><div class="meta-metric-label" style="font-size:9.5px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Spend (30d)</div><div class="meta-metric-value orange">₹${(m.spend||0).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0})}</div></div>
+      <div class="meta-metric" style="background:#F9F9F8;border:1px solid #ECECEA;border-radius:8px;padding:10px 12px"><div class="meta-metric-label" style="font-size:9.5px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Impressions</div><div class="meta-metric-value" style="font-size:17px;font-weight:700;color:#111110">${(m.impressions||0).toLocaleString()}</div></div>
+      <div class="meta-metric" style="background:#F9F9F8;border:1px solid #ECECEA;border-radius:8px;padding:10px 12px"><div class="meta-metric-label" style="font-size:9.5px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Clicks</div><div class="meta-metric-value" style="font-size:17px;font-weight:700;color:#111110">${(m.clicks||0).toLocaleString()}</div></div>
+      <div class="meta-metric" style="background:#F9F9F8;border:1px solid #ECECEA;border-radius:8px;padding:10px 12px"><div class="meta-metric-label" style="font-size:9.5px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">CTR</div><div class="meta-metric-value ${(m.ctr||0)<1?'':'green'}" style="${(m.ctr||0)<1?'color:var(--red)':''}">${(m.ctr||0).toFixed(2)}%</div></div>
+      <div class="meta-metric" style="background:#F9F9F8;border:1px solid #ECECEA;border-radius:8px;padding:10px 12px"><div class="meta-metric-label" style="font-size:9.5px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">CPC</div><div class="meta-metric-value" style="font-size:17px;font-weight:700;color:#111110">₹${(m.cpc||0).toFixed(2)}</div></div>
+      <div class="meta-metric" style="background:#F9F9F8;border:1px solid #ECECEA;border-radius:8px;padding:10px 12px"><div class="meta-metric-label" style="font-size:9.5px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Reach</div><div class="meta-metric-value" style="font-size:17px;font-weight:700;color:#111110">${(m.reach||0).toLocaleString()}</div></div>
+      <div class="meta-metric" style="background:#F9F9F8;border:1px solid #ECECEA;border-radius:8px;padding:10px 12px"><div class="meta-metric-label" style="font-size:9.5px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Leads</div><div class="meta-metric-value green">${(m.leads||0).toLocaleString()}</div></div>
     </div>`:
-    `<div class="empty-state" style="padding:20px"><div class="empty-text">No spend data yet. Click "Sync Now" to pull metrics from Meta.</div></div>`;
-    return `<div class="cd-card">
-      <div class="cd-card-head">
+    `<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4" style="padding:20px"><div class="empty-text" style="font-size:12.5px;line-height:1.5">No spend data yet. Click "Sync Now" to pull metrics from Meta.</div></div>`;
+    return `<div class="cd-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:14px">
+      <div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
         <div style="display:flex;align-items:center;gap:8px">
-          <div class="cd-card-title">Meta Ads</div>
-          <span class="badge badge-green" style="font-size:10px">Connected</span>
+          <div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">Meta Ads</div>
+          <span class="badge badge-green" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#F0FDF4;color:#15803D" style="font-size:10px">Connected</span>
           ${balanceLow?(balanceCritical?'<span style="background:#FEE2E2;color:#991B1B;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700">🚨 Critical</span>':'<span style="background:#FEF9C3;color:#854D0E;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700">⚠️ Low</span>'):''}  
         </div>
         <div style="display:flex;gap:6px;align-items:center">
@@ -988,11 +988,11 @@ function buildMetaSection(c){
       </div>
     </div>`;
   }
-  return `<div class="cd-card">
-    <div class="cd-card-head">
+  return `<div class="cd-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:14px">
+    <div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
       <div style="display:flex;align-items:center;gap:8px">
-        <div class="cd-card-title">Meta Ads</div>
-        <span class="badge badge-gray" style="font-size:10px">Not Connected</span>
+        <div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">Meta Ads</div>
+        <span class="badge badge-gray" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#F9F9F8;color:#6F6F6B;border:1px solid #E5E5E3" style="font-size:10px">Not Connected</span>
       </div>
     </div>
     <div style="padding:20px">
@@ -1384,7 +1384,7 @@ async function viewQuotation(qid,clientName,clientCompany){
     </div>
     </div>
     <div class="no-print" style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap">
-      ${!q.approved?'<button class="btn btn-sm" style="background:var(--green-bg);color:var(--green);border-color:#86efac" onclick="approveQuotation('+q.id+')">✓ Mark Approved</button>':'<span class="badge badge-green">✓ Approved</span>'}
+      ${!q.approved?'<button class="btn btn-sm" style="background:var(--green-bg);color:var(--green);border-color:#86efac" onclick="approveQuotation('+q.id+')">✓ Mark Approved</button>':'<span class="badge badge-green" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#F0FDF4;color:#15803D">✓ Approved</span>'}
       <button class="btn btn-ghost btn-sm" onclick="closeModal()">Close</button>
     </div>`);
     const modal=document.querySelector('.modal');
@@ -1438,16 +1438,16 @@ async function buildAdAnalytics(){
 function buildMetaAnalyticsTab(metaData,totalSpend,totalImpressions,totalLeads){
   const accounts=metaData.accounts||[];
   // Build stats row
-  const statsRow='<div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">'
-    +'<div class="stat-card accent"><div class="stat-label">Total Meta Spend</div><div class="stat-value">'+fmt(totalSpend)+'</div></div>'
-    +'<div class="stat-card"><div class="stat-label">Total Impressions</div><div class="stat-value">'+totalImpressions.toLocaleString()+'</div></div>'
-    +'<div class="stat-card green-accent"><div class="stat-label">Total Leads</div><div class="stat-value">'+totalLeads.toLocaleString()+'</div></div>'
-    +'<div class="stat-card blue-accent"><div class="stat-label">Connected Accounts</div><div class="stat-value">'+accounts.length+'</div></div>'
+  const statsRow='<div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">'
+    +'<div class="stat-card accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #E96800;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Meta Spend</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">'+fmt(totalSpend)+'</div></div>'
+    +'<div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 20px;transition:box-shadow .12s"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Impressions</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">'+totalImpressions.toLocaleString()+'</div></div>'
+    +'<div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Leads</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">'+totalLeads.toLocaleString()+'</div></div>'
+    +'<div class="stat-card blue-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #2563EB;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Connected Accounts</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">'+accounts.length+'</div></div>'
     +'</div>';
   if(!accounts.length){
-    return statsRow+'<div class="empty-state"><div class="empty-icon">📊</div>'
-      +'<div class="empty-label">No Meta Ads accounts connected</div>'
-      +'<div class="empty-text">Go to a client profile to connect their Meta Ads account.</div></div>';
+    return statsRow+'<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">📊</div>'
+      +'<div class="empty-label" style="font-size:14px;font-weight:500;color:#6F6F6B;margin-bottom:3px">No Meta Ads accounts connected</div>'
+      +'<div class="empty-text" style="font-size:12.5px;line-height:1.5">Go to a client profile to connect their Meta Ads account.</div></div>';
   }
   var rows=accounts.map(function(a){
     var cl=appState.clients.find(function(x){return x.id===a.client_id;})||{name:'Unknown',color:'#888'};
@@ -1458,7 +1458,7 @@ function buildMetaAnalyticsTab(metaData,totalSpend,totalImpressions,totalLeads){
     var badge='<span class="badge '+(a.is_active?'badge-green':'badge-gray')+'">'+(a.is_active?'Active':'Inactive')+'</span>';
     var ctrColor=(a.ctr||0)<1?'var(--red)':'var(--green)';
     return '<tr onclick="navigate(\'clientDetail\','+a.client_id+')" style="cursor:pointer">'
-      +'<td><div class="name-cell">'+avatarHtml(cl,{size:28})+'<span style="font-weight:500">'+cl.name+'</span></div></td>'
+      +'<td><div class="name-cell" style="display:flex;align-items:center;gap:9px">'+avatarHtml(cl,{size:28})+'<span style="font-weight:500">'+cl.name+'</span></div></td>'
       +'<td><code style="font-size:11px;background:#F3F4F6;padding:2px 6px;border-radius:4px">'+(a.ad_account_id||'—')+'</code></td>'
       +'<td style="font-weight:500">'+fmt(a.spend||0)+'</td>'
       +'<td>'+((a.impressions||0).toLocaleString())+'</td>'
@@ -1471,8 +1471,8 @@ function buildMetaAnalyticsTab(metaData,totalSpend,totalImpressions,totalLeads){
       +'</tr>';
   }).join('');
   return statsRow
-    +'<div class="table-wrap">'
-    +'<div class="table-header"><div class="table-title">Meta Ads Per Client</div>'
+    +'<div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">'
+    +'<div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Meta Ads Per Client</div>'
     +'<button class="btn btn-sm" onclick="syncMeta()">Sync All</button></div>'
     +'<table><thead><tr><th>Client</th><th>Account ID</th><th>Spend</th><th>Impressions</th>'
     +'<th>Clicks</th><th>CTR</th><th>CPC</th><th>Leads</th><th>Balance</th><th>Status</th>'
@@ -1482,19 +1482,19 @@ function buildMetaAnalyticsTab(metaData,totalSpend,totalImpressions,totalLeads){
 function buildGoogleAnalyticsTab(googleData,totalSpend){
   const accounts=googleData.accounts||[];
   return `
-  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
-    <div class="stat-card accent"><div class="stat-label">Total Google Spend</div><div class="stat-value">${fmt(totalSpend)}</div></div>
-    <div class="stat-card green-accent"><div class="stat-label">Connected Accounts</div><div class="stat-value">${accounts.length}</div></div>
-    <div class="stat-card blue-accent"><div class="stat-label">Active Campaigns</div><div class="stat-value">${accounts.reduce((s,a)=>s+(a.campaigns||0),0)}</div></div>
+  <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">
+    <div class="stat-card accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #E96800;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Google Spend</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(totalSpend)}</div></div>
+    <div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Connected Accounts</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${accounts.length}</div></div>
+    <div class="stat-card blue-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #2563EB;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Active Campaigns</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${accounts.reduce((s,a)=>s+(a.campaigns||0),0)}</div></div>
   </div>
-  ${accounts.length===0?`<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">No Google Ads accounts connected. Go to Settings to set up Google Ads integration.</div></div>`:`
-  <div class="table-wrap">
-    <div class="table-header"><div class="table-title">Google Ads — Per Client</div></div>
+  ${accounts.length===0?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">🔍</div><div class="empty-text" style="font-size:12.5px;line-height:1.5">No Google Ads accounts connected. Go to Settings to set up Google Ads integration.</div></div>`:`
+  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
+    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Google Ads — Per Client</div></div>
     <table><thead><tr><th>Client</th><th>CID</th><th>Spend (30d)</th><th>Clicks</th><th>Impressions</th><th>Conversions</th><th>CPC</th></tr></thead><tbody>
     ${accounts.map(a=>{
       const c=appState.clients.find(x=>x.id===a.client_id)||{name:'—',color:'#888'};
       return`<tr>
-        <td><div class="name-cell">${avatarHtml(c,{size:28})}<span style="font-weight:500">${c.name}</span></div></td>
+        <td><div class="name-cell" style="display:flex;align-items:center;gap:9px">${avatarHtml(c,{size:28})}<span style="font-weight:500">${c.name}</span></div></td>
         <td style="color:var(--text2);font-size:12px">${a.customer_id||'—'}</td>
         <td style="font-weight:500">${fmt(a.spend||0)}</td>
         <td>${(a.clicks||0).toLocaleString()}</td>
@@ -1508,21 +1508,21 @@ function buildGoogleAnalyticsTab(googleData,totalSpend){
 
 function buildCreativesTab(creatives){
   if(!creatives||creatives.length===0){
-    return `<div class="empty-state"><div class="empty-icon">🎨</div><div class="empty-text">No creative data yet. Sync Meta accounts to pull creative performance data.<br><br><button class="btn btn-primary btn-sm" onclick="syncMeta()">↻ Sync Meta Now</button></div></div>`;
+    return `<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">🎨</div><div class="empty-text" style="font-size:12.5px;line-height:1.5">No creative data yet. Sync Meta accounts to pull creative performance data.<br><br><button class="btn btn-primary btn-sm" onclick="syncMeta()">↻ Sync Meta Now</button></div></div>`;
   }
   // Sort by CTR descending = best performing first
   const sorted=[...creatives].sort((a,b)=>(b.ctr||0)-(a.ctr||0));
   return `
-  <div class="chart-card">
-    <div class="chart-header">
-      <div class="chart-title">Creative Performance Rankings</div>
+  <div class="chart-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:18px;margin-bottom:16px">
+    <div class="chart-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div class="chart-title" style="font-size:13px;font-weight:600;color:#111110">Creative Performance Rankings</div>
       <span style="font-size:12px;color:var(--text2)">Ranked by CTR — higher = better</span>
     </div>
     <table><thead><tr><th>#</th><th>Creative</th><th>Type</th><th>Impressions</th><th>Clicks</th><th>CTR</th><th>Spend</th><th>Leads</th><th>Why it performs</th></tr></thead><tbody>
     ${sorted.map((cr,i)=>`<tr>
       <td><span style="font-size:13px;font-weight:700;color:${i===0?'#F59E0B':i===1?'#9CA3AF':i===2?'#CD7C2F':'var(--muted)'}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</span></td>
       <td style="font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${cr.name||cr.creative_id}">${cr.name||cr.creative_id||'Creative '+(i+1)}</td>
-      <td><span class="badge badge-blue">${cr.type||'Image'}</span></td>
+      <td><span class="badge badge-blue" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#EFF6FF;color:#2563EB">${cr.type||'Image'}</span></td>
       <td>${(cr.impressions||0).toLocaleString()}</td>
       <td>${(cr.clicks||0).toLocaleString()}</td>
       <td style="font-weight:600;color:${(cr.ctr||0)>=2?'var(--green)':(cr.ctr||0)>=1?'var(--orange)':'var(--red)'}">${(cr.ctr||0).toFixed(2)}%</td>
@@ -1532,8 +1532,8 @@ function buildCreativesTab(creatives){
     </tr>`).join('')}
     </tbody></table>
   </div>
-  <div class="chart-card">
-    <div class="chart-title" style="margin-bottom:12px">📊 Improvement Suggestions</div>
+  <div class="chart-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:18px;margin-bottom:16px">
+    <div class="chart-title" style="font-size:13px;font-weight:600;color:#111110" style="margin-bottom:12px">📊 Improvement Suggestions</div>
     ${sorted.slice(-3).reverse().map((cr,i)=>`<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #F5F5F5">
       <span style="font-size:16px;flex-shrink:0">💡</span>
       <div>
@@ -1559,10 +1559,10 @@ function improvementSuggestion(cr){
 // ── AI MARKET RESEARCH TAB ─────────────────────────────────
 function buildAIResearchTab(clients, selectedClientId){
   const cl = clients.find(c=>String(c.id)===String(selectedClientId)) || clients[0];
-  if(!cl) return `<div class="empty-state"><div class="empty-icon">🤖</div><div class="empty-text">Add clients to use AI Research.</div></div>`;
+  if(!cl) return `<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">🤖</div><div class="empty-text" style="font-size:12.5px;line-height:1.5">Add clients to use AI Research.</div></div>`;
   return `<div style="max-width:700px">
-    <div class="cd-card" style="margin-bottom:16px">
-      <div class="cd-card-head"><div class="cd-card-title">🤖 AI Market Research Report</div><span style="font-size:12px;color:var(--text2)">Powered by Claude AI</span></div>
+    <div class="cd-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:14px" style="margin-bottom:16px">
+      <div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">🤖 AI Market Research Report</div><span style="font-size:12px;color:var(--text2)">Powered by Claude AI</span></div>
       <div style="padding:20px">
         <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Generate a real market research report for <b>${cl.name}</b> (${cl.company}). The AI will analyze their industry, suggest target audience, ad copy directions, competitor insights, and recommended marketing strategies.</div>
         <div class="form-group"><label class="form-label">Industry / Niche</label>
@@ -1584,8 +1584,8 @@ function buildAIResearchTab(clients, selectedClientId){
       </div>
     </div>
     <div id="ai-research-result" style="display:none" class="cd-card">
-      <div class="cd-card-head">
-        <div class="cd-card-title">📊 Research Report</div>
+      <div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">📊 Research Report</div>
         <button class="btn btn-sm" onclick="copyResearch()">📋 Copy</button>
       </div>
       <div id="ai-research-content" style="padding:20px;font-size:13.5px;line-height:1.8;white-space:pre-wrap;color:var(--text)"></div>
@@ -1694,9 +1694,9 @@ async function buildCampaigns(){
   const[camps,clients]=await Promise.all([api('/api/campaigns').catch(()=>[]),api('/api/clients').catch(()=>[])]);
   appState.clients=clients;
   return `
-  <div class="table-wrap">
-    <div class="table-header">
-      <div class="table-title">All Campaigns <span style="color:var(--text2);font-weight:400;font-size:12px">${camps.length} total</span></div>
+  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
+    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div class="table-title" style="font-size:13px;font-weight:600;color:#111110">All Campaigns <span style="color:var(--text2);font-weight:400;font-size:12px">${camps.length} total</span></div>
       <input class="search-input" placeholder="Search…" oninput="filterTable(this,'camps-tbody')"/>
     </div>
     <table><thead><tr><th>Campaign</th><th>Client</th><th>Channel</th><th>Budget</th><th>Spend</th><th>Progress</th><th>Status</th><th></th></tr></thead>
@@ -1704,10 +1704,10 @@ async function buildCampaigns(){
     ${camps.map(c=>{const p=c.budget>0?Math.round(c.spend/c.budget*100):0;return`<tr data-search="${c.name.toLowerCase()} ${(c.client_name||'').toLowerCase()}">
       <td style="font-weight:500">${c.name}</td>
       <td style="color:var(--text2)">${c.client_name||'—'}</td>
-      <td><span class="badge badge-blue">${c.channel}</span></td>
+      <td><span class="badge badge-blue" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#EFF6FF;color:#2563EB">${c.channel}</span></td>
       <td>${fmt(c.budget)}</td>
       <td>${fmt(c.spend)}</td>
-      <td><div class="progress-wrap"><div class="progress-bar-bg"><div class="progress-bar" style="width:${Math.min(p,100)}%;background:${p>90?'var(--red)':p>70?'var(--orange)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2);min-width:28px">${p}%</span></div></td>
+      <td><div class="progress-wrap" style="display:flex;align-items:center;gap:7px"><div class="progress-bar-bg" style="flex:1;height:4px;background:#ECECEA;border-radius:4px"><div class="progress-bar" style="width:${Math.min(p,100)}%;background:${p>90?'var(--red)':p>70?'var(--orange)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2);min-width:28px">${p}%</span></div></td>
       <td><span class="badge ${c.status==='Active'?'badge-green':c.status==='Paused'?'badge-orange':'badge-gray'}">${c.status}</span></td>
       <td><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteCampaign(${c.id})">Delete</button></td>
     </tr>`;}).join('')}
@@ -1721,13 +1721,13 @@ async function buildAutomations(){
   const totalRev=autos.reduce((a,x)=>a+parseFloat(x.revenue||0),0);
   const running=autos.filter(a=>a.status==='Running').length;
   return `
-  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
-    <div class="stat-card accent"><div class="stat-label">Total Auto Revenue</div><div class="stat-value">${fmt(Number(totalRev))}</div></div>
-    <div class="stat-card green-accent"><div class="stat-label">Running</div><div class="stat-value">${running}</div></div>
-    <div class="stat-card"><div class="stat-label">Total Automations</div><div class="stat-value">${autos.length}</div></div>
+  <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">
+    <div class="stat-card accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #E96800;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Auto Revenue</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(Number(totalRev))}</div></div>
+    <div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Running</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${running}</div></div>
+    <div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 20px;transition:box-shadow .12s"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Automations</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${autos.length}</div></div>
   </div>
-  <div class="table-wrap">
-    <div class="table-header"><div class="table-title">All Automations</div></div>
+  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
+    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">All Automations</div></div>
     <table><thead><tr><th>Name</th><th>Client</th><th>Status</th><th>Revenue</th><th>Notes</th><th></th></tr></thead><tbody>
     ${autos.map(a=>`<tr>
       <td style="font-weight:500">${a.name}</td>
@@ -1746,13 +1746,13 @@ async function buildCollaborations(){
   const collabs=await api('/api/collaborations').catch(()=>[]);
   const totalRev=collabs.reduce((a,c)=>a+parseFloat(c.revenue||0),0);
   return `
-  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
-    <div class="stat-card accent"><div class="stat-label">Total Collab Revenue</div><div class="stat-value">${fmt(Number(totalRev))}</div></div>
-    <div class="stat-card green-accent"><div class="stat-label">Active Partners</div><div class="stat-value">${collabs.filter(c=>c.status==='Active').length}</div></div>
-    <div class="stat-card"><div class="stat-label">Total Partners</div><div class="stat-value">${collabs.length}</div></div>
+  <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">
+    <div class="stat-card accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #E96800;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Collab Revenue</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(Number(totalRev))}</div></div>
+    <div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Active Partners</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${collabs.filter(c=>c.status==='Active').length}</div></div>
+    <div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 20px;transition:box-shadow .12s"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Partners</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${collabs.length}</div></div>
   </div>
-  <div class="table-wrap">
-    <div class="table-header"><div class="table-title">Collaborations</div></div>
+  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
+    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Collaborations</div></div>
     <table><thead><tr><th>Partner</th><th>Revenue</th><th>Status</th><th>Notes</th><th></th></tr></thead><tbody>
     ${collabs.map(c=>`<tr>
       <td style="font-weight:500">${c.partner}</td>
@@ -1791,21 +1791,21 @@ async function buildCompanyFinance(){
   const totalClientRev=clients.reduce((s,c)=>s+parseFloat(c.revenue||0),0);
   const totalClientSpend=clients.reduce((s,c)=>s+parseFloat(c.spend||0),0);
   return `
-  <div class="stats-grid">
-    <div class="stat-card accent" onclick="openRevenueBreakdownByClient()"><div class="stat-label">Total Revenue ↗</div><div class="stat-value">${fmt(safeStats.totalRevenue)}</div><div class="stat-sub" style="color:var(--text3)">Click to see per-client</div></div>
-    <div class="stat-card" onclick="openSpendBreakdownByClient()"><div class="stat-label">Total Ad Spend ↗</div><div class="stat-value">${fmt(safeStats.totalSpend)}</div><div class="stat-sub" style="color:var(--text3)">Click to see per-client</div></div>
-    <div class="stat-card green-accent"><div class="stat-label">Profit</div><div class="stat-value" style="color:var(--green)">${fmt(safeStats.profit)}</div><div class="stat-sub" style="color:var(--green)">Margin: ${safeStats.totalRevenue>0?((safeStats.profit/safeStats.totalRevenue)*100).toFixed(1):'0'}%</div></div>
-    <div class="stat-card blue-accent"><div class="stat-label">This Month</div><div class="stat-value">${fmt(safeStats.thisMonth)}</div></div>
-    <div class="stat-card"><div class="stat-label">Projected</div><div class="stat-value">${fmt(safeStats.projected)}</div></div>
+  <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">
+    <div class="stat-card accent" onclick="openRevenueBreakdownByClient()"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Revenue ↗</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(safeStats.totalRevenue)}</div><div class="stat-sub" style="color:var(--text3)">Click to see per-client</div></div>
+    <div class="stat-card" onclick="openSpendBreakdownByClient()"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Ad Spend ↗</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(safeStats.totalSpend)}</div><div class="stat-sub" style="color:var(--text3)">Click to see per-client</div></div>
+    <div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Profit</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110" style="color:var(--green)">${fmt(safeStats.profit)}</div><div class="stat-sub" style="color:var(--green)">Margin: ${safeStats.totalRevenue>0?((safeStats.profit/safeStats.totalRevenue)*100).toFixed(1):'0'}%</div></div>
+    <div class="stat-card blue-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #2563EB;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">This Month</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(safeStats.thisMonth)}</div></div>
+    <div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 20px;transition:box-shadow .12s"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Projected</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(safeStats.projected)}</div></div>
   </div>
-  <div class="table-wrap" style="margin-bottom:20px">
-    <div class="table-header">
-      <div class="table-title">Revenue per Client</div>
+  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px" style="margin-bottom:20px">
+    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Revenue per Client</div>
       <span style="font-size:12px;color:var(--text2)">Click a client row for full detail</span>
     </div>
     <table><thead><tr><th>Client</th><th>Revenue</th><th>Ad Spend</th><th>Profit</th><th>ROI</th><th>Expected</th><th>Status</th></tr></thead><tbody>
     ${clients.map(c=>`<tr onclick="navigate('clientDetail',${c.id})" style="cursor:pointer">
-      <td><div class="name-cell">${avatarHtml(c,{size:28})}<span style="font-weight:500">${c.name}<br><span style="font-size:11px;color:var(--text2);font-weight:400">${c.company}</span></span></div></td>
+      <td><div class="name-cell" style="display:flex;align-items:center;gap:9px">${avatarHtml(c,{size:28})}<span style="font-weight:500">${c.name}<br><span style="font-size:11px;color:var(--text2);font-weight:400">${c.company}</span></span></div></td>
       <td style="font-weight:600;color:var(--orange)">${fmt(c.revenue)}</td>
       <td>${fmt(c.spend)}</td>
       <td style="color:var(--green);font-weight:500">${fmt(c.profit)}</td>
@@ -1822,19 +1822,19 @@ async function buildCompanyFinance(){
     </tr>
     </tbody></table>
   </div>
-  <div class="table-wrap">
-    <div class="table-header">
-      <div class="table-title">Manual Revenue Entries</div>
+  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
+    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Manual Revenue Entries</div>
     </div>
     <table><thead><tr><th>Client</th><th>Amount</th><th>Date</th><th>Source</th><th>Notes</th><th></th></tr></thead><tbody>
     ${entries.length===0?`<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:32px">No manual entries yet. Use "+ Manual Revenue" to add one.</td></tr>`:
     entries.map(r=>{
       const c=clients.find(x=>x.id===r.client_id)||{name:'General',color:'#888'};
       return`<tr>
-        <td><div class="name-cell">${avatarHtml(c,{size:24})}${c.name}</div></td>
+        <td><div class="name-cell" style="display:flex;align-items:center;gap:9px">${avatarHtml(c,{size:24})}${c.name}</div></td>
         <td style="font-weight:500;color:var(--orange)">${fmt(r.amount)}</td>
         <td style="color:var(--text2)">${r.date}</td>
-        <td><span class="badge badge-orange">Manual</span></td>
+        <td><span class="badge badge-orange" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#FFF3EA;color:#E96800">Manual</span></td>
         <td style="color:var(--text2);font-size:12px">${r.notes||'—'}</td>
         <td><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteRevEntry(${r.id})">Delete</button></td>
       </tr>`;}).join('')}
@@ -1885,14 +1885,14 @@ async function buildPersonalFinance(){
     <button class="btn btn-primary btn-sm" onclick="openAddTransaction()">+ Add Transaction</button>
     <button class="btn btn-sm" onclick="openAddSalary()">+ Add Salary</button>
   </div>
-  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
-    <div class="stat-card accent"><div class="stat-label">Personal Income</div><div class="stat-value">${fmt(data.totalIncome)}</div></div>
-    <div class="stat-card"><div class="stat-label">Expenses</div><div class="stat-value" style="color:var(--red)">${fmt(data.totalExpenses)}</div></div>
-    <div class="stat-card green-accent"><div class="stat-label">Net Balance</div><div class="stat-value" style="color:var(--green)">${fmt(data.netBalance)}</div></div>
-    <div class="stat-card blue-accent"><div class="stat-label">Salaries Paid</div><div class="stat-value">${fmt(data.totalSalaries)}</div></div>
+  <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">
+    <div class="stat-card accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #E96800;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Personal Income</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(data.totalIncome)}</div></div>
+    <div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 20px;transition:box-shadow .12s"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Expenses</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110" style="color:var(--red)">${fmt(data.totalExpenses)}</div></div>
+    <div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Net Balance</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110" style="color:var(--green)">${fmt(data.netBalance)}</div></div>
+    <div class="stat-card blue-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #2563EB;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Salaries Paid</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(data.totalSalaries)}</div></div>
   </div>
-  <div class="table-wrap">
-    <div class="table-header"><div class="table-title">Transactions</div></div>
+  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
+    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Transactions</div></div>
     <table><thead><tr><th>User</th><th>Type</th><th>Category</th><th>Amount</th><th>Date</th><th>Notes</th><th></th></tr></thead><tbody>
     ${data.transactions.length===0?`<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:32px">No transactions yet.</td></tr>`:
     data.transactions.map(t=>`<tr>
@@ -1906,9 +1906,9 @@ async function buildPersonalFinance(){
     </tr>`).join('')}
     </tbody></table>
   </div>
-  <div class="two-col">
-    <div class="table-wrap">
-      <div class="table-header"><div class="table-title">Salary Payments</div></div>
+  <div class="two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+    <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
+      <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Salary Payments</div></div>
       <table><thead><tr><th>User</th><th>Amount</th><th>Date</th><th>Notes</th><th></th></tr></thead><tbody>
       ${data.salaries.map(s=>`<tr>
         <td style="font-weight:500">${s.user_name||'—'}</td>
@@ -1919,8 +1919,8 @@ async function buildPersonalFinance(){
       </tr>`).join('')}
       </tbody></table>
     </div>
-    <div class="table-wrap">
-      <div class="table-header"><div class="table-title">Team Summary</div></div>
+    <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
+      <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Team Summary</div></div>
       <table><thead><tr><th>User</th><th>Income</th><th>Expenses</th><th>Net</th></tr></thead><tbody>
       ${data.summary.map(s=>`<tr>
         <td style="font-weight:500">${s.user_name}</td>
@@ -1959,16 +1959,16 @@ async function buildTally(){
   const categoryColors={'Ad Spend':'#FF6A00','Salary':'#3B82F6','Software':'#8B5CF6','Office':'#10B981','Travel':'#F59E0B','Other':'#9CA3AF'};
 
   return `
-  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
-    <div class="stat-card accent"><div class="stat-label">Total Spends</div><div class="stat-value">${fmt(summary.total||0)}</div></div>
-    <div class="stat-card"><div class="stat-label">This Month</div><div class="stat-value">${fmt(byMonth[new Date().toISOString().slice(0,7)]?.total||0)}</div></div>
-    <div class="stat-card green-accent"><div class="stat-label">Categories</div><div class="stat-value">${(summary.categories||[]).length}</div></div>
-    <div class="stat-card blue-accent"><div class="stat-label">Total Entries</div><div class="stat-value">${entries.length}</div></div>
+  <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">
+    <div class="stat-card accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #E96800;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Spends</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(summary.total||0)}</div></div>
+    <div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 20px;transition:box-shadow .12s"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">This Month</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(byMonth[new Date().toISOString().slice(0,7)]?.total||0)}</div></div>
+    <div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Categories</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${(summary.categories||[]).length}</div></div>
+    <div class="stat-card blue-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #2563EB;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Entries</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${entries.length}</div></div>
   </div>
 
   ${(summary.categories||[]).length>0?`
-  <div class="chart-card">
-    <div class="chart-header"><div class="chart-title">Spend by Category</div></div>
+  <div class="chart-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:18px;margin-bottom:16px">
+    <div class="chart-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px"><div class="chart-title" style="font-size:13px;font-weight:600;color:#111110">Spend by Category</div></div>
     <div style="display:flex;flex-direction:column;gap:10px">
       ${summary.categories.map(cat=>{
         const pct=summary.total>0?Math.round((cat.total/summary.total)*100):0;
@@ -1985,9 +1985,9 @@ async function buildTally(){
   ${months.map(m=>{
     const mData=byMonth[m];
     const mName=new Date(m+'-01').toLocaleDateString('en-IN',{month:'long',year:'numeric'});
-    return`<div class="table-wrap" style="margin-bottom:16px">
-      <div class="table-header">
-        <div class="table-title">${mName}</div>
+    return`<div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px" style="margin-bottom:16px">
+      <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div class="table-title" style="font-size:13px;font-weight:600;color:#111110">${mName}</div>
         <span style="font-size:14px;font-weight:700;color:var(--orange)">${fmt(mData.total)}</span>
       </div>
       <table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Added by</th><th></th></tr></thead><tbody>
@@ -2002,7 +2002,7 @@ async function buildTally(){
       </tbody></table>
     </div>`;}).join('')}
 
-  ${entries.length===0?`<div class="empty-state"><div class="empty-icon">💸</div><div class="empty-text">No spend entries yet. Click "+ Add Spend" to start tracking daily expenses like ad spend, salaries, software, office costs etc.</div></div>`:''}`;
+  ${entries.length===0?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">💸</div><div class="empty-text" style="font-size:12.5px;line-height:1.5">No spend entries yet. Click "+ Add Spend" to start tracking daily expenses like ad spend, salaries, software, office costs etc.</div></div>`:''}`;
 }
 
 async function openAddSpend(){
@@ -2067,11 +2067,11 @@ async function buildReminders(){
     </div>`).join('')}
   </div>`:''}
 
-  <div class="table-wrap">
-    <div class="table-header">
-      <div class="table-title">Upcoming Reminders</div>
+  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
+    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Upcoming Reminders</div>
     </div>
-    ${upcoming.length===0?`<div class="empty-state" style="padding:32px 20px"><div class="empty-text">No upcoming reminders. Add one using the button above.</div></div>`:`
+    ${upcoming.length===0?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4" style="padding:32px 20px"><div class="empty-text" style="font-size:12.5px;line-height:1.5">No upcoming reminders. Add one using the button above.</div></div>`:`
     <table><thead><tr><th>Client</th><th>Title</th><th>Amount</th><th>Due Date</th><th>Channel</th><th>Status</th><th></th></tr></thead><tbody>
     ${upcoming.map(r=>`<tr>
       <td style="font-weight:500">${r.client_name||'—'}</td>
@@ -2079,7 +2079,7 @@ async function buildReminders(){
       <td style="font-weight:600;color:var(--orange)">${r.amount?fmt(r.amount):'—'}</td>
       <td style="color:var(--text2)">${new Date(r.due_date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</td>
       <td><div style="display:flex;gap:4px">${(r.channels||['email']).map(ch=>`<span class="badge ${ch==='whatsapp'?'badge-green':ch==='email'?'badge-blue':'badge-gray'}">${ch==='whatsapp'?'📱':'📧'} ${ch}</span>`).join('')}</div></td>
-      <td><span class="badge badge-orange">Pending</span></td>
+      <td><span class="badge badge-orange" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#FFF3EA;color:#E96800">Pending</span></td>
       <td style="white-space:nowrap">
         <button class="btn btn-primary btn-sm" onclick="sendReminder(${r.id})">Send Now</button>
         <button class="btn btn-ghost btn-sm" onclick="markReminderSent(${r.id})">Mark Sent</button>
@@ -2089,16 +2089,16 @@ async function buildReminders(){
     </tbody></table>`}
   </div>
 
-  <div class="table-wrap">
-    <div class="table-header"><div class="table-title">Sent Reminders</div></div>
-    ${sent.length===0?`<div class="empty-state" style="padding:24px 20px"><div class="empty-text">No reminders sent yet.</div></div>`:`
+  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
+    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Sent Reminders</div></div>
+    ${sent.length===0?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4" style="padding:24px 20px"><div class="empty-text" style="font-size:12.5px;line-height:1.5">No reminders sent yet.</div></div>`:`
     <table><thead><tr><th>Client</th><th>Title</th><th>Amount</th><th>Sent At</th><th>Channel</th></tr></thead><tbody>
     ${sent.map(r=>`<tr>
       <td style="font-weight:500">${r.client_name||'—'}</td>
       <td>${r.title}</td>
       <td>${r.amount?fmt(r.amount):'—'}</td>
       <td style="color:var(--text2)">${r.sent_at?new Date(r.sent_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—'}</td>
-      <td><span class="badge badge-green">✓ Sent</span></td>
+      <td><span class="badge badge-green" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#F0FDF4;color:#15803D">✓ Sent</span></td>
     </tr>`).join('')}
     </tbody></table>`}
   </div>`;
@@ -2183,8 +2183,8 @@ async function buildSettings(){
 }
 
 function buildSettingsCompany(co){
-  return `<div class="cd-card">
-    <div class="cd-card-head"><div class="cd-card-title">Company Information</div></div>
+  return `<div class="cd-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:14px">
+    <div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">Company Information</div></div>
     <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
       <div class="form-row">
         <div class="form-group"><label class="form-label">Company Name</label><input class="form-input" id="s-name" value="${co.company_name||''}"></div>
@@ -2211,8 +2211,8 @@ function buildSettingsCompany(co){
 function buildSettingsPayment(co){
   const upiQR=co.upi_id?('https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=upi://pay?pa='+encodeURIComponent(co.upi_id)+'%26pn='+encodeURIComponent(co.company_name||'WeClick AI')):null;
   const qrHtml=upiQR?('<div style="margin-top:10px;display:flex;align-items:center;gap:12px"><img src="'+upiQR+'" style="width:100px;height:100px;border-radius:6px;border:1px solid var(--border)"/><span style="font-size:12px;color:var(--text2)">Scan to pay via UPI</span></div>'):'';
-  return '<div class="cd-card">'
-    +'<div class="cd-card-head"><div class="cd-card-title">Payment Details — shown on Quotations</div></div>'
+  return '<div class="cd-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:14px">'
+    +'<div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">Payment Details — shown on Quotations</div></div>'
     +'<div style="padding:20px;display:flex;flex-direction:column;gap:14px">'
     +'<div class="form-group"><label class="form-label">UPI ID <span style="color:var(--text2);font-weight:400">(QR auto-generated)</span></label>'
     +'<input class="form-input" id="s-upi" placeholder="yourname@paytm" value="'+(co.upi_id||'')+'">'
@@ -2260,7 +2260,7 @@ async function buildMeetings(){
     const timeStr=dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
     const isPast=dt<now;
     return `<tr>
-      <td><div class="name-cell">${avatarHtml(cl,{size:28})}<div><div style="font-weight:500">${cl.name}</div><div style="font-size:11px;color:var(--text2)">${cl.company}</div></div></div></td>
+      <td><div class="name-cell" style="display:flex;align-items:center;gap:9px">${avatarHtml(cl,{size:28})}<div><div style="font-weight:500">${cl.name}</div><div style="font-size:11px;color:var(--text2)">${cl.company}</div></div></div></td>
       <td style="font-weight:500">${m.title||'Meeting'}</td>
       <td>${dateStr}</td>
       <td style="color:var(--text2)">${timeStr}</td>
@@ -2276,25 +2276,25 @@ async function buildMeetings(){
   };
 
   return `
-  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
-    <div class="stat-card accent"><div class="stat-label">Upcoming</div><div class="stat-value">${upcoming.length}</div></div>
-    <div class="stat-card blue-accent"><div class="stat-label">This Week</div><div class="stat-value">${upcoming.filter(m=>{const d=new Date(m.meeting_date);return(d-now)<7*86400000;}).length}</div></div>
-    <div class="stat-card green-accent"><div class="stat-label">Notified</div><div class="stat-value">${meetings.filter(m=>m.notified).length}</div></div>
-    <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${meetings.length}</div></div>
+  <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">
+    <div class="stat-card accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #E96800;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Upcoming</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${upcoming.length}</div></div>
+    <div class="stat-card blue-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #2563EB;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">This Week</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${upcoming.filter(m=>{const d=new Date(m.meeting_date);return(d-now)<7*86400000;}).length}</div></div>
+    <div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Notified</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${meetings.filter(m=>m.notified).length}</div></div>
+    <div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 20px;transition:box-shadow .12s"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${meetings.length}</div></div>
   </div>
 
-  <div class="table-wrap" style="margin-bottom:20px">
-    <div class="table-header">
-      <div class="table-title">📅 Upcoming Meetings</div>
+  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px" style="margin-bottom:20px">
+    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div class="table-title" style="font-size:13px;font-weight:600;color:#111110">📅 Upcoming Meetings</div>
       <span style="font-size:12px;color:var(--text2)">Click "Notify" to send email to client</span>
     </div>
-    ${upcoming.length===0?`<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">No upcoming meetings. Schedule one with the + button.</div></div>`:`
+    ${upcoming.length===0?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">📅</div><div class="empty-text" style="font-size:12.5px;line-height:1.5">No upcoming meetings. Schedule one with the + button.</div></div>`:`
     <table><thead><tr><th>Client</th><th>Title</th><th>Date</th><th>Time</th><th>Duration</th><th>Type</th><th>Notified</th><th></th></tr></thead>
     <tbody>${upcoming.map(meetingRow).join('')}</tbody></table>`}
   </div>
 
-  ${past.length>0?`<div class="table-wrap">
-    <div class="table-header"><div class="table-title">Past Meetings</div></div>
+  ${past.length>0?`<div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
+    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Past Meetings</div></div>
     <table><thead><tr><th>Client</th><th>Title</th><th>Date</th><th>Time</th><th>Duration</th><th>Type</th><th>Notified</th><th></th></tr></thead>
     <tbody>${past.slice(0,20).map(meetingRow).join('')}</tbody></table>
   </div>`:''}`;
