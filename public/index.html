@@ -555,6 +555,7 @@ function setActiveNav(page){
 
 // ── NAVIGATION ─────────────────────────────────────────────────
 async function navigate(page,id){
+  appState.navVersion=(appState.navVersion||0)+1;
   appState.page=page;
   if(id!==undefined) appState.selectedClientId=id;
   const navMap={clientDetail:'clients'};
@@ -584,27 +585,39 @@ function renderTopbarActions(){
 // ── PAGE RENDER ────────────────────────────────────────────────
 async function renderPage(){
   const el=document.getElementById('page-content');
-  el.innerHTML='<div class="loading" style="padding:60px;text-align:center;color:var(--text3)">Loading...</div>';
+  const myVersion=(appState.navVersion||0);
+  el.innerHTML='<div style="padding:60px;text-align:center;color:var(--text3);font-size:13px">Loading...</div>';
+  let html='';
+  const pg=appState.page;
+  try{
+    switch(pg){
+      case 'dashboard': html=await buildDashboard();break;
+      case 'clients': html=await buildClients();break;
+      case 'clientDetail': html=await buildClientDetail();break;
+      case 'campaigns': html=await buildCampaigns();break;
+      case 'automations': html=await buildAutomations();break;
+      case 'collaborations': html=await buildCollaborations();break;
+      case 'revenue': html=await buildRevenue();break;
+      case 'tally': html=await buildTally();break;
+      case 'meetings': html=await buildMeetings();break;
+      case 'reminders': html=await buildReminders();break;
+      case 'adanalytics': html=await buildAdAnalytics();break;
+      case 'settings': html=await buildSettings();break;
+      default: html='<p style="padding:20px;color:var(--text3)">Page not found</p>';
+    }
+  }catch(e){
+    html='<div style="padding:40px;text-align:center;color:var(--red)">Error loading page: '+e.message+'</div>';
+    console.error('renderPage error:',e);
+  }
+  // Only render if we're still on the same navigation
+  if(appState.navVersion!==myVersion) return;
+  el.innerHTML='';
   const div=document.createElement('div');
   div.className='page';
-  switch(appState.page){
-    case 'dashboard': div.innerHTML=await buildDashboard();break;
-    case 'clients': div.innerHTML=await buildClients();break;
-    case 'clientDetail': div.innerHTML=await buildClientDetail();break;
-    case 'campaigns': div.innerHTML=await buildCampaigns();break;
-    case 'automations': div.innerHTML=await buildAutomations();break;
-    case 'collaborations': div.innerHTML=await buildCollaborations();break;
-    case 'revenue': div.innerHTML=await buildRevenue();break;
-    case 'tally': div.innerHTML=await buildTally();break;
-    case 'meetings': div.innerHTML=await buildMeetings();break;
-    case 'reminders': div.innerHTML=await buildReminders();break;
-    case 'adanalytics': div.innerHTML=await buildAdAnalytics();break;
-    case 'settings': div.innerHTML=await buildSettings();break;
-    default: div.innerHTML='<p>Page not found</p>';
-  }
+  div.innerHTML=html;
   el.appendChild(div);
-  drawChart();
-  if(appState.page==='dashboard') initDashboardCharts();
+  if(pg==='dashboard'){drawChart();initDashboardCharts();}
+  else drawChart();
 }
 
 // ── DASHBOARD ──────────────────────────────────────────────────
