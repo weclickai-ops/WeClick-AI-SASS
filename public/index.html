@@ -281,6 +281,42 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml;utf8,
 .qa-chip{display:flex;align-items:center;gap:7px;padding:7px 14px;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:12.5px;font-weight:500;cursor:pointer;color:var(--text2);transition:all .12s}
 .qa-chip:hover{border-color:var(--orange);color:var(--orange);background:var(--orange-bg)}
 .qa-chip .chip-icon{font-size:14px}
+
+/* ── STAT CARDS (legacy pages: automations, collaborations, etc) ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;transition:box-shadow .15s}
+.stat-card:hover{box-shadow:var(--shadow-sm)}
+.stat-card.accent{border-left:3px solid var(--orange)}
+.stat-card.green-accent{border-left:3px solid var(--green)}
+.stat-card.blue-accent{border-left:3px solid var(--blue)}
+.stat-label{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
+.stat-value{font-size:22px;font-weight:700;letter-spacing:-0.5px;color:var(--text)}
+.stat-sub{font-size:11.5px;color:var(--text2);margin-top:4px}
+/* ── CLIENT DETAIL HEADER ── */
+.cd-header{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:18px}
+.cd-header-top{padding:20px 24px;display:flex;align-items:flex-start;gap:16px}
+.cd-av{width:56px;height:56px;border-radius:50%;flex-shrink:0;position:relative;overflow:hidden;cursor:pointer;transition:transform .15s}
+.cd-av:hover{transform:scale(1.04)}
+.cd-av-inner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff}
+.cd-av-cam{position:absolute;right:-1px;bottom:-1px;width:18px;height:18px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;border:2px solid #fff;pointer-events:none}
+.cd-info{flex:1;min-width:0}
+.cd-name{font-size:18px;font-weight:700;letter-spacing:-0.4px;margin-bottom:4px}
+.cd-company{font-size:13px;color:var(--text2)}
+.cd-email{font-size:12px;color:var(--text2)}
+.cd-actions{display:flex;gap:7px;flex-shrink:0;flex-wrap:wrap;align-self:flex-start}
+.cd-stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border2)}
+.cd-stat{padding:14px 20px;border-right:1px solid var(--border2)}
+.cd-stat:last-child{border-right:none}
+.cd-stat-lbl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.cd-stat-val{font-size:18px;font-weight:700;letter-spacing:-0.4px;color:var(--text)}
+/* ── META SECTION ── */
+.meta-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:16px}
+.meta-metrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;padding:14px 18px}
+.low-budget-banner{display:flex;align-items:flex-start;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border2)}
+/* ── CONTENT CALENDAR ── */
+.calendar{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;margin-bottom:18px}
+/* ── QUOTATION ── */
+.quote-preview{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;font-family:'Inter',sans-serif}
 </style>
 
 </head>
@@ -980,7 +1016,7 @@ function openCreateQuotation(clientId, clientName, clientCompany){
     <button class="btn btn-primary" onclick="saveQuotation(${clientId})">Save Quotation</button>
   </div>`);
   document.querySelector('.modal').classList.add('modal-lg');
-  renderQuoteItems();
+  setTimeout(renderQuoteItems,60);
 }
 
 
@@ -1450,7 +1486,7 @@ async function buildCampaigns(){
 // ── AUTOMATIONS ────────────────────────────────────────────────
 async function buildAutomations(){
   const autos=await api('/api/automations').catch(()=>[]);
-  const totalRev=autos.reduce((a,x)=>a+(x.revenue||0),0);
+  const totalRev=autos.reduce((a,x)=>a+parseFloat(x.revenue||0),0);
   const running=autos.filter(a=>a.status==='Running').length;
   return `
   <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
@@ -1476,7 +1512,7 @@ async function buildAutomations(){
 // ── COLLABORATIONS ─────────────────────────────────────────────
 async function buildCollaborations(){
   const collabs=await api('/api/collaborations').catch(()=>[]);
-  const totalRev=collabs.reduce((a,c)=>a+(c.revenue||0),0);
+  const totalRev=collabs.reduce((a,c)=>a+parseFloat(c.revenue||0),0);
   return `
   <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
     <div class="stat-card accent"><div class="stat-label">Total Collab Revenue</div><div class="stat-value">${fmt(Number(totalRev))}</div></div>
