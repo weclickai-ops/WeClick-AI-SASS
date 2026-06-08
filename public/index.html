@@ -375,16 +375,11 @@ let appState = {
 
 // ── UTILS ──────────────────────────────────────────────────────
 function fmt(n){
-  n=Math.round(n||0);
-  if(n<0) return '-'+fmt(-n);
-  const s=n.toString();
-  if(s.length<=3) return '₹'+s;
-  const last3=s.slice(-3);
-  const rest=s.slice(0,-3);
-  const grps=[];let tmp=rest;
-  while(tmp.length>2){grps.unshift(tmp.slice(-2));tmp=tmp.slice(0,-2);}
-  if(tmp) grps.unshift(tmp);
-  return '₹'+grps.join(',')+','+last3;
+  n=Math.round(parseFloat(n)||0);
+  if(isNaN(n)||!isFinite(n))return '₹0';
+  if(n<0)return '-'+fmt(-n);
+  // Use Indian number format
+  return '₹'+n.toLocaleString('en-IN',{maximumFractionDigits:0});
 }
 function ini(name){return (name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
 function avatarHtml(c, opts){
@@ -614,27 +609,7 @@ async function buildDashboard(){
       <div id="donut-legend" style="margin-top:10px;display:flex;flex-direction:column;gap:4px"></div>
     </div>
   </div>
-  <div class="chart-card">
-    <div class="chart-header">
-      <div class="chart-title">Revenue vs Ad Spend</div>
-      <div class="chart-controls">
-        <select class="select-input" id="chart-client" onchange="setChartClient(this.value)">
-          <option value="all" ${appState.chartClientId==='all'?'selected':''}>All Clients</option>
-          ${clients.map(c=>`<option value="${c.id}" ${String(appState.chartClientId)===String(c.id)?'selected':''}>${c.name} — ${c.company}</option>`).join('')}
-        </select>
-        <div class="toggle-group">
-          <div class="toggle-btn ${appState.chartPeriod==='30'?'active':''}" onclick="toggleChart('30')">30D</div>
-          <div class="toggle-btn ${appState.chartPeriod==='90'?'active':''}" onclick="toggleChart('90')">90D</div>
-        </div>
-      </div>
-    </div>
-    <div class="area-chart" id="chart-area"></div>
-    <div class="chart-tooltip" id="chart-tooltip"></div>
-    <div style="display:flex;gap:16px;margin-top:8px">
-      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:var(--orange)"></div>Revenue</div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:#9CA3AF"></div>Ad Spend</div>
-    </div>
-  </div>
+  
   <div class="two-col">
     <div class="table-wrap">
       <div class="table-header">
@@ -742,8 +717,9 @@ function drawChart(){
   for(let i=0;i<=4;i++){
     const yy=padT+innerH*i/4;
     const val=Math.round(niceMax*(1-i/4));
+    const valLabel=val>=10000000?'₹'+(val/10000000).toFixed(1)+'Cr':val>=100000?'₹'+(val/100000).toFixed(1)+'L':val>=1000?'₹'+(val/1000).toFixed(0)+'k':val===0?'0':'₹'+val;
     gridLines.push(`<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="#F0F0F0" stroke-width="1"/>`);
-    gridLabels.push(`<text x="${padL-8}" y="${yy+4}" text-anchor="end" font-size="10" fill="#9CA3AF" font-family="DM Sans">${val>=1000?Math.round(val/1000)+'k':val}</text>`);
+    gridLabels.push(`<text x="${padL-8}" y="${yy+4}" text-anchor="end" font-size="10" fill="#9CA3AF" font-family="DM Sans">${val>=10000000?(val/10000000).toFixed(1)+'Cr':val>=100000?(val/100000).toFixed(1)+'L':val>=1000?(val/1000).toFixed(0)+'k':val===0?'0':val}</text>`);
   }
   const step=Math.max(1,Math.ceil(labels.length/7));
   const xLabels=labels.map((l,i)=>(i%step===0||i===labels.length-1)?`<text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="10" fill="#9CA3AF" font-family="DM Sans">${l}</text>`:'').join('');
@@ -1283,7 +1259,7 @@ async function viewQuotation(qid,clientName,clientCompany){
           </div>
         </div>
       </div>`);
-    document.querySelector('.modal').classList.add('modal-xl');
+    const qm=document.querySelector('.modal');if(qm){qm.classList.add('modal-xl');qm.style.maxHeight='90vh';qm.style.overflowY='auto';}
   }catch(e){toast('Error loading quotation','error');}
 }
 
@@ -1514,7 +1490,7 @@ async function buildRevenue(){
   return `
   <div class="tabs">
     <div class="tab ${appState.financeTab==='company'?'active':''}" onclick="setFinanceTab('company')">Company Finance</div>
-    <div class="tab ${appState.financeTab==='personal'?'active':''}" onclick="setFinanceTab('personal')">Personal & Team Finance</div>
+    <div class="tab ${appState.financeTab==='personal'?'active':''}" onclick="setFinanceTab('personal')">Personal & Team</div>
   </div>
   <div id="finance-content">${await buildFinanceTab()}</div>`;
 }
@@ -1529,6 +1505,7 @@ async function buildFinanceTab(){
 }
 async function buildCompanyFinance(){
   const[stats,rev,clients]=await Promise.all([api('/api/dashboard').catch(()=>({})),api('/api/revenue').catch(()=>({})),api('/api/clients').catch(()=>[])]);
+  const safeStats={totalRevenue:stats.totalRevenue||0,totalSpend:stats.totalSpend||0,profit:stats.profit||0,activeClients:stats.activeClients||0,totalClients:stats.totalClients||0,automationRevenue:stats.automationRevenue||0,collaborationRevenue:stats.collaborationRevenue||0,thisMonth:stats.thisMonth||0,projected:stats.projected||0};
   appState.clients=clients;
   const entries=(rev&&rev.entries)||[];
   const totalClientRev=clients.reduce((s,c)=>s+(c.revenue||0),0);
@@ -1678,10 +1655,16 @@ async function buildPersonalFinance(){
 
 // ── TALLY / DAILY SPENDS ─────────────────────────────────────
 async function buildTally(){
-  let data={entries:[],summary:{total:0,categories:[]}};
-  try{data=await api('/api/tally');}catch(e){}
-  const entries=data.entries||[];
-  const summary=data.summary||{total:0,categories:[]};
+  let entries=[];
+  try{
+    const raw=await api('/api/finance/daily-spend');
+    // server returns plain array
+    entries=Array.isArray(raw)?raw:(raw.entries||[]);
+  }catch(e){}
+  // Build summary from entries
+  const catMap={};
+  entries.forEach(e=>{const k=e.category||'Other';if(!catMap[k])catMap[k]=0;catMap[k]+=(e.amount||0);});
+  const summary={total:entries.reduce((s,e)=>s+(e.amount||0),0),categories:Object.entries(catMap).map(([name,total])=>({name,total}))};
 
   // Group by month
   const byMonth={};
@@ -1747,9 +1730,10 @@ async function openAddSpend(){
   openModal(`<div class="modal-title">Add Spend Entry</div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Category</label>
-        <select class="form-input" id="m-cat">
-          <option>Ad Spend</option><option>Salary</option><option>Software</option><option>Office</option><option>Travel</option><option>Other</option>
+        <select class="form-input" id="m-cat" onchange="toggleCustomCat(this)">
+          <option>Ad Spend</option><option>Salary</option><option>Software</option><option>Office</option><option>Travel</option><option>Other</option><option value="__custom">+ Custom...</option>
         </select>
+        <input class="form-input" id="m-cat-custom" placeholder="Enter custom category" style="display:none;margin-top:6px">
       </div>
       <div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" id="m-amount" type="number" placeholder="5000"></div>
     </div>
@@ -1762,11 +1746,15 @@ async function openAddSpend(){
     </div>
     <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveSpend()">Add Spend</button></div>`);
 }
+function toggleCustomCat(sel){
+  const custom=document.getElementById('m-cat-custom');
+  if(custom) custom.style.display=sel.value==='__custom'?'block':'none';
+}
 async function saveSpend(){
   const amount=parseFloat(document.getElementById('m-amount').value);
   if(!amount||isNaN(amount)){toast('Enter valid amount','error');return;}
-  await api('/api/tally',{method:'POST',body:JSON.stringify({
-    category:document.getElementById('m-cat').value,
+  await api('/api/finance/daily-spend',{method:'POST',body:JSON.stringify({
+    category:(()=>{const sel=document.getElementById('m-cat');const custom=document.getElementById('m-cat-custom');return sel.value==='__custom'?(custom?.value||'Other'):sel.value;})(),
     amount,
     description:document.getElementById('m-desc').value,
     date:document.getElementById('m-date').value,
@@ -1776,7 +1764,7 @@ async function saveSpend(){
 }
 async function deleteSpend(id){
   if(!confirm('Delete this spend entry?')) return;
-  await api(`/api/tally/${id}`,{method:'DELETE'});
+  await api(`/api/finance/daily-spend/${id}`,{method:'DELETE'});
   toast('Entry deleted');navigate('tally');
 }
 
