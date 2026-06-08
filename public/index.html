@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WeClick AI</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#F4F4F2;
@@ -830,37 +833,37 @@ async function buildClientDetail(){
   </div>`:'';
 
   const headerHtml=`
-  <div class="cd-header">
-    <div style="height:4px;background:${c.color}"></div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px">
+    <div style="height:3px;background:${c.color||'var(--orange)'}"></div>
     ${statusBanner}
-    <div class="cd-header-top">
-      <div class="cd-av" style="background:${c.color}" onclick="document.getElementById('avatar-input').click()" title="Click to change photo">
-        <div class="cd-av-inner">${ini(c.name)}</div>
-        ${c.avatar_url?`<img src="${c.avatar_url}" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"/>`:''}
-        <div class="cd-av-cam">📷</div>
+    <div style="padding:18px 20px;display:flex;align-items:flex-start;gap:14px">
+      <div style="width:52px;height:52px;min-width:52px;border-radius:50%;position:relative;overflow:hidden;cursor:pointer;background:${c.color||'var(--orange)'};flex-shrink:0" onclick="document.getElementById('avatar-input').click()" title="Click to change photo">
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff">${ini(c.name)}</div>
+        ${c.avatar_url?`<img src="${c.avatar_url}" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%"/>`:''}
+        <div style="position:absolute;right:-1px;bottom:-1px;width:17px;height:17px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:8px;border:2px solid #fff">📷</div>
       </div>
       <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadAvatar(${c.id}, this)"/>
-      <div class="cd-info">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px">
-          <span class="cd-name">${c.name}</span>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <span style="font-size:17px;font-weight:700;letter-spacing:-0.4px;color:var(--text)">${c.name}</span>
           <span class="badge ${clientStatusBadgeClass(c.status)}">${c.status}</span>
-          ${c.metaAccount?.is_active?`<span class="meta-badge">f Meta</span>`:''}
+          ${c.metaAccount?.is_active?`<span style="display:inline-flex;align-items:center;gap:3px;background:#EBF5FF;color:#1877F2;border:1px solid #BFDBFE;border-radius:20px;font-size:10px;font-weight:600;padding:1px 7px">f Meta</span>`:''}
         </div>
-        <div class="cd-company">${c.company}</div>
-        ${c.email?`<div class="cd-email">✉ ${c.email}</div>`:''}
+        <div style="font-size:13px;color:var(--text2)">${c.company}</div>
+        ${c.email?`<div style="font-size:11.5px;color:var(--text3);margin-top:1px">✉ ${c.email}</div>`:''}
       </div>
-      <div class="cd-actions">
+      <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;align-self:flex-start">
         <button class="btn btn-sm" onclick="openSendReport(${c.id})">Send Report</button>
-        <button class="btn btn-sm ${c.status==='Active'?'':'btn-primary'}" onclick="toggleClientStatus(${c.id},'${c.status}')">${c.status==='Active'?'⏸ Pause':'▶ Resume'}</button>
+        <button class="btn btn-sm btn-pause" onclick="toggleClientPause(${c.id},'${c.status}')">${c.status==='Active'?'⏸ Pause':'▶ Resume'}</button>
         <button class="btn btn-primary btn-sm" onclick="openEditClient(${c.id})">Edit Client</button>
       </div>
     </div>
-    <div class="cd-stats">
-      <div class="cd-stat"><div class="cd-stat-lbl">Revenue</div><div class="cd-stat-val" style="color:var(--orange)">${fmt(c.revenue)}</div></div>
-      <div class="cd-stat"><div class="cd-stat-lbl">Ad Spend</div><div class="cd-stat-val">${fmt(c.spend)}</div></div>
-      <div class="cd-stat"><div class="cd-stat-lbl">Profit</div><div class="cd-stat-val" style="color:var(--green)">${fmt(c.profit)}</div></div>
-      <div class="cd-stat"><div class="cd-stat-lbl">Expected</div><div class="cd-stat-val" style="color:var(--blue)">${fmt(c.expected_revenue)}</div></div>
-      <div class="cd-stat"><div class="cd-stat-lbl">ROI</div><div class="cd-stat-val" style="color:var(--green)">${c.spend>0?((c.profit/c.spend)*100).toFixed(0):'—'}${c.spend>0?'%':''}</div></div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--border2)">
+      <div style="padding:12px 18px;border-right:1px solid var(--border2)"><div style="font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Revenue</div><div style="font-size:17px;font-weight:700;color:var(--orange)">${fmt(c.revenue)}</div></div>
+      <div style="padding:12px 18px;border-right:1px solid var(--border2)"><div style="font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Ad Spend</div><div style="font-size:17px;font-weight:700;color:var(--text)">${fmt(c.spend)}</div></div>
+      <div style="padding:12px 18px;border-right:1px solid var(--border2)"><div style="font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Profit</div><div style="font-size:17px;font-weight:700;color:var(--green)">${fmt(c.profit)}</div></div>
+      <div style="padding:12px 18px;border-right:1px solid var(--border2)"><div style="font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Expected</div><div style="font-size:17px;font-weight:700;color:var(--blue)">${fmt(c.expected_revenue)}</div></div>
+      <div style="padding:12px 18px"><div style="font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">ROI</div><div style="font-size:17px;font-weight:700;color:var(--green)">${c.spend>0?Math.round((c.revenue/c.spend)*100):0}%</div></div>
     </div>
   </div>`;
 
