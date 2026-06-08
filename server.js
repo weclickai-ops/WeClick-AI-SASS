@@ -511,6 +511,249 @@ app.delete('/api/tally/:id', async (req, res) => {
   catch(e){ res.status(500).json({error:e.message}); }
 });
 
+
+
+// ══════════════════════════════════════════════════════════════
+// MEETINGS
+// ══════════════════════════════════════════════════════════════
+app.get('/api/meetings', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT m.*, c.name as client_name, c.company as client_company, c.email as client_email, c.color as client_color
+      FROM meetings m LEFT JOIN clients c ON c.id=m.client_id
+      ORDER BY m.meeting_date ASC`);
+    res.json(result.rows);
+  } catch(e) { res.json([]); }
+});
+
+app.post('/api/meetings', async (req, res) => {
+  try {
+    const { client_id, title, meeting_date, duration_mins, meeting_type, meeting_link, notes, send_notification } = req.body;
+    const result = await db.query(
+      `INSERT INTO meetings (client_id,title,meeting_date,duration_mins,meeting_type,meeting_link,notes,notified,created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,false,NOW()) RETURNING *`,
+      [client_id, title||'Meeting', meeting_date, duration_mins||60, meeting_type||'video', meeting_link||'', notes||'']
+    );
+    const meeting = result.rows[0];
+    await logActivity({type:'meeting', title:`Meeting scheduled: ${title} with client`, client_id: client_id});
+
+    if (send_notification) {
+      await sendMeetingEmail(meeting.id);
+    }
+    res.json(meeting);
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+app.put('/api/meetings/:id', async (req, res) => {
+  try {
+    const { client_id, title, meeting_date, duration_mins, meeting_type, meeting_link, notes } = req.body;
+    const result = await db.query(
+      `UPDATE meetings SET client_id=$1,title=$2,meeting_date=$3,duration_mins=$4,meeting_type=$5,meeting_link=$6,notes=$7 WHERE id=$8 RETURNING *`,
+      [client_id, title, meeting_date, duration_mins||60, meeting_type||'video', meeting_link||'', notes||'', req.params.id]
+    );
+    res.json(result.rows[0]);
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+app.delete('/api/meetings/:id', async (req, res) => {
+  try { await db.query('DELETE FROM meetings WHERE id=$1', [req.params.id]); res.json({ok:true}); }
+  catch(e) { res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/meetings/:id/notify', async (req, res) => {
+  try {
+    const sent = await sendMeetingEmail(parseInt(req.params.id));
+    res.json({ok:true, sent});
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+async function sendMeetingEmail(meetingId) {
+  try {
+    const mRes = await db.query(`SELECT m.*,c.name,c.email,c.company FROM meetings m JOIN clients c ON c.id=m.client_id WHERE m.id=$1`, [meetingId]);
+    if (!mRes.rows[0]) return false;
+    const m = mRes.rows[0];
+    if (!m.email) return false;
+    const co = await db.query('SELECT * FROM company_settings LIMIT 1').then(r=>r.rows[0]||{});
+    const sgKey = co.sendgrid_key;
+    const dt = new Date(m.meeting_date);
+    const dateStr = dt.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const timeStr = dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+    const emailBody = `Hi ${m.name.split(' ')[0]},
+
+Your meeting has been scheduled with ${co.company_name||'WeClick AI'}.
+
+📅 Date: ${dateStr}
+🕐 Time: ${timeStr} IST
+⏱ Duration: ${m.duration_mins||60} minutes
+📋 Title: ${m.title}
+${m.meeting_link?`🔗 Meeting Link: ${m.meeting_link}`:''}
+${m.notes?`
+Agenda:
+${m.notes}`:''}
+
+Please confirm your attendance by replying to this email.
+
+Best regards,
+${co.company_name||'WeClick AI'} Team
+${co.phone?'📞 '+co.phone:''}
+${co.email?'✉ '+co.email:''}`;
+
+    if (sgKey) {
+      await fetch('https://api.sendgrid.com/v3/mail/send', {
+        method:'POST',
+        headers:{'Authorization':'Bearer '+sgKey,'Content-Type':'application/json'},
+        body: JSON.stringify({
+          personalizations:[{to:[{email:m.email, name:m.name}]}],
+          from:{email:co.email||'noreply@weclick.ai', name:co.company_name||'WeClick AI'},
+          subject:`📅 Meeting Scheduled: ${m.title} — ${dateStr}`,
+          content:[{type:'text/plain', value:emailBody}]
+        })
+      });
+      await db.query('UPDATE meetings SET notified=true WHERE id=$1', [meetingId]);
+      return true;
+    }
+    // No SendGrid key - just mark as notified in demo mode
+    await db.query('UPDATE meetings SET notified=true WHERE id=$1', [meetingId]);
+    return false;
+  } catch(e) { console.error('sendMeetingEmail failed:', e.message); return false; }
+}
+
+// ══════════════════════════════════════════════════════════════
+// AI MARKET RESEARCH
+// ══════════════════════════════════════════════════════════════
+app.post('/api/ai/research', async (req, res) => {
+  try {
+    const { prompt, clientName, industry, focus } = req.body;
+    if (!prompt) return res.status(400).json({error:'No prompt'});
+
+    // Call Anthropic API
+    const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY||'',
+        'anthropic-version':'2023-06-01'
+      },
+      body: JSON.stringify({
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:2000,
+        messages:[{role:'user', content:prompt}]
+      })
+    });
+
+    if (!aiRes.ok) {
+      const err = await aiRes.json().catch(()=>({}));
+      // Fallback: generate a template report if no API key
+      if (!process.env.ANTHROPIC_API_KEY) {
+        return res.json({report: generateFallbackReport(clientName, industry, focus, req.body.clientCompany)});
+      }
+      throw new Error(err.error?.message || 'AI API error');
+    }
+
+    const aiData = await aiRes.json();
+    const report = aiData.content?.[0]?.text || 'No report generated';
+    res.json({report});
+  } catch(e) {
+    // Fallback report
+    res.json({report: generateFallbackReport(req.body.clientName, req.body.industry, req.body.focus, req.body.clientCompany)});
+  }
+});
+
+function generateFallbackReport(clientName, industry, focus, company) {
+  const now = new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+  return `MARKET RESEARCH REPORT
+Client: ${clientName} (${company||'—'})
+Industry: ${industry}
+Generated: ${now}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. MARKET OVERVIEW
+The ${industry} market in India is growing rapidly, driven by digital adoption and rising consumer spending. Key opportunities exist in tier-2 cities and mobile-first audiences.
+
+2. TARGET AUDIENCE
+• Primary: 25-40 year olds, urban professionals
+• Secondary: 18-25, digital natives, aspirational buyers
+• Pain Points: Price sensitivity, trust issues, discovery challenges
+• Motivations: Quality, convenience, social proof, brand story
+
+3. COMPETITOR LANDSCAPE
+Top players in ${industry} compete on price, quality, and digital presence. Gaps exist in personalization, after-sales service, and community building.
+
+4. RECOMMENDED AD STRATEGY
+• Platform: Meta Ads (primary), Google Search (secondary)
+• Budget Split: 60% Meta, 30% Google, 10% testing
+• Best Performing Formats: Video reels, carousel ads, UGC
+
+5. TOP AD COPY ANGLES
+• "The problem you didn't know you had" — pain-first hook
+• Social proof + transformation story
+• Limited offer + urgency
+• Before/after or comparison
+• Founder/team story for trust
+
+6. QUICK WINS THIS WEEK
+✓ Set up Meta Pixel and conversion tracking
+✓ Create 3 video testimonial ads
+✓ Launch retargeting campaign for website visitors
+✓ A/B test 2 different headlines
+✓ Set up WhatsApp follow-up automation
+
+7. KPIs TO TRACK
+• CPL (Cost Per Lead) — target < ₹150
+• ROAS (Return on Ad Spend) — target > 3x
+• CTR (Click Through Rate) — target > 1.5%
+• Conversion Rate — target > 3%
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Note: Add your ANTHROPIC_API_KEY to Vercel environment variables for AI-powered personalized reports.`;
+}
+
+
+// ── LOW BALANCE ALERT (call manually or via cron) ─────────────
+app.post('/api/meta/check-alerts', async (req, res) => {
+  try {
+    const co = await db.query('SELECT * FROM company_settings LIMIT 1').then(r=>r.rows[0]||{});
+    const alertEmail = co.alert_email;
+    const threshold = parseFloat(co.low_balance_alert || 500);
+    if (!alertEmail) return res.json({ok:true, skipped:'No alert email set in Settings'});
+
+    const lowAccounts = await db.query(
+      `SELECT c.name, c.company, ma.balance, ma.ad_account_id
+       FROM meta_accounts ma JOIN clients c ON c.id=ma.client_id
+       WHERE ma.is_active=true AND ma.balance IS NOT NULL AND ma.balance < $1`,
+      [threshold]
+    );
+    if (lowAccounts.rows.length === 0) return res.json({ok:true, message:'No low balance accounts'});
+
+    // Log activity for each
+    for (const acc of lowAccounts.rows) {
+      await logActivity({type:'meta', title:`⚠️ Low Meta balance: ${acc.name} (₹${parseFloat(acc.balance).toFixed(0)})`});
+    }
+
+    // If SendGrid key is set, send email
+    const sgKey = co.sendgrid_key;
+    if (sgKey) {
+      const body = {
+        personalizations:[{to:[{email:alertEmail}]}],
+        from:{email: co.email||'noreply@weclick.ai', name: co.company_name||'WeClick AI'},
+        subject:`⚠️ Low Meta Ads Balance Alert — ${lowAccounts.rows.length} account(s)`,
+        content:[{type:'text/plain', value:
+          `Hi,\n\nThe following client Meta Ads accounts have low balance (below ₹${threshold}):\n\n` +
+          lowAccounts.rows.map(a=>`• ${a.name} (${a.company}): ₹${parseFloat(a.balance).toFixed(0)}`).join('\n') +
+          `\n\nPlease top up these accounts to avoid campaign disruptions.\n\n— ${co.company_name||'WeClick AI'} Dashboard`
+        }]
+      };
+      await fetch('https://api.sendgrid.com/v3/mail/send', {
+        method:'POST',
+        headers:{'Authorization':'Bearer '+sgKey,'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+      });
+    }
+
+    res.json({ok:true, alerted: lowAccounts.rows.length, emailSent: !!sgKey});
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
 // ── SERVE FRONTEND ─────────────────────────────────────────────
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
