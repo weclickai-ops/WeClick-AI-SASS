@@ -4,7 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
+// fetch is built-in in Node 18+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
