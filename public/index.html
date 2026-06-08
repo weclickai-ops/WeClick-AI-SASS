@@ -1078,120 +1078,110 @@ async function deleteContentTask(clientId,id){
 function openCreateQuotation(clientId, clientName, clientCompany){
   appState.quoteItems=[{service:'',description:'',qty:1,rate:0}];
   const validDate=new Date();validDate.setDate(validDate.getDate()+30);
-  const defaultTC=`1. Scope: Services cover only the deliverables listed above. Any additional work will be quoted separately.\n2. Payment: 100% advance required before project kickoff. No work begins until full payment is received.\n3. Revisions: Any revision requests beyond the agreed scope will be billed additionally.\n4. Ad spend: Client is responsible for ad spend on Meta Ads. Agency fee covers setup & management only.\n5. Account access: Client must provide Business Manager access within 3 business days of acceptance.\n6. Campaign monitoring: WeClick AI will actively monitor all campaigns. In the event of low ad funds, the client will be notified via email to add funds promptly.\n7. Confidentiality: Both parties agree to keep all shared materials, strategies, and data confidential.\n8. Intellectual property: All creatives and strategy documents remain agency property until full payment is received.\n9. Validity: This quotation is valid until the date mentioned above and is subject to change thereafter.\n10. Jurisdiction: Any disputes arising from this agreement shall be handled under the jurisdiction of WeClick AI.`;
+  const vd=validDate.toISOString().split('T')[0];
 
-  // Get company settings for pre-filling
-  api('/api/settings/company').catch(()=>({})).then(co=>{
+  api('/api/settings/company').catch(()=>({})).then(function(co){
     const addr=[co.address_line1,co.address_line2,co.city,co.state,co.pincode].filter(Boolean).join(', ');
+    const addrHtml=addr||'Not set — go to Settings to add company address';
+    const bankHtml=co.bank_name
+      ?('<b>Bank:</b> '+co.bank_name+'<br><b>A/C:</b> '+(co.bank_account||'—')+'<br><b>IFSC:</b> '+(co.bank_ifsc||'—')+'<br><b>Name:</b> '+(co.bank_holder||'—'))
+      :'Not set — go to Settings to add bank details';
+    const upiHtml=co.upi_id
+      ?('<div style="font-size:12px;font-weight:600;margin-bottom:6px">UPI: '+co.upi_id+'</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=upi://pay?pa='+encodeURIComponent(co.upi_id)+'%26pn='+encodeURIComponent(co.company_name||'WeClick AI')+'%26cu=INR" style="border-radius:6px;border:1px solid var(--orange-mid);display:block"/>')
+      :'Not set — go to Settings to add UPI ID';
+    const sigHtml=co.signature_url
+      ?('<img src="'+co.signature_url+'" style="height:44px;object-fit:contain;border:1px solid var(--border);border-radius:6px;padding:4px;background:#fff"/><div style="font-size:10px;color:var(--text3);margin-top:3px">Signature loaded from Settings</div>')
+      :'Not set — go to Settings to upload signature';
 
-    openModal(`
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div style="font-size:15px;font-weight:650;color:var(--text)">Create Quotation — ${clientName}</div>
-      <div style="font-size:11px;color:var(--text3)">${clientCompany}</div>
-    </div>
-    <div style="max-height:72vh;overflow-y:auto;padding-right:4px">
+    const defaultTC=`1. Scope: Services cover only the deliverables listed above. Any additional work will be quoted separately.
+2. Payment: 100% advance required before project kickoff. No work begins until full payment is received.
+3. Revisions: Any revision requests beyond the agreed scope will be billed additionally.
+4. Ad spend: Client is responsible for ad spend on Meta Ads. Agency fee covers setup and management only.
+5. Account access: Client must provide Business Manager access within 3 business days of acceptance.
+6. Campaign monitoring: WeClick AI will actively monitor all campaigns. In the event of low ad funds, the client will be notified via email to add funds promptly.
+7. Confidentiality: Both parties agree to keep all shared materials, strategies, and data confidential.
+8. Intellectual property: All creatives and strategy documents remain agency property until full payment is received.
+9. Validity: This quotation is valid until the date mentioned above and is subject to change thereafter.
+10. Jurisdiction: Any disputes arising from this agreement shall be handled under the jurisdiction of WeClick AI.`;
 
-      <!-- LINE ITEMS -->
-      <div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Line Items</div>
-      <div id="quote-items-wrap"></div>
-      <button class="btn btn-sm" style="margin:6px 0 16px" onclick="addQuoteItem()">+ Add Line Item</button>
+    openModal('<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
+      +'<div style="font-size:15px;font-weight:650;color:var(--text)">Create Quotation — '+clientName+'</div>'
+      +'<div style="font-size:11px;color:var(--text3)">'+clientCompany+'</div>'
+      +'</div>'
+      +'<div style="max-height:72vh;overflow-y:auto;padding-right:4px">'
+      +'<div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Line Items</div>'
+      +'<div id="quote-items-wrap"></div>'
+      +'<button class="btn btn-sm" style="margin:6px 0 16px" onclick="addQuoteItem()">+ Add Line Item</button>'
+      +'<div class="form-row" style="margin-bottom:16px">'
+        +'<div class="form-group"><label class="form-label">GST %</label><input class="form-input" id="m-gst" type="number" value="0" min="0" max="28" oninput="renderQuoteTotals()"></div>'
+        +'<div class="form-group"><label class="form-label">Valid Until</label><input class="form-input" id="m-valid" type="date" value="'+vd+'"></div>'
+      +'</div>'
+      +'<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-bottom:14px">'
+        +'<div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Addresses</div>'
+        +'<div class="form-row">'
+          +'<div>'
+            +'<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px">Our Company Address</div>'
+            +'<div style="font-size:11.5px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;min-height:40px;color:var(--text2)">'+addrHtml+'</div>'
+          +'</div>'
+          +'<div>'
+            +'<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px">Client Business Address</div>'
+            +'<textarea class="form-input" id="m-client-addr" rows="2" placeholder="Client business address (optional)">'+clientCompany+'</textarea>'
+          +'</div>'
+        +'</div>'
+      +'</div>'
+      +'<div style="background:#FFF3EA;border:1px solid var(--orange-mid);border-radius:8px;padding:14px;margin-bottom:14px">'
+        +'<div style="font-size:10.5px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Payment Details</div>'
+        +'<div class="form-row">'
+          +'<div><div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">Bank Transfer</div>'
+            +'<div style="font-size:11.5px;color:var(--text2);line-height:2">'+bankHtml+'</div></div>'
+          +'<div><div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">UPI / QR Code</div>'+upiHtml+'</div>'
+        +'</div>'
+      +'</div>'
+      +'<div id="quote-totals-wrap"></div>'
+      +'<div class="form-group" style="margin-top:12px">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">'
+          +'<label class="form-label" style="margin:0">Terms and Conditions</label>'
+          +'<button class="btn btn-ghost btn-sm" onclick="resetTC()" style="font-size:10.5px;padding:2px 7px">Reset to Default</button>'
+        +'</div>'
+        +'<textarea class="form-input" id="m-tc" rows="5" style="font-size:11.5px;resize:vertical">'+defaultTC+'</textarea>'
+        +'<div style="font-size:10px;color:var(--text3);margin-top:3px">These T&C appear at the bottom of the quotation. Edit freely.</div>'
+      +'</div>'
+      +'<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-top:12px">'
+        +'<div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Signature and Document</div>'
+        +'<div class="form-row">'
+          +'<div><div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Agency Signature</div>'+sigHtml+'</div>'
+          +'<div>'
+            +'<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Upload Signed Document (optional)</div>'
+            +'<div style="border:1.5px dashed var(--border);border-radius:6px;padding:12px;text-align:center;cursor:pointer" onclick="clickSignedDoc()">'
+              +'<div style="font-size:18px;margin-bottom:4px">📄</div>'
+              +'<div style="font-size:11.5px;color:var(--text2)">Upload signed PDF or image</div>'
+              +'<div style="font-size:10px;color:var(--text3)">PDF, PNG, JPG</div>'
+              +'<input type="file" id="q-signed-doc" accept=".pdf,image/*" style="display:none" onchange="previewSignedDoc(this)">'
+            +'</div>'
+            +'<div id="q-signed-preview" style="display:none;margin-top:6px;font-size:11px;color:var(--green);font-weight:500"></div>'
+          +'</div>'
+        +'</div>'
+      +'</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:7px;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid var(--border2)">'
+        +'<button class="btn" onclick="closeModal()">Cancel</button>'
+        +'<button class="btn btn-primary" onclick="saveQuotation('+clientId+')">Save Quotation</button>'
+      +'</div>');
 
-      <!-- GST + VALID -->
-      <div class="form-row" style="margin-bottom:16px">
-        <div class="form-group"><label class="form-label">GST %</label><input class="form-input" id="m-gst" type="number" value="0" min="0" max="28" oninput="renderQuoteTotals()"></div>
-        <div class="form-group"><label class="form-label">Valid Until</label><input class="form-input" id="m-valid" type="date" value="${validDate.toISOString().split('T')[0]}"></div>
-      </div>
-
-      <!-- ADDRESSES -->
-      <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-bottom:14px">
-        <div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">📍 Addresses (shown on quotation)</div>
-        <div class="form-row">
-          <div>
-            <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px">Our Company Address</div>
-            <div style="font-size:11.5px;color:${addr?'var(--text)':'var(--text3)'};padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;min-height:40px">
-              ${addr||'<span style="color:var(--text3)">Not set — add in <b onclick="closeModal();navigate('settings')" style="cursor:pointer;color:var(--orange);text-decoration:underline">Settings → Company Info</b></span>'}
-            </div>
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px">Client Business Address</div>
-            <textarea class="form-input" id="m-client-addr" rows="2" placeholder="Client's business address (optional)">${clientCompany||''}</textarea>
-          </div>
-        </div>
-      </div>
-
-      <!-- PAYMENT DETAILS -->
-      <div style="background:#FFF3EA;border:1px solid var(--orange-mid);border-radius:8px;padding:14px;margin-bottom:14px">
-        <div style="font-size:10.5px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">💳 Payment Details (shown on quotation)</div>
-        <div class="form-row">
-          <div>
-            <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">Bank Transfer</div>
-            <div style="font-size:11.5px;color:var(--text2);line-height:2">
-              ${(co.bank_name?'<div><b>Bank:</b> '+co.bank_name+'</div>':'')+(co.bank_account?'<div><b>A/C:</b> '+co.bank_account+'</div>':'')+(co.bank_ifsc?'<div><b>IFSC:</b> '+co.bank_ifsc+'</div>':'')+(co.bank_holder?'<div><b>Name:</b> '+co.bank_holder+'</div>':'')+((!co.bank_account)?'<div style="color:var(--text3)">Not set — add in Settings</div>':'')}
-            </div>
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">UPI / QR Code</div>
-            ${co.upi_id?('<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">UPI: '+co.upi_id+'</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=upi://pay?pa='+encodeURIComponent(co.upi_id)+'%26pn='+encodeURIComponent(co.company_name||'WeClick AI')+'%26cu=INR" style="border-radius:6px;border:1px solid var(--orange-mid);display:block"/><div style="font-size:10px;color:var(--text3);margin-top:4px">QR auto-shown on PDF</div>'):'<div style="color:var(--text3);font-size:11.5px">Not set — add in Settings</div>'}
-          </div>
-        </div>
-      </div>
-
-      <!-- TOTALS -->
-      <div id="quote-totals-wrap"></div>
-
-      <!-- TERMS & CONDITIONS -->
-      <div class="form-group" style="margin-top:12px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-          <label class="form-label" style="margin:0">Terms & Conditions</label>
-          <button class="btn btn-ghost btn-sm" onclick="resetTC()" style="font-size:10.5px;padding:2px 7px">↺ Reset to Default</button>
-        </div>
-        <textarea class="form-input" id="m-tc" rows="5" style="font-size:11.5px;resize:vertical">${defaultTC}</textarea>
-        <div style="font-size:10px;color:var(--text3);margin-top:3px">Shown at the bottom of the quotation. Edit freely.</div>
-      </div>
-
-      <!-- SIGNATURE SECTION -->
-      <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-top:12px">
-        <div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">✍️ Signature & Document</div>
-        <div class="form-row">
-          <div>
-            <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Agency Signature</div>
-            ${co.signature_url?('<img src="'+co.signature_url+'" style="height:44px;object-fit:contain;border:1px solid var(--border);border-radius:6px;padding:4px;background:#fff"/><div style="font-size:10px;color:var(--text3);margin-top:3px">✓ Signature loaded from Settings</div>'):'<div style="font-size:11.5px;color:var(--text3)">Not set — add in Settings → Signature</div>'}
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Upload Signed Document (optional)</div>
-            <div style="border:1.5px dashed var(--border);border-radius:6px;padding:12px;text-align:center;cursor:pointer;transition:all .12s" onclick="document.getElementById('q-signed-doc').click()" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
-              <div style="font-size:18px;margin-bottom:4px">📄</div>
-              <div style="font-size:11.5px;color:var(--text2)">Upload signed PDF / image</div>
-              <div style="font-size:10px;color:var(--text3)">PDF, PNG, JPG · Max 5MB</div>
-              <input type="file" id="q-signed-doc" accept=".pdf,image/*" style="display:none" onchange="previewSignedDoc(this)">
-            </div>
-            <div id="q-signed-preview" style="display:none;margin-top:6px;font-size:11px;color:var(--green);font-weight:500"></div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-    <div style="display:flex;gap:7px;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid var(--border2)">
-      <button class="btn" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveQuotation(${clientId})">Save Quotation</button>
-    </div>`);
-
-    // Set modal to XL size
     const modal=document.querySelector('.modal');
-    if(modal){
-      modal.style.width='820px';
-      modal.style.maxWidth='96vw';
-      modal.style.maxHeight='94vh';
-      modal.style.overflowY='auto';
-    }
-    setTimeout(()=>{renderQuoteItems();renderQuoteTotals();},60);
+    if(modal){modal.style.width='820px';modal.style.maxWidth='96vw';modal.style.maxHeight='94vh';modal.style.overflowY='auto';}
+    setTimeout(function(){renderQuoteItems();renderQuoteTotals();},60);
   });
 }
+
+function clickSignedDoc(){var el=document.getElementById('q-signed-doc');if(el)el.click();}
+
+function clickSignedDoc(){var el=document.getElementById('q-signed-doc');if(el)el.click();}
 
 function previewSignedDoc(input){
   const file=input.files[0];if(!file)return;
   const preview=document.getElementById('q-signed-preview');
-  if(preview){preview.style.display='block';preview.textContent='✓ '+file.name+' ('+( file.size/1024).toFixed(0)+' KB) — will be attached';}
+  if(preview){preview.style.display='block';preview.textContent='Attached: '+file.name+' ('+(file.size/1024).toFixed(0)+' KB)';}
 }
 
 
@@ -1447,40 +1437,46 @@ async function buildAdAnalytics(){
 
 function buildMetaAnalyticsTab(metaData,totalSpend,totalImpressions,totalLeads){
   const accounts=metaData.accounts||[];
-  return `
-  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
-    <div class="stat-card accent"><div class="stat-label">Total Meta Spend</div><div class="stat-value">${fmt(totalSpend)}</div></div>
-    <div class="stat-card"><div class="stat-label">Total Impressions</div><div class="stat-value">${totalImpressions>=1000000?(totalImpressions/1000000).toFixed(1)+'M':totalImpressions>=1000?(totalImpressions/1000).toFixed(0)+'K':totalImpressions}</div></div>
-    <div class="stat-card green-accent"><div class="stat-label">Total Leads</div><div class="stat-value">${totalLeads.toLocaleString()}</div></div>
-    <div class="stat-card blue-accent"><div class="stat-label">Connected Accounts</div><div class="stat-value">${accounts.length}</div></div>
-  </div>
-  ${accounts.length===0?`<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-text">No Meta Ads accounts connected. Go to a client profile and connect their Meta account.</div></div>`:`
-  <div class="table-wrap">
-    <div class="table-header">
-      <div class="table-title">Meta Ads — Per Client</div>
-      <button class="btn btn-sm" onclick="syncMeta()">↻ Sync All</button>
-    </div>
-    <table><thead><tr><th>Client</th><th>Account ID</th><th>Spend (30d)</th><th>Impressions</th><th>Clicks</th><th>CTR</th><th>CPC</th><th>Leads</th><th>Balance</th><th>Status</th></tr></thead><tbody>
-    ${accounts.map(a=>{
-      const c=appState.clients.find(x=>x.id===a.client_id)||{name:'—',color:'#888'};
-      const balanceLow=a.balance!==null&&a.balance<500;
-      const balanceCritical=a.balance!==null&&a.balance<100;
-      return`<tr onclick="navigate('clientDetail',${a.client_id})" style="cursor:pointer">
-        <td><div class="name-cell">${avatarHtml(c,{size:28})}<span style="font-weight:500">${c.name}</span></div></td>
-        <td><code style="font-size:11px;background:#F3F4F6;border:1px solid var(--border);border-radius:4px;padding:1px 5px">${a.ad_account_id||'—'}</code></td>
-        <td style="font-weight:500">${fmt(a.spend||0)}</td>
-        <td>${(a.impressions||0).toLocaleString()}</td>
-        <td>${(a.clicks||0).toLocaleString()}</td>
-        <td style="color:${(a.ctr||0)<1?'var(--red)':'var(--green)'}">${(a.ctr||0).toFixed(2)}%</td>
-        <td>${fmt(a.cpc||0)}</td>
-        <td style="color:var(--green);font-weight:500">${(a.leads||0).toLocaleString()}</td>
-        <td style="color:${balanceCritical?'var(--red)':balanceLow?'#D97706':'var(--green)'}">
-          ${a.balance!==null?((balanceCritical?'🚨':balanceLow?'⚠️':'')+' ₹'+parseFloat(a.balance).toFixed(0)+' remaining'):'—'}
-        </td>
-        <td><span class="badge ${a.is_active?'badge-green':'badge-gray'}">${a.is_active?'Active':'Inactive'}</span></td>
-      </tr>`;}).join('')}
-    </tbody></table>
-  </div>`};
+  // Build stats row
+  const statsRow='<div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">'
+    +'<div class="stat-card accent"><div class="stat-label">Total Meta Spend</div><div class="stat-value">'+fmt(totalSpend)+'</div></div>'
+    +'<div class="stat-card"><div class="stat-label">Total Impressions</div><div class="stat-value">'+totalImpressions.toLocaleString()+'</div></div>'
+    +'<div class="stat-card green-accent"><div class="stat-label">Total Leads</div><div class="stat-value">'+totalLeads.toLocaleString()+'</div></div>'
+    +'<div class="stat-card blue-accent"><div class="stat-label">Connected Accounts</div><div class="stat-value">'+accounts.length+'</div></div>'
+    +'</div>';
+  if(!accounts.length){
+    return statsRow+'<div class="empty-state"><div class="empty-icon">📊</div>'
+      +'<div class="empty-label">No Meta Ads accounts connected</div>'
+      +'<div class="empty-text">Go to a client profile to connect their Meta Ads account.</div></div>';
+  }
+  var rows=accounts.map(function(a){
+    var cl=appState.clients.find(function(x){return x.id===a.client_id;})||{name:'Unknown',color:'#888'};
+    var low=a.balance!==null&&a.balance<500;
+    var crit=a.balance!==null&&a.balance<100;
+    var balColor=crit?'var(--red)':low?'#D97706':'var(--green)';
+    var balText=a.balance!==null?((crit?'🚨':low?'⚠️':'')+' ₹'+parseFloat(a.balance).toFixed(0)):'—';
+    var badge='<span class="badge '+(a.is_active?'badge-green':'badge-gray')+'">'+(a.is_active?'Active':'Inactive')+'</span>';
+    var ctrColor=(a.ctr||0)<1?'var(--red)':'var(--green)';
+    return '<tr onclick="navigate(\'clientDetail\','+a.client_id+')" style="cursor:pointer">'
+      +'<td><div class="name-cell">'+avatarHtml(cl,{size:28})+'<span style="font-weight:500">'+cl.name+'</span></div></td>'
+      +'<td><code style="font-size:11px;background:#F3F4F6;padding:2px 6px;border-radius:4px">'+(a.ad_account_id||'—')+'</code></td>'
+      +'<td style="font-weight:500">'+fmt(a.spend||0)+'</td>'
+      +'<td>'+((a.impressions||0).toLocaleString())+'</td>'
+      +'<td>'+((a.clicks||0).toLocaleString())+'</td>'
+      +'<td style="color:'+ctrColor+'">'+((a.ctr||0).toFixed(2))+'%</td>'
+      +'<td>'+fmt(a.cpc||0)+'</td>'
+      +'<td style="color:var(--green);font-weight:500">'+((a.leads||0).toLocaleString())+'</td>'
+      +'<td style="color:'+balColor+'">'+balText+'</td>'
+      +'<td>'+badge+'</td>'
+      +'</tr>';
+  }).join('');
+  return statsRow
+    +'<div class="table-wrap">'
+    +'<div class="table-header"><div class="table-title">Meta Ads Per Client</div>'
+    +'<button class="btn btn-sm" onclick="syncMeta()">Sync All</button></div>'
+    +'<table><thead><tr><th>Client</th><th>Account ID</th><th>Spend</th><th>Impressions</th>'
+    +'<th>Clicks</th><th>CTR</th><th>CPC</th><th>Leads</th><th>Balance</th><th>Status</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 
 function buildGoogleAnalyticsTab(googleData,totalSpend){
@@ -2213,15 +2209,27 @@ function buildSettingsCompany(co){
 }
 
 function buildSettingsPayment(co){
-  const upiQR=co.upi_id?`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=upi://pay?pa=${encodeURIComponent(co.upi_id)}%26pn=${encodeURIComponent(co.company_name||'WeClick AI')}`:null;
-  return `<div class="cd-card">
-    <div class="cd-card-head"><div class="cd-card-title">Payment Details — shown on Quotations</div></div>
-    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
-      <div class="form-group"><label class="form-label">UPI ID <span style="color:var(--text2);font-weight:400">(QR auto-generated)</span></label>
-        <input class="form-input" id="s-upi" placeholder="yourname@paytm" value="${co.upi_id||''}">
-        ${upiQR?'<div style="margin-top:10px;display:flex;align-items:center;gap:12px"><img src="'+upiQR+'" style="width:80px;height:80px;border-radius:5px"/><div style="font-size:12px">Scan to pay via UPI</div></div>':''})});
-  toast('Signature removed');navigate('settings');
+  const upiQR=co.upi_id?('https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=upi://pay?pa='+encodeURIComponent(co.upi_id)+'%26pn='+encodeURIComponent(co.company_name||'WeClick AI')):null;
+  const qrHtml=upiQR?('<div style="margin-top:10px;display:flex;align-items:center;gap:12px"><img src="'+upiQR+'" style="width:100px;height:100px;border-radius:6px;border:1px solid var(--border)"/><span style="font-size:12px;color:var(--text2)">Scan to pay via UPI</span></div>'):'';
+  return '<div class="cd-card">'
+    +'<div class="cd-card-head"><div class="cd-card-title">Payment Details — shown on Quotations</div></div>'
+    +'<div style="padding:20px;display:flex;flex-direction:column;gap:14px">'
+    +'<div class="form-group"><label class="form-label">UPI ID <span style="color:var(--text2);font-weight:400">(QR auto-generated)</span></label>'
+    +'<input class="form-input" id="s-upi" placeholder="yourname@paytm" value="'+(co.upi_id||'')+'">'
+    +qrHtml+'</div>'
+    +'<div style="border-top:1px solid var(--border);padding-top:14px">'
+    +'<div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px">Bank Transfer Details</div>'
+    +'<div class="form-row">'
+    +'<div class="form-group"><label class="form-label">Bank Name</label><input class="form-input" id="s-bank" placeholder="HDFC Bank" value="'+(co.bank_name||'')+'"></div>'
+    +'<div class="form-group"><label class="form-label">Account Holder</label><input class="form-input" id="s-holder" placeholder="WeClick AI Pvt Ltd" value="'+(co.bank_holder||'')+'"></div>'
+    +'</div><div class="form-row">'
+    +'<div class="form-group"><label class="form-label">Account Number</label><input class="form-input" id="s-accno" value="'+(co.bank_account||'')+'"></div>'
+    +'<div class="form-group"><label class="form-label">IFSC Code</label><input class="form-input" id="s-ifsc" placeholder="HDFC0001234" value="'+(co.bank_ifsc||'')+'"></div>'
+    +'</div></div>'
+    +'<button class="btn btn-primary" style="width:fit-content" onclick="savePaymentSettings()">Save Payment Details</button>'
+    +'</div></div>';
 }
+
 async function uploadSignature(input){
   const file=input.files[0];if(!file)return;
   if(file.size>2*1024*1024){toast('Max 2MB','error');return;}
