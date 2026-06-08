@@ -331,6 +331,10 @@ tbody tr:hover{background:#FAFAFA}
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg>
       Tally / Spends
     </div>
+    <div class="nav-item" data-page="meetings">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="2"/><path d="M1 7h14M5 1v4M11 1v4"/></svg>
+      Client Meetings
+    </div>
     <div class="nav-item" data-page="reminders">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1a5 5 0 015 5v2l1.5 3h-13L3 8V6a5 5 0 015-5z"/><path d="M6.5 13.5a1.5 1.5 0 003 0"/></svg>
       Reminders
@@ -457,7 +461,7 @@ async function navigate(page,id){
   if(id!==undefined) appState.selectedClientId=id;
   const navMap={clientDetail:'clients'};
   setActiveNav(navMap[page]||page);
-  const titles={dashboard:'Dashboard',clients:'Clients',clientDetail:'Client Detail',campaigns:'Campaigns',automations:'Automations',collaborations:'Collaborations',revenue:'Revenue · Finance Hub',tally:'Tally / Daily Spends',reminders:'Payment Reminders',adanalytics:'Ad Analytics',settings:'Settings'};
+  const titles={dashboard:'Dashboard',clients:'Clients',clientDetail:'Client Detail',campaigns:'Campaigns',automations:'Automations',collaborations:'Collaborations',revenue:'Revenue · Finance Hub',tally:'Tally / Daily Spends',reminders:'Payment Reminders',meetings:'Client Meetings',adanalytics:'Ad Analytics',settings:'Settings'};
   document.getElementById('topbar-title').textContent=titles[page]||page;
   renderTopbarActions();
   const content=document.getElementById('page-content');
@@ -474,6 +478,7 @@ function renderTopbarActions(){
   else if(p==='collaborations') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddCollab()">+ Add Partner</button>`;
   else if(p==='revenue') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddRevenue()">+ Manual Revenue</button>`;
   else if(p==='tally') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddSpend()">+ Add Spend</button>`;
+  else if(p==='meetings') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddMeeting()">+ Schedule Meeting</button>`;
   else if(p==='reminders') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddReminder()">+ Add Reminder</button>`;
   else el.innerHTML='';
 }
@@ -493,6 +498,7 @@ async function renderPage(){
     case 'collaborations': div.innerHTML=await buildCollaborations();break;
     case 'revenue': div.innerHTML=await buildRevenue();break;
     case 'tally': div.innerHTML=await buildTally();break;
+    case 'meetings': div.innerHTML=await buildMeetings();break;
     case 'reminders': div.innerHTML=await buildReminders();break;
     case 'adanalytics': div.innerHTML=await buildAdAnalytics();break;
     case 'settings': div.innerHTML=await buildSettings();break;
@@ -1184,86 +1190,97 @@ async function viewQuotation(qid,clientName,clientCompany){
     ]);
     const q=rows.find(r=>r.id===qid);
     if(!q){toast('Not found','error');return;}
+    const items=typeof q.items==='string'?JSON.parse(q.items):(q.items||[]);
     const issued=new Date(q.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
     const validTxt=q.valid_until?new Date(q.valid_until).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}):'—';
     const addr=[co.address_line1,co.address_line2,co.city,co.state,co.pincode].filter(Boolean).join(', ');
-    // Build UPI QR URL if UPI ID exists
-    const upiQR=co.upi_id?`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=upi://pay?pa=${encodeURIComponent(co.upi_id)}%26pn=${encodeURIComponent(co.company_name||'WeClick AI')}%26am=${q.total}%26cu=INR%26tn=${encodeURIComponent('Quotation '+q.quotation_no||q.id)}`:'';
-    openModal(`<div class="modal-title no-print" style="display:flex;justify-content:space-between;align-items:center">
-        <span>Quotation Preview</span>
+    const upiQR=co.upi_id?`https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=upi://pay?pa=${encodeURIComponent(co.upi_id)}%26pn=${encodeURIComponent(co.company_name||'WeClick AI')}%26am=${q.total}%26cu=INR`:null;
+
+    openModal(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px" class="no-print">
+        <div style="font-size:16px;font-weight:600">Quotation Preview</div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-sm" onclick="closeModal()">Close</button>
-          <button class="btn btn-primary btn-sm" onclick="window.print()">↓ Download PDF</button>
+          <button class="btn btn-primary btn-sm" onclick="window.print()">⬇ Download PDF</button>
         </div>
       </div>
       <div id="print-area">
-        <div class="quote-preview">
-          <div class="quote-preview-head">
-            <div class="quote-preview-brand">
-              ${co.logo_url?`<img src="${co.logo_url}" style="height:48px;object-fit:contain"/>`:`<div class="logo-mark">${(co.company_name||'WC').slice(0,2).toUpperCase()}</div>`}
-              <div>
-                <div style="font-size:18px;font-weight:600">${co.company_name||'WeClick AI'}</div>
-                <div style="font-size:11px;color:var(--muted)">${co.tagline||'Marketing Agency'}</div>
-                ${addr?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${addr}</div>`:''}
-                ${co.phone?`<div style="font-size:11px;color:var(--muted)">📞 ${co.phone}</div>`:''}
-                ${co.email?`<div style="font-size:11px;color:var(--muted)">✉ ${co.email}</div>`:''}
-                ${co.gstin?`<div style="font-size:11px;color:var(--muted)">GSTIN: ${co.gstin}</div>`:''}
-                ${co.website?`<div style="font-size:11px;color:var(--muted)">🌐 ${co.website}</div>`:''}
-              </div>
-            </div>
-            <div class="quote-preview-meta">
-              <strong>Quotation</strong>
-              <div>${q.quotation_no||('#'+q.id)}</div>
-              <div>Issued: ${issued}</div>
-              <div>Valid until: ${validTxt}</div>
-            </div>
+      <div class="quote-preview" style="font-family:'DM Sans',sans-serif;background:#fff;padding:32px;border-radius:8px">
+        <!-- HEADER -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:18px;border-bottom:3px solid #FF6A00;margin-bottom:20px">
+          <div>
+            <div style="font-size:22px;font-weight:700;color:#0F0F0F">${co.company_name||'WeClick AI'}</div>
+            ${co.tagline?`<div style="font-size:12px;color:#6B7280">${co.tagline}</div>`:''}
+            ${addr?`<div style="font-size:11px;color:#6B7280;margin-top:3px">${addr}</div>`:''}
+            ${co.phone?`<div style="font-size:11px;color:#6B7280">📞 ${co.phone}</div>`:''}
+            ${co.email?`<div style="font-size:11px;color:#6B7280">✉ ${co.email}</div>`:''}
+            ${co.gstin?`<div style="font-size:11px;color:#6B7280;margin-top:2px">GSTIN: ${co.gstin}</div>`:''}
           </div>
-          <div class="quote-preview-to">
-            <strong>Billed To</strong>
-            <div style="font-weight:500;font-size:14px">${clientName}</div>
-            <div style="color:var(--muted)">${clientCompany}</div>
-          </div>
-          <table>
-            <thead><tr><th>Service</th><th>Description</th><th style="text-align:right">Qty</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th></tr></thead>
-            <tbody>${q.items.map(i=>`<tr>
-              <td style="font-weight:500">${i.service||''}</td>
-              <td style="color:var(--muted)">${i.description||''}</td>
-              <td style="text-align:right">${i.qty}</td>
-              <td style="text-align:right">${fmt(i.rate)}</td>
-              <td style="text-align:right;font-weight:500">${fmt((i.qty||0)*(i.rate||0))}</td>
-            </tr>`).join('')}</tbody>
-          </table>
-          <div class="quote-preview-totals">
-            <div class="row"><span>Subtotal</span><span>${fmt(q.subtotal)}</span></div>
-            <div class="row"><span>GST @ ${q.gst_pct}%</span><span>${fmt(q.gst_amount)}</span></div>
-            <div class="row grand"><span>Grand Total</span><span>${fmt(q.total)}</span></div>
-          </div>
-          ${(co.upi_id||co.bank_account)?`
-          <div style="margin-top:20px;padding:14px;background:#FFF7F0;border-radius:8px;border:1px solid #FDDCBB;display:flex;gap:20px;align-items:flex-start">
-            <div style="flex:1">
-              <div style="font-size:12px;font-weight:600;color:#FF6A00;margin-bottom:8px">💳 Payment Details</div>
-              <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:12px">
-                ${co.upi_id?`<div><div style="color:var(--muted)">UPI ID</div><div style="font-weight:600">${co.upi_id}</div></div>`:''}
-                ${co.bank_name?`<div><div style="color:var(--muted)">Bank</div><div style="font-weight:600">${co.bank_name}</div></div>`:''}
-                ${co.bank_account?`<div><div style="color:var(--muted)">Account No</div><div style="font-weight:600">${co.bank_account}</div></div>`:''}
-                ${co.bank_ifsc?`<div><div style="color:var(--muted)">IFSC</div><div style="font-weight:600">${co.bank_ifsc}</div></div>`:''}
-                ${co.bank_holder?`<div><div style="color:var(--muted)">Account Name</div><div style="font-weight:600">${co.bank_holder}</div></div>`:''}
-              </div>
-            </div>
-            ${upiQR?`<div style="text-align:center;flex-shrink:0"><img src="${upiQR}" style="width:90px;height:90px;border-radius:6px;border:1px solid #FDDCBB"/><div style="font-size:10px;color:var(--muted);margin-top:4px">Scan to Pay</div></div>`:''}
-          </div>`:''}
-          ${q.notes?`<div class="quote-preview-foot"><strong style="color:var(--text)">Notes:</strong> ${q.notes}</div>`:''}
-          <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:flex-end">
-            <div class="quote-preview-foot" style="margin:0;flex:1">Thank you for choosing ${co.company_name||'WeClick AI'}. This quotation is valid until the date mentioned. Payment: 50% advance, 50% on delivery.</div>
-            ${co.signature_url?`<div style="text-align:center;margin-left:20px"><img src="${co.signature_url}" style="height:50px;opacity:0.85"/><div style="font-size:10px;color:var(--muted);margin-top:4px">Authorised Signatory</div></div>`:'<div style="text-align:center;margin-left:20px;padding-top:30px;border-top:1px solid #E5E5E5;width:120px"><div style="font-size:10px;color:var(--muted)">Authorised Signatory</div></div>'}
+          <div style="text-align:right">
+            <div style="font-size:24px;font-weight:700;color:#FF6A00">QUOTATION</div>
+            <div style="font-size:13px;color:#0F0F0F;font-weight:600">${q.quotation_no||('#'+q.id)}</div>
+            <div style="font-size:11px;color:#6B7280;margin-top:4px">Issued: ${issued}</div>
+            <div style="font-size:11px;color:#6B7280">Valid until: ${validTxt}</div>
           </div>
         </div>
+        <!-- BILLED TO -->
+        <div style="margin-bottom:18px">
+          <div style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Billed To</div>
+          <div style="font-size:15px;font-weight:600">${clientName}</div>
+          <div style="font-size:13px;color:#6B7280">${clientCompany}</div>
+        </div>
+        <!-- ITEMS TABLE -->
+        <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+          <thead><tr style="background:#FAFAFA">
+            <th style="text-align:left;padding:10px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6B7280;border-bottom:2px solid #E5E5E5">Service</th>
+            <th style="text-align:left;padding:10px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6B7280;border-bottom:2px solid #E5E5E5">Description</th>
+            <th style="text-align:right;padding:10px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6B7280;border-bottom:2px solid #E5E5E5">Qty</th>
+            <th style="text-align:right;padding:10px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6B7280;border-bottom:2px solid #E5E5E5">Rate</th>
+            <th style="text-align:right;padding:10px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6B7280;border-bottom:2px solid #E5E5E5">Amount</th>
+          </tr></thead>
+          <tbody>${items.map(i=>`<tr style="border-bottom:1px solid #F5F5F5">
+            <td style="padding:10px;font-weight:500;font-size:13px">${i.service||''}</td>
+            <td style="padding:10px;color:#6B7280;font-size:12px">${i.description||''}</td>
+            <td style="padding:10px;text-align:right;font-size:13px">${i.qty||1}</td>
+            <td style="padding:10px;text-align:right;font-size:13px">${fmt(i.rate||0)}</td>
+            <td style="padding:10px;text-align:right;font-weight:500;font-size:13px">${fmt((i.qty||1)*(i.rate||0))}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+        <!-- TOTALS + PAYMENT SIDE BY SIDE -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:20px">
+          <!-- Payment details left -->
+          <div style="flex:1">
+            ${(co.upi_id||co.bank_account)?`<div style="background:#FFF7F0;border:1px solid #FDDCBB;border-radius:8px;padding:14px">
+              <div style="font-size:11px;font-weight:700;color:#FF6A00;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">💳 Payment Details</div>
+              ${upiQR?`<div style="display:flex;gap:12px;align-items:center;margin-bottom:10px"><img src="${upiQR}" style="width:80px;height:80px;border-radius:4px"/><div style="font-size:12px;color:#6B7280">Scan to pay via UPI<br><span style="font-weight:600;color:#0F0F0F">${co.upi_id}</span></div></div>`:''}
+              ${co.bank_name?`<div style="font-size:12px;color:#6B7280;line-height:1.8">Bank: <b style="color:#0F0F0F">${co.bank_name}</b><br>A/C: <b style="color:#0F0F0F">${co.bank_account||'—'}</b><br>IFSC: <b style="color:#0F0F0F">${co.bank_ifsc||'—'}</b><br>Name: <b style="color:#0F0F0F">${co.bank_holder||'—'}</b></div>`:''}
+            </div>`:''}
+          </div>
+          <!-- Totals right -->
+          <div style="min-width:240px">
+            <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid #F0F0F0"><span style="color:#6B7280">Subtotal</span><span>${fmt(q.subtotal||0)}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid #F0F0F0"><span style="color:#6B7280">GST @ ${q.gst_pct||0}%</span><span>${fmt(q.gst_amount||0)}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:17px;font-weight:700;color:#FF6A00;border-top:2px solid #FF6A00"><span>Grand Total</span><span>${fmt(q.total||0)}</span></div>
+          </div>
+        </div>
+        <!-- FOOTER: notes + signature -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:16px;border-top:1px dashed #E5E5E5">
+          <div style="flex:1;font-size:11.5px;color:#6B7280;line-height:1.6">
+            ${q.notes?`<b style="color:#0F0F0F">Notes:</b> ${q.notes}<br>`:''}
+            Thank you for choosing ${co.company_name||'WeClick AI'}. Valid until the date mentioned above. Payment due within 7 days.
+          </div>
+          <div style="text-align:center;margin-left:24px">
+            ${co.signature_url?`<img src="${co.signature_url}" style="height:50px;object-fit:contain;display:block;margin-bottom:4px"/>`:'<div style="height:50px;border-bottom:1px solid #E5E5E5;width:120px;margin-bottom:4px"></div>'}
+            <div style="font-size:10px;color:#6B7280">Authorised Signatory</div>
+            <div style="font-size:11px;font-weight:600;color:#0F0F0F">${co.company_name||'WeClick AI'}</div>
+          </div>
+        </div>
+      </div>
       </div>`);
-    const qm=document.querySelector('.modal');if(qm){qm.classList.add('modal-xl');qm.style.maxHeight='90vh';qm.style.overflowY='auto';}
-  }catch(e){toast('Error loading quotation','error');}
+    const modal=document.querySelector('.modal');
+    if(modal){modal.classList.add('modal-xl');modal.style.maxHeight='90vh';modal.style.overflowY='auto';}
+  }catch(e){console.error(e);toast('Error loading quotation','error');}
 }
 
-// ── AD ANALYTICS ──────────────────────────────────────────────
 async function buildAdAnalytics(){
   const clients=await api('/api/clients').catch(()=>[]);
   appState.clients=clients;
@@ -1286,12 +1303,14 @@ async function buildAdAnalytics(){
       <div class="tab ${appState.adAnalyticsTab==='meta'?'active':''}" onclick="appState.adAnalyticsTab='meta';navigate('adanalytics')">f Meta Ads</div>
       <div class="tab ${appState.adAnalyticsTab==='google'?'active':''}" onclick="appState.adAnalyticsTab='google';navigate('adanalytics')">🔍 Google Ads</div>
       <div class="tab ${appState.adAnalyticsTab==='creatives'?'active':''}" onclick="appState.adAnalyticsTab='creatives';navigate('adanalytics')">🎨 Creatives</div>
+      <div class="tab ${appState.adAnalyticsTab==='research'?'active':''}" onclick="appState.adAnalyticsTab='research';navigate('adanalytics')">🤖 AI Research</div>
     </div>
   </div>
 
   ${appState.adAnalyticsTab==='meta'?buildMetaAnalyticsTab(metaData,totalMetaSpend,totalMetaImpressions,totalMetaLeads):''}
   ${appState.adAnalyticsTab==='google'?buildGoogleAnalyticsTab(googleData,totalGoogleSpend):''}
-  ${appState.adAnalyticsTab==='creatives'?buildCreativesTab(creatives):''}`;
+  ${appState.adAnalyticsTab==='creatives'?buildCreativesTab(creatives):''}
+  ${appState.adAnalyticsTab==='research'?buildAIResearchTab(clients,appState.adSelectedClient):''}`;
 }
 
 function buildMetaAnalyticsTab(metaData,totalSpend,totalImpressions,totalLeads){
@@ -1409,6 +1428,126 @@ function improvementSuggestion(cr){
   return 'Moderate performer. A/B test with a video version of the same concept for potential 2x improvement.';
 }
 
+// ── AI MARKET RESEARCH TAB ─────────────────────────────────
+function buildAIResearchTab(clients, selectedClientId){
+  const cl = clients.find(c=>String(c.id)===String(selectedClientId)) || clients[0];
+  if(!cl) return `<div class="empty-state"><div class="empty-icon">🤖</div><div class="empty-text">Add clients to use AI Research.</div></div>`;
+  return `<div style="max-width:700px">
+    <div class="cd-card" style="margin-bottom:16px">
+      <div class="cd-card-head"><div class="cd-card-title">🤖 AI Market Research Report</div><span style="font-size:12px;color:var(--muted)">Powered by Claude AI</span></div>
+      <div style="padding:20px">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Generate a real market research report for <b>${cl.name}</b> (${cl.company}). The AI will analyze their industry, suggest target audience, ad copy directions, competitor insights, and recommended marketing strategies.</div>
+        <div class="form-group"><label class="form-label">Industry / Niche</label>
+          <input class="form-input" id="ai-industry" placeholder="e.g. D2C skincare, B2B SaaS, Restaurant chain...">
+        </div>
+        <div class="form-group"><label class="form-label">Business Description</label>
+          <textarea class="form-input" id="ai-desc" rows="3" placeholder="What does ${cl.company} sell? Who are their customers? What's their goal?"></textarea>
+        </div>
+        <div class="form-group"><label class="form-label">Research Focus</label>
+          <select class="form-input" id="ai-focus">
+            <option value="full">Full Market Analysis</option>
+            <option value="audience">Target Audience Deep Dive</option>
+            <option value="competitor">Competitor Analysis</option>
+            <option value="adcopy">Ad Copy Angles & Hooks</option>
+            <option value="funnel">Marketing Funnel Strategy</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="generateAIResearch('${cl.name}','${cl.company}')">🤖 Generate Research Report</button>
+      </div>
+    </div>
+    <div id="ai-research-result" style="display:none" class="cd-card">
+      <div class="cd-card-head">
+        <div class="cd-card-title">📊 Research Report</div>
+        <button class="btn btn-sm" onclick="copyResearch()">📋 Copy</button>
+      </div>
+      <div id="ai-research-content" style="padding:20px;font-size:13.5px;line-height:1.8;white-space:pre-wrap;color:var(--text)"></div>
+    </div>
+  </div>`;
+}
+
+async function generateAIResearch(clientName, clientCompany){
+  const industry = document.getElementById('ai-industry')?.value || '';
+  const desc = document.getElementById('ai-desc')?.value || '';
+  const focus = document.getElementById('ai-focus')?.value || 'full';
+  if(!industry){toast('Enter industry/niche first','error');return;}
+
+  const focusLabels = {full:'Full Market Analysis',audience:'Target Audience Analysis',competitor:'Competitor Analysis',adcopy:'Ad Copy Angles & Hooks',funnel:'Marketing Funnel Strategy'};
+  
+  const btn = document.querySelector('#ai-research-result')?.previousElementSibling?.querySelector('button.btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='🤖 Generating...';}
+  
+  const prompt = `You are a senior digital marketing strategist. Generate a detailed ${focusLabels[focus]} report for this client:
+
+Client: ${clientName}
+Company: ${clientCompany}
+Industry/Niche: ${industry}
+${desc?'Description: '+desc:''}
+
+Provide a structured, actionable report covering:
+${focus==='full'?`1. Market Overview & Size
+2. Target Audience (demographics, psychographics, pain points)
+3. Key Competitors (3-5) and their positioning
+4. Recommended Ad Channels (Meta, Google, etc.) with rationale
+5. Top 5 Ad Copy Angles/Hooks
+6. Recommended Marketing Funnel
+7. KPIs to Track
+8. Quick Wins (actions to take this week)`:
+focus==='audience'?`1. Primary Target Audience Profile (age, gender, location, income)
+2. Psychographic Profile (values, interests, lifestyle)
+3. Top 5 Pain Points
+4. Customer Journey Map
+5. Best Platforms to Reach Them
+6. Messaging that Resonates`:
+focus==='competitor'?`1. Top 5 Competitors in ${industry}
+2. Their Strengths and Weaknesses
+3. Their Ad Strategies (what angles they use)
+4. Market Gaps You Can Exploit
+5. Your Unique Positioning`:
+focus==='adcopy'?`1. 10 High-Converting Ad Headlines
+2. 5 Primary Text Variations
+3. 3 Call-to-Action Options
+4. Emotional vs Rational Hooks
+5. Pain Point vs Desire-Based Angles
+6. Best Ad Formats for This Business`:
+`1. Awareness Stage Strategy
+2. Consideration Stage Strategy  
+3. Conversion Stage Strategy
+4. Retargeting Strategy
+5. Upsell/Retention Strategy
+6. Budget Allocation Recommendation`}
+
+Format with clear headers and bullet points. Be specific and actionable.`;
+
+  const resultDiv = document.getElementById('ai-research-result');
+  const contentDiv = document.getElementById('ai-research-content');
+  if(resultDiv) resultDiv.style.display='block';
+  if(contentDiv) contentDiv.textContent='Generating your report...';
+
+  try{
+    const res = await fetch('/api/ai/research', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({prompt, clientName, clientCompany, industry, focus})
+    });
+    const data = await res.json();
+    if(data.report){
+      if(contentDiv) contentDiv.textContent = data.report;
+    } else {
+      if(contentDiv) contentDiv.textContent = data.error || 'Failed to generate report';
+    }
+  }catch(e){
+    if(contentDiv) contentDiv.textContent = 'Error: '+e.message;
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='🤖 Generate Research Report';}
+  }
+}
+
+function copyResearch(){
+  const content = document.getElementById('ai-research-content')?.textContent||'';
+  navigator.clipboard.writeText(content).then(()=>toast('Report copied to clipboard'));
+}
+
+
 // ── CAMPAIGNS ──────────────────────────────────────────────────
 async function buildCampaigns(){
   const[camps,clients]=await Promise.all([api('/api/campaigns').catch(()=>[]),api('/api/clients').catch(()=>[])]);
@@ -1508,8 +1647,8 @@ async function buildCompanyFinance(){
   const safeStats={totalRevenue:stats.totalRevenue||0,totalSpend:stats.totalSpend||0,profit:stats.profit||0,activeClients:stats.activeClients||0,totalClients:stats.totalClients||0,automationRevenue:stats.automationRevenue||0,collaborationRevenue:stats.collaborationRevenue||0,thisMonth:stats.thisMonth||0,projected:stats.projected||0};
   appState.clients=clients;
   const entries=(rev&&rev.entries)||[];
-  const totalClientRev=clients.reduce((s,c)=>s+(c.revenue||0),0);
-  const totalClientSpend=clients.reduce((s,c)=>s+(c.spend||0),0);
+  const totalClientRev=clients.reduce((s,c)=>s+parseFloat(c.revenue||0),0);
+  const totalClientSpend=clients.reduce((s,c)=>s+parseFloat(c.spend||0),0);
   return `
   <div class="stats-grid">
     <div class="stat-card accent" onclick="openRevenueBreakdownByClient()"><div class="stat-label">Total Revenue ↗</div><div class="stat-value">${fmt(safeStats.totalRevenue)}</div><div class="stat-sub" style="color:var(--subtle)">Click to see per-client</div></div>
@@ -1880,164 +2019,306 @@ async function deleteReminder(id){
   toast('Deleted');navigate('reminders');
 }
 
-// ── SETTINGS ───────────────────────────────────────────────────
+// ── SETTINGS ─────────────────────────────────────────────────
 async function buildSettings(){
+  if(!appState.settingsTab) appState.settingsTab='company';
   let co={};
   try{co=await api('/api/settings/company');}catch(e){}
-  const tabs=['company','payment','signature','agency'];
-  const tabLabels={'company':'🏢 Company Info','payment':'💳 Payment Details','signature':'✍️ Signature','agency':'⚙️ Agency'};
+  const t=appState.settingsTab;
+  const nav=['company','payment','signature','agency'];
+  const navLabels={'company':'🏢 Company Info','payment':'💳 Payment Details','signature':'✍️ Signature','agency':'⚙️ Agency'};
+  const navHtml=nav.map(n=>`<div class="settings-nav-item${t===n?' active':''}" onclick="appState.settingsTab='${n}';navigate('settings')">${navLabels[n]}</div>`).join('');
 
-  if(!appState.settingsTab) appState.settingsTab='company';
-  return `
-  <div style="display:flex;gap:24px;align-items:flex-start">
-    <div class="settings-nav">
-      ${tabs.map(t=>`<div class="settings-nav-item ${appState.settingsTab===t?'active':''}" onclick="appState.settingsTab='${t}';navigate('settings')">${tabLabels[t]}</div>`).join('')}
-    </div>
-    <div class="settings-body">
-      ${appState.settingsTab==='company'?buildSettingsCompany(co):''}
-      ${appState.settingsTab==='payment'?buildSettingsPayment(co):''}
-      ${appState.settingsTab==='signature'?buildSettingsSignature(co):''}
-      ${appState.settingsTab==='agency'?buildSettingsAgency():''}
-    </div>
+  let content='';
+  if(t==='company') content=buildSettingsCompany(co);
+  else if(t==='payment') content=buildSettingsPayment(co);
+  else if(t==='signature') content=buildSettingsSignature(co);
+  else content=buildSettingsAgency(co);
+
+  return `<div style="display:flex;gap:24px;align-items:flex-start">
+    <div class="settings-nav" style="min-width:180px">${navHtml}</div>
+    <div style="flex:1;max-width:600px">${content}</div>
   </div>`;
 }
 
 function buildSettingsCompany(co){
-  return `<div class="table-wrap">
-    <div class="table-header"><div class="table-title">Company Information</div></div>
-    <div style="padding:20px;display:flex;flex-direction:column;gap:14px;max-width:520px">
+  return `<div class="cd-card">
+    <div class="cd-card-head"><div class="cd-card-title">Company Information</div></div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Company Name</label><input class="form-input" id="s-company-name" value="${co.company_name||'WeClick AI'}"></div>
-        <div class="form-group"><label class="form-label">Tagline</label><input class="form-input" id="s-tagline" value="${co.tagline||'Marketing Agency'}"></div>
+        <div class="form-group"><label class="form-label">Company Name</label><input class="form-input" id="s-name" value="${co.company_name||''}"></div>
+        <div class="form-group"><label class="form-label">Tagline</label><input class="form-input" id="s-tagline" value="${co.tagline||''}"></div>
       </div>
-      <div class="form-group"><label class="form-label">Address Line 1</label><input class="form-input" id="s-addr1" value="${co.address_line1||''}" placeholder="Plot No, Street Name"></div>
-      <div class="form-group"><label class="form-label">Address Line 2 <span style="color:var(--muted)">optional</span></label><input class="form-input" id="s-addr2" value="${co.address_line2||''}" placeholder="Area, Landmark"></div>
-      <div class="form-row-3">
-        <div class="form-group"><label class="form-label">City</label><input class="form-input" id="s-city" value="${co.city||''}" placeholder="Hyderabad"></div>
-        <div class="form-group"><label class="form-label">State</label><input class="form-input" id="s-state" value="${co.state||''}" placeholder="Telangana"></div>
-        <div class="form-group"><label class="form-label">Pincode</label><input class="form-input" id="s-pin" value="${co.pincode||''}" placeholder="500001"></div>
-      </div>
+      <div class="form-group"><label class="form-label">Address Line 1</label><input class="form-input" id="s-addr1" value="${co.address_line1||''}"></div>
+      <div class="form-group"><label class="form-label">Address Line 2</label><input class="form-input" id="s-addr2" value="${co.address_line2||''}"></div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="s-phone" value="${co.phone||''}" placeholder="+91 98765 43210"></div>
-        <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="s-email" type="email" value="${co.email||''}" placeholder="info@weclick.ai"></div>
+        <div class="form-group"><label class="form-label">City</label><input class="form-input" id="s-city" value="${co.city||''}"></div>
+        <div class="form-group"><label class="form-label">State</label><input class="form-input" id="s-state" value="${co.state||''}"></div>
+        <div class="form-group"><label class="form-label">Pincode</label><input class="form-input" id="s-pin" value="${co.pincode||''}"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Website</label><input class="form-input" id="s-web" value="${co.website||''}" placeholder="https://weclick.ai"></div>
-        <div class="form-group"><label class="form-label">GSTIN</label><input class="form-input" id="s-gstin" value="${co.gstin||''}" placeholder="29AAAAA0000A1Z5"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="s-phone" value="${co.phone||''}"></div>
+        <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="s-email" value="${co.email||''}"></div>
       </div>
-      <div class="form-group"><label class="form-label">Company Logo URL <span style="color:var(--muted)">optional — shown on quotations</span></label><input class="form-input" id="s-logo" value="${co.logo_url||''}" placeholder="https://..."></div>
+      <div class="form-group"><label class="form-label">GSTIN</label><input class="form-input" id="s-gstin" placeholder="27AAPCS1234A1Z5" value="${co.gstin||''}"></div>
+      <div class="form-group"><label class="form-label">Website</label><input class="form-input" id="s-website" placeholder="https://weclick.ai" value="${co.website||''}"></div>
       <button class="btn btn-primary" style="width:fit-content" onclick="saveCompanySettings()">Save Company Info</button>
     </div>
   </div>`;
 }
 
 function buildSettingsPayment(co){
-  return `<div class="table-wrap">
-    <div class="table-header"><div class="table-title">Payment Details — shown on Quotations</div></div>
-    <div style="padding:20px;display:flex;flex-direction:column;gap:14px;max-width:520px">
-      <div class="form-group"><label class="form-label">UPI ID <span style="color:var(--muted)">QR code auto-generated</span></label><input class="form-input" id="s-upi" value="${co.upi_id||''}" placeholder="weclick@paytm"></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Bank Name</label><input class="form-input" id="s-bank-name" value="${co.bank_name||''}" placeholder="HDFC Bank"></div>
-        <div class="form-group"><label class="form-label">Account Holder Name</label><input class="form-input" id="s-bank-holder" value="${co.bank_holder||''}" placeholder="WeClick AI Pvt Ltd"></div>
+  const upiQR=co.upi_id?`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=upi://pay?pa=${encodeURIComponent(co.upi_id)}%26pn=${encodeURIComponent(co.company_name||'WeClick AI')}`:null;
+  return `<div class="cd-card">
+    <div class="cd-card-head"><div class="cd-card-title">Payment Details — shown on Quotations</div></div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+      <div class="form-group"><label class="form-label">UPI ID <span style="color:var(--muted);font-weight:400">(QR auto-generated)</span></label>
+        <input class="form-input" id="s-upi" placeholder="yourname@paytm" value="${co.upi_id||''}">
+        ${upiQR?`<div style="margin-top:10px;display:flex;align-items:center;gap:12px"><img src="${upiQR}" style="width:100px;height:100px;border-radius:6px;border:1px solid var(--border)"/><span style="font-size:12px;color:var(--muted)">This QR will appear on all quotations for instant payment.</span></div>`:'<div style="margin-top:6px;font-size:12px;color:var(--muted)">💡 Add your UPI ID above to generate a QR code that appears on your quotations.</div>'}
       </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Account Number</label><input class="form-input" id="s-bank-acc" value="${co.bank_account||''}" placeholder="XXXXXXXXXXXXXXXX"></div>
-        <div class="form-group"><label class="form-label">IFSC Code</label><input class="form-input" id="s-bank-ifsc" value="${co.bank_ifsc||''}" placeholder="HDFC0001234"></div>
+      <div style="border-top:1px solid var(--border);padding-top:14px">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px">Bank Transfer Details</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Bank Name</label><input class="form-input" id="s-bank" placeholder="HDFC Bank" value="${co.bank_name||''}"></div>
+          <div class="form-group"><label class="form-label">Account Holder</label><input class="form-input" id="s-holder" placeholder="WeClick AI Pvt Ltd" value="${co.bank_holder||''}"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Account Number</label><input class="form-input" id="s-accno" value="${co.bank_account||''}"></div>
+          <div class="form-group"><label class="form-label">IFSC Code</label><input class="form-input" id="s-ifsc" placeholder="HDFC0001234" value="${co.bank_ifsc||''}"></div>
+        </div>
       </div>
-      ${co.upi_id?`<div style="margin-top:4px;padding:12px;background:#FFF7F0;border-radius:8px;border:1px solid #FDDCBB;display:flex;gap:12px;align-items:center">
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=upi://pay?pa=${encodeURIComponent(co.upi_id)}%26pn=${encodeURIComponent(co.company_name||'WeClick AI')}" style="width:70px;height:70px;border-radius:4px"/>
-        <div><div style="font-size:12px;font-weight:600;color:var(--orange);margin-bottom:3px">📱 UPI QR Preview</div><div style="font-size:12px;color:var(--muted)">Scan to pay — this QR appears on all quotations</div><div style="font-size:13px;font-weight:600;margin-top:4px">${co.upi_id}</div></div>
-      </div>`:'<div style="padding:12px;background:#F9FAFB;border-radius:8px;font-size:12px;color:var(--muted)">💡 Add your UPI ID above to generate a QR code that appears on your quotations.</div>'}
       <button class="btn btn-primary" style="width:fit-content" onclick="savePaymentSettings()">Save Payment Details</button>
     </div>
   </div>`;
 }
 
 function buildSettingsSignature(co){
-  return `<div class="table-wrap">
-    <div class="table-header"><div class="table-title">Digital Signature — shown on Quotations</div></div>
-    <div style="padding:20px;max-width:520px">
+  return `<div class="cd-card">
+    <div class="cd-card-head"><div class="cd-card-title">Digital Signature — shown on Quotations</div></div>
+    <div style="padding:20px">
       <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Upload a scanned or digital signature image that will appear at the bottom of all quotations as "Authorised Signatory".</div>
-      ${co.signature_url?`<div style="margin-bottom:16px;padding:16px;background:#FAFAFA;border:1px solid var(--border);border-radius:8px;display:flex;gap:12px;align-items:center">
-        <img src="${co.signature_url}" style="height:60px;object-fit:contain;opacity:0.85"/>
-        <div><div style="font-size:12px;font-weight:600;margin-bottom:4px">Current Signature</div>
-        <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="removeSignature()">Remove</button></div>
-      </div>`:'<div style="margin-bottom:16px;padding:20px;background:#FAFAFA;border:1px dashed var(--border);border-radius:8px;text-align:center;color:var(--muted);font-size:13px">No signature uploaded yet</div>'}
-      <div class="upload-zone" onclick="document.getElementById('sig-upload').click()">
-        <div style="font-size:24px;margin-bottom:8px">✍️</div>
+      ${co.signature_url?`<div style="background:#FAFAFA;border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;gap:12px;align-items:center;margin-bottom:16px">
+        <img src="${co.signature_url}" style="height:60px;object-fit:contain;border-radius:4px;background:#fff"/>
+        <div><div style="font-size:13px;font-weight:500;margin-bottom:4px">Current Signature</div><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="removeSignature()">Remove</button></div>
+      </div>`:''}
+      <div class="upload-zone" onclick="document.getElementById('sig-upload').click()" style="cursor:pointer;border:2px dashed var(--border);border-radius:8px;padding:28px;text-align:center;transition:all .15s">
+        <div style="font-size:28px;margin-bottom:8px">✍️</div>
         <div style="font-weight:500;margin-bottom:4px">Click to upload signature</div>
         <div style="font-size:12px;color:var(--muted)">PNG or JPG with transparent/white background · Max 2MB</div>
         <input type="file" id="sig-upload" accept="image/png,image/jpeg" style="display:none" onchange="uploadSignature(this)">
       </div>
-      <div style="font-size:12px;color:var(--muted);margin-top:8px">💡 Tip: Sign on white paper, take a photo, crop tightly, and upload as PNG for best results.</div>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted)">💡 Tip: Sign on white paper, take a photo, crop tightly, and upload as PNG for best results.</div>
     </div>
   </div>`;
 }
 
-function buildSettingsAgency(){
-  return `<div class="table-wrap">
-    <div class="table-header"><div class="table-title">Agency Settings</div></div>
-    <div style="padding:20px;display:flex;flex-direction:column;gap:14px;max-width:520px">
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Owner Name</label><input class="form-input" value="Admin"></div>
-        <div class="form-group"><label class="form-label">Default Currency</label><input class="form-input" value="INR (₹)" readonly></div>
+function buildSettingsAgency(co){
+  return `<div class="cd-card">
+    <div class="cd-card-head"><div class="cd-card-title">Agency Settings</div></div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+      <div class="form-group"><label class="form-label">Default GST %</label><input class="form-input" id="s-gst" type="number" placeholder="18" value="${co.default_gst||'18'}"></div>
+      <div class="form-group"><label class="form-label">Currency</label><select class="form-input" id="s-currency"><option value="INR" selected>INR (₹)</option><option value="USD">USD ($)</option></select></div>
+      <div class="form-group"><label class="form-label">Low Meta Balance Alert (₹)</label><input class="form-input" id="s-alert" type="number" placeholder="500" value="${co.low_balance_alert||'500'}"><div style="font-size:12px;color:var(--muted);margin-top:4px">Send email alert when any client's Meta balance drops below this amount</div></div>
+      <div class="form-group"><label class="form-label">Alert Email</label><input class="form-input" id="s-alert-email" type="email" placeholder="you@agency.com" value="${co.alert_email||''}"></div>
+      <div style="border-top:1px solid var(--border);padding-top:14px">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">Email Integration (for reminders)</div>
+        <div class="form-group"><label class="form-label">SendGrid API Key</label><input class="form-input" type="password" id="s-sg" placeholder="SG.xxxxx..." value="${co.sendgrid_key||''}"></div>
       </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Fiscal Year Start</label><select class="form-input"><option>April</option><option>January</option></select></div>
-        <div class="form-group"><label class="form-label">Time Zone</label><select class="form-input"><option>Asia/Kolkata (IST)</option><option>UTC</option></select></div>
-      </div>
-      <div class="form-group"><label class="form-label">WhatsApp API (Twilio) <span style="color:var(--muted)">for reminder notifications</span></label><input class="form-input" placeholder="Your Twilio WhatsApp number"></div>
-      <div class="form-group"><label class="form-label">Sendgrid / SMTP API Key <span style="color:var(--muted)">for email reminders</span></label><input class="form-input" type="password" placeholder="SG.xxxxx..."></div>
-      <button class="btn btn-primary" style="width:fit-content" onclick="toast('Settings saved')">Save Settings</button>
+      <button class="btn btn-primary" style="width:fit-content" onclick="saveAgencySettings()">Save Agency Settings</button>
     </div>
   </div>`;
 }
 
 async function saveCompanySettings(){
-  const payload={
-    company_name:document.getElementById('s-company-name').value,
-    tagline:document.getElementById('s-tagline').value,
-    address_line1:document.getElementById('s-addr1').value,
-    address_line2:document.getElementById('s-addr2').value,
-    city:document.getElementById('s-city').value,
-    state:document.getElementById('s-state').value,
-    pincode:document.getElementById('s-pin').value,
-    phone:document.getElementById('s-phone').value,
-    email:document.getElementById('s-email').value,
-    website:document.getElementById('s-web').value,
-    gstin:document.getElementById('s-gstin').value,
-    logo_url:document.getElementById('s-logo').value
-  };
-  await api('/api/settings/company',{method:'POST',body:JSON.stringify(payload)});
-  toast('Company info saved');
+  const co={company_name:v('s-name'),tagline:v('s-tagline'),address_line1:v('s-addr1'),address_line2:v('s-addr2'),city:v('s-city'),state:v('s-state'),pincode:v('s-pin'),phone:v('s-phone'),email:v('s-email'),gstin:v('s-gstin'),website:v('s-website')};
+  await api('/api/settings/company',{method:'POST',body:JSON.stringify(co)});
+  toast('Company info saved ✓');
 }
 async function savePaymentSettings(){
-  const payload={
-    upi_id:document.getElementById('s-upi').value,
-    bank_name:document.getElementById('s-bank-name').value,
-    bank_holder:document.getElementById('s-bank-holder').value,
-    bank_account:document.getElementById('s-bank-acc').value,
-    bank_ifsc:document.getElementById('s-bank-ifsc').value
-  };
-  await api('/api/settings/company',{method:'POST',body:JSON.stringify(payload)});
-  toast('Payment details saved');navigate('settings');
+  const co={upi_id:v('s-upi'),bank_name:v('s-bank'),bank_holder:v('s-holder'),bank_account:v('s-accno'),bank_ifsc:v('s-ifsc')};
+  await api('/api/settings/company',{method:'POST',body:JSON.stringify(co)});
+  toast('Payment details saved ✓');navigate('settings');
 }
-async function uploadSignature(input){
-  const file=input.files&&input.files[0];if(!file)return;
-  if(file.size>2*1024*1024){toast('File too large (max 2MB)','error');return;}
-  const fd=new FormData();fd.append('signature',file);
-  try{
-    const res=await fetch('/api/settings/signature',{method:'POST',body:fd});
-    const data=await res.json();
-    if(!res.ok)throw new Error(data.error||'Upload failed');
-    toast('Signature uploaded');navigate('settings');
-  }catch(e){toast(e.message,'error');}
+async function saveAgencySettings(){
+  const co={default_gst:v('s-gst'),alert_email:v('s-alert-email'),low_balance_alert:v('s-alert'),sendgrid_key:v('s-sg')};
+  await api('/api/settings/company',{method:'POST',body:JSON.stringify(co)});
+  toast('Agency settings saved ✓');
 }
+function v(id){const el=document.getElementById(id);return el?el.value.trim():'';}
 async function removeSignature(){
-  if(!confirm('Remove signature?')) return;
-  await api('/api/settings/signature',{method:'DELETE'});
+  await api('/api/settings/company',{method:'POST',body:JSON.stringify({signature_url:''})});
   toast('Signature removed');navigate('settings');
 }
+async function uploadSignature(input){
+  const file=input.files[0];if(!file)return;
+  if(file.size>2*1024*1024){toast('Max 2MB','error');return;}
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    const b64=e.target.result;
+    await api('/api/settings/company',{method:'POST',body:JSON.stringify({signature_url:b64})});
+    toast('Signature saved ✓');navigate('settings');
+  };
+  reader.readAsDataURL(file);
+}
+
+
+// ── MEETINGS ──────────────────────────────────────────────
+async function buildMeetings(){
+  let meetings=[];
+  let clients=[];
+  try{[meetings,clients]=await Promise.all([api('/api/meetings'),api('/api/clients')]);}catch(e){}
+  const now=new Date();
+  const upcoming=meetings.filter(m=>new Date(m.meeting_date)>=now).sort((a,b)=>new Date(a.meeting_date)-new Date(b.meeting_date));
+  const past=meetings.filter(m=>new Date(m.meeting_date)<now).sort((a,b)=>new Date(b.meeting_date)-new Date(a.meeting_date));
+  const clientMap={};clients.forEach(c=>{clientMap[c.id]=c;});
+
+  const meetingRow=(m)=>{
+    const cl=clientMap[m.client_id]||{name:'Unknown',company:'',color:'#888'};
+    const dt=new Date(m.meeting_date);
+    const dateStr=dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    const timeStr=dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+    const isPast=dt<now;
+    return `<tr>
+      <td><div class="name-cell">${avatarHtml(cl,{size:28})}<div><div style="font-weight:500">${cl.name}</div><div style="font-size:11px;color:var(--muted)">${cl.company}</div></div></div></td>
+      <td style="font-weight:500">${m.title||'Meeting'}</td>
+      <td>${dateStr}</td>
+      <td style="color:var(--muted)">${timeStr}</td>
+      <td>${m.duration_mins||60} min</td>
+      <td><span class="badge ${m.meeting_type==='video'?'badge-blue':m.meeting_type==='call'?'badge-green':'badge-orange'}">${m.meeting_type||'video'}</span></td>
+      <td><span class="badge ${m.notified?'badge-green':'badge-gray'}">${m.notified?'Sent':'Pending'}</span></td>
+      <td style="white-space:nowrap">
+        ${!m.notified&&!isPast?`<button class="btn btn-sm btn-primary" onclick="sendMeetingNotification(${m.id})">📧 Notify</button>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="openEditMeeting(${m.id})" style="margin-left:4px">Edit</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteMeeting(${m.id})">Delete</button>
+      </td>
+    </tr>`;
+  };
+
+  return `
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat-card accent"><div class="stat-label">Upcoming</div><div class="stat-value">${upcoming.length}</div></div>
+    <div class="stat-card blue-accent"><div class="stat-label">This Week</div><div class="stat-value">${upcoming.filter(m=>{const d=new Date(m.meeting_date);return(d-now)<7*86400000;}).length}</div></div>
+    <div class="stat-card green-accent"><div class="stat-label">Notified</div><div class="stat-value">${meetings.filter(m=>m.notified).length}</div></div>
+    <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${meetings.length}</div></div>
+  </div>
+
+  <div class="table-wrap" style="margin-bottom:20px">
+    <div class="table-header">
+      <div class="table-title">📅 Upcoming Meetings</div>
+      <span style="font-size:12px;color:var(--muted)">Click "Notify" to send email to client</span>
+    </div>
+    ${upcoming.length===0?`<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">No upcoming meetings. Schedule one with the + button.</div></div>`:`
+    <table><thead><tr><th>Client</th><th>Title</th><th>Date</th><th>Time</th><th>Duration</th><th>Type</th><th>Notified</th><th></th></tr></thead>
+    <tbody>${upcoming.map(meetingRow).join('')}</tbody></table>`}
+  </div>
+
+  ${past.length>0?`<div class="table-wrap">
+    <div class="table-header"><div class="table-title">Past Meetings</div></div>
+    <table><thead><tr><th>Client</th><th>Title</th><th>Date</th><th>Time</th><th>Duration</th><th>Type</th><th>Notified</th><th></th></tr></thead>
+    <tbody>${past.slice(0,20).map(meetingRow).join('')}</tbody></table>
+  </div>`:''}`;
+}
+
+async function openAddMeeting(){
+  const clients=await api('/api/clients').catch(()=>[]);
+  const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
+  const dateStr=tomorrow.toISOString().slice(0,10);
+  openModal(`<div class="modal-title">Schedule Client Meeting</div>
+    <div class="form-group"><label class="form-label">Client</label>
+      <select class="form-input" id="m-client">${clients.map(cl=>`<option value="${cl.id}">${cl.name} — ${cl.company}</option>`).join('')}</select>
+    </div>
+    <div class="form-group"><label class="form-label">Meeting Title</label>
+      <input class="form-input" id="m-title" placeholder="Monthly Review / Strategy Call / Onboarding">
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-date" type="date" value="${dateStr}"></div>
+      <div class="form-group"><label class="form-label">Time</label><input class="form-input" id="m-time" type="time" value="10:00"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Duration (mins)</label><input class="form-input" id="m-dur" type="number" value="60"></div>
+      <div class="form-group"><label class="form-label">Type</label>
+        <select class="form-input" id="m-type"><option value="video">Video Call</option><option value="call">Phone Call</option><option value="inperson">In Person</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Meeting Link (Zoom/Meet)</label>
+      <input class="form-input" id="m-link" placeholder="https://meet.google.com/...">
+    </div>
+    <div class="form-group"><label class="form-label">Agenda / Notes</label>
+      <textarea class="form-input" id="m-notes" rows="3" placeholder="Topics to discuss..."></textarea>
+    </div>
+    <div style="background:var(--orange-light);border-radius:8px;padding:10px 14px;font-size:12.5px;color:var(--orange);margin-bottom:4px">
+      📧 An email notification will be sent to the client automatically when you click "Schedule & Notify"
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="saveMeeting(false)">Save Only</button>
+      <button class="btn btn-primary" onclick="saveMeeting(true)">📧 Schedule & Notify</button>
+    </div>`);
+}
+
+async function saveMeeting(notify){
+  const clientId=document.getElementById('m-client').value;
+  const date=document.getElementById('m-date').value;
+  const time=document.getElementById('m-time').value;
+  if(!clientId||!date){toast('Select client and date','error');return;}
+  const meetingDate=date+'T'+time+':00';
+  const payload={client_id:parseInt(clientId),title:document.getElementById('m-title').value||'Meeting',meeting_date:meetingDate,duration_mins:parseInt(document.getElementById('m-dur').value)||60,meeting_type:document.getElementById('m-type').value,meeting_link:document.getElementById('m-link').value,notes:document.getElementById('m-notes').value,send_notification:notify};
+  const result=await api('/api/meetings',{method:'POST',body:JSON.stringify(payload)});
+  toast(notify?'Meeting scheduled & client notified ✓':'Meeting saved');
+  closeModal();navigate('meetings');
+}
+
+async function sendMeetingNotification(id){
+  await api(`/api/meetings/${id}/notify`,{method:'POST',body:'{}'});
+  toast('Email notification sent to client ✓');navigate('meetings');
+}
+
+async function deleteMeeting(id){
+  if(!confirm('Delete this meeting?'))return;
+  await api(`/api/meetings/${id}`,{method:'DELETE'});
+  toast('Meeting deleted');navigate('meetings');
+}
+
+async function openEditMeeting(id){
+  const meetings=await api('/api/meetings');
+  const m=meetings.find(x=>x.id===id);if(!m)return;
+  const clients=await api('/api/clients').catch(()=>[]);
+  const dateStr=m.meeting_date?m.meeting_date.slice(0,10):'';
+  const timeStr=m.meeting_date?m.meeting_date.slice(11,16):'10:00';
+  openModal(`<div class="modal-title">Edit Meeting</div>
+    <div class="form-group"><label class="form-label">Client</label>
+      <select class="form-input" id="m-client">${clients.map(cl=>`<option value="${cl.id}" ${cl.id===m.client_id?'selected':''}>${cl.name} — ${cl.company}</option>`).join('')}</select>
+    </div>
+    <div class="form-group"><label class="form-label">Title</label><input class="form-input" id="m-title" value="${m.title||''}"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-date" type="date" value="${dateStr}"></div>
+      <div class="form-group"><label class="form-label">Time</label><input class="form-input" id="m-time" type="time" value="${timeStr}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Duration (mins)</label><input class="form-input" id="m-dur" type="number" value="${m.duration_mins||60}"></div>
+      <div class="form-group"><label class="form-label">Type</label>
+        <select class="form-input" id="m-type">
+          <option value="video" ${m.meeting_type==='video'?'selected':''}>Video Call</option>
+          <option value="call" ${m.meeting_type==='call'?'selected':''}>Phone Call</option>
+          <option value="inperson" ${m.meeting_type==='inperson'?'selected':''}>In Person</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Meeting Link</label><input class="form-input" id="m-link" value="${m.meeting_link||''}"></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="m-notes" rows="3">${m.notes||''}</textarea></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="updateMeeting(${id})">Save Changes</button>
+    </div>`);
+}
+
+async function updateMeeting(id){
+  const date=document.getElementById('m-date').value;
+  const time=document.getElementById('m-time').value;
+  await api(`/api/meetings/${id}`,{method:'PUT',body:JSON.stringify({client_id:parseInt(document.getElementById('m-client').value),title:document.getElementById('m-title').value,meeting_date:date+'T'+time+':00',duration_mins:parseInt(document.getElementById('m-dur').value)||60,meeting_type:document.getElementById('m-type').value,meeting_link:document.getElementById('m-link').value,notes:document.getElementById('m-notes').value})});
+  toast('Meeting updated');closeModal();navigate('meetings');
+}
+
 
 // ── MODALS ──────────────────────────────────────────────────────
 function openModal(html){
