@@ -647,9 +647,9 @@ async function buildDashboard(){
   const activity=s.recentActivity||[];
   const actHtml=activity.length===0
     ?`<div class="empty-state" style="padding:32px"><div class="empty-icon">⚡</div><div class="empty-label">No activity yet</div><div class="empty-text">Add clients or sync Meta to see events.</div></div>`
-    :activity.slice(0,8).map(a=>`<li class="activity-item" onclick="${a.client_id?`navigate('clientDetail',${a.client_id})`:'void(0)'}" style="${a.client_id?'cursor:pointer':''}">
+    :activity.slice(0,8).map(a=>`<li class="activity-item" onclick="${a.client_id?('navigate(\'clientDetail\','+a.client_id+')'):'void(0)'}" style="${a.client_id?'cursor:pointer':''}">
       <div class="act-dot" style="background:${activityColor(a.type)}"></div>
-      <div class="act-body"><div class="act-text">${activityIcon(a.type)} ${a.title}</div>${a.details?`<div class="act-time">${a.details}</div>`:''}<div class="act-time">${timeAgo(a.created_at)}</div></div>
+      <div class="act-body"><div class="act-text">${activityIcon(a.type)} ${a.title}</div>${a.details?'<div class="act-time">'+a.details+'</div>':''}<div class="act-time">${timeAgo(a.created_at)}</div></div>
     </li>`).join('');
 
   const topClients=clients.slice(0,5).map(cl=>`<tr onclick="navigate('clientDetail',${cl.id})" style="cursor:pointer">
@@ -839,7 +839,7 @@ async function buildClientDetail(){
     <div style="padding:18px 20px;display:flex;align-items:flex-start;gap:14px">
       <div style="width:52px;height:52px;min-width:52px;border-radius:50%;position:relative;overflow:hidden;cursor:pointer;background:${c.color||'var(--orange)'};flex-shrink:0" onclick="document.getElementById('avatar-input').click()" title="Click to change photo">
         <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff">${ini(c.name)}</div>
-        ${c.avatar_url?`<img src="${c.avatar_url}" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%"/>`:''}
+        ${c.avatar_url?'<img src="'+c.avatar_url+'" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%"/>':''}
         <div style="position:absolute;right:-1px;bottom:-1px;width:17px;height:17px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:8px;border:2px solid #fff">📷</div>
       </div>
       <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadAvatar(${c.id}, this)"/>
@@ -847,10 +847,10 @@ async function buildClientDetail(){
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
           <span style="font-size:17px;font-weight:700;letter-spacing:-0.4px;color:var(--text)">${c.name}</span>
           <span class="badge ${clientStatusBadgeClass(c.status)}">${c.status}</span>
-          ${c.metaAccount?.is_active?`<span style="display:inline-flex;align-items:center;gap:3px;background:#EBF5FF;color:#1877F2;border:1px solid #BFDBFE;border-radius:20px;font-size:10px;font-weight:600;padding:1px 7px">f Meta</span>`:''}
+          ${c.metaAccount?.is_active?'<span style="display:inline-flex;align-items:center;gap:3px;background:#EBF5FF;color:#1877F2;border:1px solid #BFDBFE;border-radius:20px;font-size:10px;font-weight:600;padding:1px 7px">f Meta</span>':''}
         </div>
         <div style="font-size:13px;color:var(--text2)">${c.company}</div>
-        ${c.email?`<div style="font-size:11.5px;color:var(--text3);margin-top:1px">✉ ${c.email}</div>`:''}
+        ${c.email?'<div style="font-size:11.5px;color:var(--text3);margin-top:1px">✉ '+c.email+'</div>':''}
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;align-self:flex-start">
         <button class="btn btn-sm" onclick="openSendReport(${c.id})">Send Report</button>
@@ -961,10 +961,10 @@ function buildMetaSection(c){
         <div style="display:flex;align-items:center;gap:8px">
           <div class="cd-card-title">Meta Ads</div>
           <span class="badge badge-green" style="font-size:10px">Connected</span>
-          ${balanceLow?`<span style="font-size:10px;font-weight:700;background:${balanceCritical?'#FEE2E2':'#FEF9C3'};color:${balanceCritical?'#991B1B':'#854D0E'};border-radius:20px;padding:2px 8px">${balanceCritical?'🚨 Critical':'⚠️ Low Funds'}</span>`:''}
+          ${balanceLow?(balanceCritical?'<span style="background:#FEE2E2;color:#991B1B;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700">🚨 Critical</span>':'<span style="background:#FEF9C3;color:#854D0E;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700">⚠️ Low</span>'):''}  
         </div>
         <div style="display:flex;gap:6px;align-items:center">
-          ${meta?.last_synced?`<span style="font-size:11px;color:var(--text2)">Synced ${relTime(meta.last_synced)}</span>`:''}
+          ${meta?.last_synced?'<span style="font-size:11px;color:var(--text2)">Synced '+relTime(meta.last_synced)+'</span>':''}
           <button class="btn btn-sm" id="meta-sync-btn" onclick="syncClientMeta(${c.id})">↻ Sync Now</button>
           <button class="btn btn-ghost btn-sm" onclick="showMetaEditForm(${c.id})">Edit</button>
           <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="disconnectMeta(${c.id})">Disconnect</button>
@@ -1035,7 +1035,7 @@ function renderCalendar(client){
       <span class="cal-task-dot" style="background:${platformColor(t.platform)};width:9px;height:9px"></span>
       <span style="font-weight:500;min-width:90px">${new Date(t.date).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span>
       <span style="color:var(--text2)">${t.platform} · ${t.content_type}</span>
-      ${t.notes?`<span style="color:var(--text3);font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">— ${t.notes}</span>`:'<span style="flex:1"></span>'}
+      ${t.notes?'<span style="color:var(--text3);font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">— '+t.notes+'</span>':'<span style="flex:1"></span>'}
       <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteContentTask(${client.id},${t.id})">×</button>
     </div>`).join('')}
   </div>`;
@@ -1126,20 +1126,12 @@ function openCreateQuotation(clientId, clientName, clientCompany){
           <div>
             <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">Bank Transfer</div>
             <div style="font-size:11.5px;color:var(--text2);line-height:2">
-              ${co.bank_name?`<div><b>Bank:</b> ${co.bank_name}</div>`:''}
-              ${co.bank_account?`<div><b>A/C:</b> ${co.bank_account}</div>`:''}
-              ${co.bank_ifsc?`<div><b>IFSC:</b> ${co.bank_ifsc}</div>`:''}
-              ${co.bank_holder?`<div><b>Name:</b> ${co.bank_holder}</div>`:''}
-              ${!co.bank_account?`<div style="color:var(--text3)">Not set — add in <b onclick="closeModal();navigate('settings')" style="cursor:pointer;color:var(--orange);text-decoration:underline">Settings → Payment</b></div>`:''}
+              ${(co.bank_name?'<div><b>Bank:</b> '+co.bank_name+'</div>':'')+(co.bank_account?'<div><b>A/C:</b> '+co.bank_account+'</div>':'')+(co.bank_ifsc?'<div><b>IFSC:</b> '+co.bank_ifsc+'</div>':'')+(co.bank_holder?'<div><b>Name:</b> '+co.bank_holder+'</div>':'')+((!co.bank_account)?'<div style="color:var(--text3)">Not set — add in Settings</div>':'')}
             </div>
           </div>
           <div>
             <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">UPI / QR Code</div>
-            ${co.upi_id?`
-              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">UPI: ${co.upi_id}</div>
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=upi://pay?pa=${encodeURIComponent(co.upi_id)}%26pn=${encodeURIComponent(co.company_name||'WeClick AI')}%26cu=INR" style="border-radius:6px;border:1px solid var(--orange-mid);display:block"/>
-              <div style="font-size:10px;color:var(--text3);margin-top:4px">QR auto-shown on PDF</div>
-            `:`<div style="color:var(--text3);font-size:11.5px">Not set — add in <b onclick="closeModal();navigate('settings')" style="cursor:pointer;color:var(--orange);text-decoration:underline">Settings → Payment</b></div>`}
+            ${co.upi_id?('<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">UPI: '+co.upi_id+'</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=upi://pay?pa='+encodeURIComponent(co.upi_id)+'%26pn='+encodeURIComponent(co.company_name||'WeClick AI')+'%26cu=INR" style="border-radius:6px;border:1px solid var(--orange-mid);display:block"/><div style="font-size:10px;color:var(--text3);margin-top:4px">QR auto-shown on PDF</div>'):'<div style="color:var(--text3);font-size:11.5px">Not set — add in Settings</div>'}
           </div>
         </div>
       </div>
@@ -1163,7 +1155,7 @@ function openCreateQuotation(clientId, clientName, clientCompany){
         <div class="form-row">
           <div>
             <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Agency Signature</div>
-            ${co.signature_url?`<img src="${co.signature_url}" style="height:44px;object-fit:contain;border:1px solid var(--border);border-radius:6px;padding:4px;background:#fff"/><div style="font-size:10px;color:var(--text3);margin-top:3px">✓ Signature loaded from Settings</div>`:`<div style="font-size:11.5px;color:var(--text3)">Not set — add in <b onclick="closeModal();navigate('settings')" style="cursor:pointer;color:var(--orange);text-decoration:underline">Settings → Signature</b></div>`}
+            ${co.signature_url?('<img src="'+co.signature_url+'" style="height:44px;object-fit:contain;border:1px solid var(--border);border-radius:6px;padding:4px;background:#fff"/><div style="font-size:10px;color:var(--text3);margin-top:3px">✓ Signature loaded from Settings</div>'):'<div style="font-size:11.5px;color:var(--text3)">Not set — add in Settings → Signature</div>'}
           </div>
           <div>
             <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Upload Signed Document (optional)</div>
@@ -1305,10 +1297,10 @@ async function viewQuotation(qid,clientName,clientCompany){
           <div>
             <div style="font-size:16px;font-weight:700;color:#111110">${co.company_name||'WeClick AI'}</div>
             <div style="font-size:11px;color:#6F6F6B">${co.tagline||'Marketing Agency · India'}</div>
-            ${addr?`<div style="font-size:10.5px;color:#6F6F6B;margin-top:2px">${addr}</div>`:''}
-            ${co.phone?`<div style="font-size:10.5px;color:#6F6F6B">📞 ${co.phone}</div>`:''}
-            ${co.email?`<div style="font-size:10.5px;color:#6F6F6B">✉ ${co.email}</div>`:''}
-            ${co.gstin?`<div style="font-size:10px;color:#9C9C97;margin-top:2px">GSTIN: ${co.gstin}</div>`:''}
+            ${addr?'<div style="font-size:10.5px;color:#6F6F6B;margin-top:2px">'+addr+'</div>':''}
+            ${co.phone?'<div style="font-size:10.5px;color:#6F6F6B">📞 '+co.phone+'</div>':''}
+            ${co.email?'<div style="font-size:10.5px;color:#6F6F6B">✉ '+co.email+'</div>':''}
+            ${co.gstin?'<div style="font-size:10px;color:#9C9C97;margin-top:2px">GSTIN: '+co.gstin+'</div>':''}
           </div>
         </div>
         <!-- Right: Quotation meta -->
@@ -1356,16 +1348,13 @@ async function viewQuotation(qid,clientName,clientCompany){
           ${(co.upi_id||co.bank_account)?`<div style="background:#FFF3EA;border:1px solid #FFD4AA;border-radius:8px;padding:14px">
             <div style="font-size:10px;font-weight:700;color:#E96800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">💳 Payment Details</div>
             <div style="display:flex;gap:14px;align-items:flex-start">
-              ${upiQR?`<div style="flex-shrink:0;text-align:center">
-                <img src="${upiQR}" style="width:80px;height:80px;border-radius:5px;border:1px solid #FFD4AA;display:block"/>
-                <div style="font-size:9px;color:#6F6F6B;margin-top:3px">Scan to pay UPI</div>
-              </div>`:''}
+              ${upiQR?('<div style="flex-shrink:0;text-align:center"><img src="'+upiQR+'" style="width:80px;height:80px;border-radius:5px;border:1px solid #FFD4AA;display:block"/><div style="font-size:9px;color:#6F6F6B;margin-top:3px">Scan to pay UPI</div></div>'):''}
               <div style="font-size:11.5px;color:#6F6F6B;line-height:2">
-                ${co.upi_id?`<div><b style="color:#111110">UPI:</b> ${co.upi_id}</div>`:''}
-                ${co.bank_name?`<div><b style="color:#111110">Bank:</b> ${co.bank_name}</div>`:''}
-                ${co.bank_account?`<div><b style="color:#111110">A/C:</b> ${co.bank_account}</div>`:''}
-                ${co.bank_ifsc?`<div><b style="color:#111110">IFSC:</b> ${co.bank_ifsc}</div>`:''}
-                ${co.bank_holder?`<div><b style="color:#111110">Name:</b> ${co.bank_holder}</div>`:''}
+                ${co.upi_id?'<div><b style="color:#111110">UPI:</b> '+co.upi_id+'</div>':''}
+                ${co.bank_name?'<div><b style="color:#111110">Bank:</b> '+co.bank_name+'</div>':''}
+                ${co.bank_account?'<div><b style="color:#111110">A/C:</b> '+co.bank_account+'</div>':''}
+                ${co.bank_ifsc?'<div><b style="color:#111110">IFSC:</b> '+co.bank_ifsc+'</div>':''}
+                ${co.bank_holder?'<div><b style="color:#111110">Name:</b> '+co.bank_holder+'</div>':''}
               </div>
             </div>
           </div>`:'<div style="font-size:11.5px;color:#9C9C97;padding:8px 0">Add payment details in Settings → Payment Details</div>'}
@@ -1379,10 +1368,7 @@ async function viewQuotation(qid,clientName,clientCompany){
       </div>
 
       <!-- TERMS & CONDITIONS -->
-      ${tcHtml?`<div style="margin-bottom:18px;padding:14px;background:#F9F9F8;border-radius:8px;border-left:3px solid #E96800">
-        <div style="font-size:10px;font-weight:700;color:#E96800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Terms & Conditions</div>
-        ${tcHtml}
-      </div>`:''}
+      ${tcHtml?'<div style="margin-bottom:18px;padding:14px;background:#F9F9F8;border-radius:8px;border-left:3px solid #E96800"><div style="font-size:10px;font-weight:700;color:#E96800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Terms & Conditions</div>'+tcHtml+'</div>':''}
 
       <!-- FOOTER: signature + approval -->
       <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:14px;border-top:1px dashed #E5E5E3">
@@ -1392,7 +1378,7 @@ async function viewQuotation(qid,clientName,clientCompany){
         <div style="display:flex;gap:18px;flex-shrink:0;margin-left:20px">
           <!-- Our signature -->
           <div style="text-align:center">
-            ${co.signature_url?`<img src="${co.signature_url}" style="height:44px;object-fit:contain;display:block;margin:0 auto 4px"/>`:'<div style="height:44px;border-bottom:1px solid #E5E5E3;min-width:110px;margin-bottom:4px"></div>'}
+            ${co.signature_url?('<img src="'+co.signature_url+'" style="height:44px;object-fit:contain;display:block;margin:0 auto 4px"/>'):'<div style="height:44px;border-bottom:1px solid #E5E5E3;min-width:110px;margin-bottom:4px"></div>'}
             <div style="font-size:9.5px;color:#9C9C97">Authorised Signatory</div>
             <div style="font-size:10.5px;font-weight:600;color:#111110">${co.company_name||'WeClick AI'}</div>
           </div>
@@ -1489,12 +1475,12 @@ function buildMetaAnalyticsTab(metaData,totalSpend,totalImpressions,totalLeads){
         <td>${fmt(a.cpc||0)}</td>
         <td style="color:var(--green);font-weight:500">${(a.leads||0).toLocaleString()}</td>
         <td style="color:${balanceCritical?'var(--red)':balanceLow?'#D97706':'var(--green)'}">
-          ${a.balance!==null?`${balanceCritical?'🚨':balanceLow?'⚠️':''}${fmt(a.balance)}`:'—'}
+          ${a.balance!==null?((balanceCritical?'🚨':balanceLow?'⚠️':'')+' ₹'+parseFloat(a.balance).toFixed(0)+' remaining'):'—'}
         </td>
         <td><span class="badge ${a.is_active?'badge-green':'badge-gray'}">${a.is_active?'Active':'Inactive'}</span></td>
       </tr>`;}).join('')}
     </tbody></table>
-  </div>`}`;
+  </div>`};
 }
 
 function buildGoogleAnalyticsTab(googleData,totalSpend){
@@ -2233,79 +2219,7 @@ function buildSettingsPayment(co){
     <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
       <div class="form-group"><label class="form-label">UPI ID <span style="color:var(--text2);font-weight:400">(QR auto-generated)</span></label>
         <input class="form-input" id="s-upi" placeholder="yourname@paytm" value="${co.upi_id||''}">
-        ${upiQR?`<div style="margin-top:10px;display:flex;align-items:center;gap:12px"><img src="${upiQR}" style="width:100px;height:100px;border-radius:6px;border:1px solid var(--border)"/><span style="font-size:12px;color:var(--text2)">This QR will appear on all quotations for instant payment.</span></div>`:'<div style="margin-top:6px;font-size:12px;color:var(--text2)">💡 Add your UPI ID above to generate a QR code that appears on your quotations.</div>'}
-      </div>
-      <div style="border-top:1px solid var(--border);padding-top:14px">
-        <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px">Bank Transfer Details</div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Bank Name</label><input class="form-input" id="s-bank" placeholder="HDFC Bank" value="${co.bank_name||''}"></div>
-          <div class="form-group"><label class="form-label">Account Holder</label><input class="form-input" id="s-holder" placeholder="WeClick AI Pvt Ltd" value="${co.bank_holder||''}"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Account Number</label><input class="form-input" id="s-accno" value="${co.bank_account||''}"></div>
-          <div class="form-group"><label class="form-label">IFSC Code</label><input class="form-input" id="s-ifsc" placeholder="HDFC0001234" value="${co.bank_ifsc||''}"></div>
-        </div>
-      </div>
-      <button class="btn btn-primary" style="width:fit-content" onclick="savePaymentSettings()">Save Payment Details</button>
-    </div>
-  </div>`;
-}
-
-function buildSettingsSignature(co){
-  return `<div class="cd-card">
-    <div class="cd-card-head"><div class="cd-card-title">Digital Signature — shown on Quotations</div></div>
-    <div style="padding:20px">
-      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">Upload a scanned or digital signature image that will appear at the bottom of all quotations as "Authorised Signatory".</div>
-      ${co.signature_url?`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;gap:12px;align-items:center;margin-bottom:16px">
-        <img src="${co.signature_url}" style="height:60px;object-fit:contain;border-radius:4px;background:#fff"/>
-        <div><div style="font-size:13px;font-weight:500;margin-bottom:4px">Current Signature</div><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="removeSignature()">Remove</button></div>
-      </div>`:''}
-      <div class="upload-zone" onclick="document.getElementById('sig-upload').click()" style="cursor:pointer;border:2px dashed var(--border);border-radius:8px;padding:28px;text-align:center;transition:all .15s">
-        <div style="font-size:28px;margin-bottom:8px">✍️</div>
-        <div style="font-weight:500;margin-bottom:4px">Click to upload signature</div>
-        <div style="font-size:12px;color:var(--text2)">PNG or JPG with transparent/white background · Max 2MB</div>
-        <input type="file" id="sig-upload" accept="image/png,image/jpeg" style="display:none" onchange="uploadSignature(this)">
-      </div>
-      <div style="margin-top:10px;font-size:12px;color:var(--text2)">💡 Tip: Sign on white paper, take a photo, crop tightly, and upload as PNG for best results.</div>
-    </div>
-  </div>`;
-}
-
-function buildSettingsAgency(co){
-  return `<div class="cd-card">
-    <div class="cd-card-head"><div class="cd-card-title">Agency Settings</div></div>
-    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
-      <div class="form-group"><label class="form-label">Default GST %</label><input class="form-input" id="s-gst" type="number" placeholder="18" value="${co.default_gst||'18'}"></div>
-      <div class="form-group"><label class="form-label">Currency</label><select class="form-input" id="s-currency"><option value="INR" selected>INR (₹)</option><option value="USD">USD ($)</option></select></div>
-      <div class="form-group"><label class="form-label">Low Meta Balance Alert (₹)</label><input class="form-input" id="s-alert" type="number" placeholder="500" value="${co.low_balance_alert||'500'}"><div style="font-size:12px;color:var(--text2);margin-top:4px">Send email alert when any client's Meta balance drops below this amount</div></div>
-      <div class="form-group"><label class="form-label">Alert Email</label><input class="form-input" id="s-alert-email" type="email" placeholder="you@agency.com" value="${co.alert_email||''}"></div>
-      <div style="border-top:1px solid var(--border);padding-top:14px">
-        <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">Email Integration (for reminders)</div>
-        <div class="form-group"><label class="form-label">SendGrid API Key</label><input class="form-input" type="password" id="s-sg" placeholder="SG.xxxxx..." value="${co.sendgrid_key||''}"></div>
-      </div>
-      <button class="btn btn-primary" style="width:fit-content" onclick="saveAgencySettings()">Save Agency Settings</button>
-    </div>
-  </div>`;
-}
-
-async function saveCompanySettings(){
-  const co={company_name:v('s-name'),tagline:v('s-tagline'),address_line1:v('s-addr1'),address_line2:v('s-addr2'),city:v('s-city'),state:v('s-state'),pincode:v('s-pin'),phone:v('s-phone'),email:v('s-email'),gstin:v('s-gstin'),website:v('s-website')};
-  await api('/api/settings/company',{method:'POST',body:JSON.stringify(co)});
-  toast('Company info saved ✓');
-}
-async function savePaymentSettings(){
-  const co={upi_id:v('s-upi'),bank_name:v('s-bank'),bank_holder:v('s-holder'),bank_account:v('s-accno'),bank_ifsc:v('s-ifsc')};
-  await api('/api/settings/company',{method:'POST',body:JSON.stringify(co)});
-  toast('Payment details saved ✓');navigate('settings');
-}
-async function saveAgencySettings(){
-  const co={default_gst:v('s-gst'),alert_email:v('s-alert-email'),low_balance_alert:v('s-alert'),sendgrid_key:v('s-sg')};
-  await api('/api/settings/company',{method:'POST',body:JSON.stringify(co)});
-  toast('Agency settings saved ✓');
-}
-function v(id){const el=document.getElementById(id);return el?el.value.trim():'';}
-async function removeSignature(){
-  await api('/api/settings/company',{method:'POST',body:JSON.stringify({signature_url:''})});
+        ${upiQR?'<div style="margin-top:10px;display:flex;align-items:center;gap:12px"><img src="'+upiQR+'" style="width:80px;height:80px;border-radius:5px"/><div style="font-size:12px">Scan to pay via UPI</div></div>':''})});
   toast('Signature removed');navigate('settings');
 }
 async function uploadSignature(input){
@@ -2346,7 +2260,7 @@ async function buildMeetings(){
       <td><span class="badge ${m.meeting_type==='video'?'badge-blue':m.meeting_type==='call'?'badge-green':'badge-orange'}">${m.meeting_type||'video'}</span></td>
       <td><span class="badge ${m.notified?'badge-green':'badge-gray'}">${m.notified?'Sent':'Pending'}</span></td>
       <td style="white-space:nowrap">
-        ${!m.notified&&!isPast?`<button class="btn btn-sm btn-primary" onclick="sendMeetingNotification(${m.id})">📧 Notify</button>`:''}
+        ${(!m.notified&&!isPast)?'<button class="btn btn-sm btn-primary" onclick="sendMeetingNotification('+m.id+')">📧 Notify</button>':''}
         <button class="btn btn-ghost btn-sm" onclick="openEditMeeting(${m.id})" style="margin-left:4px">Edit</button>
         <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteMeeting(${m.id})">Delete</button>
       </td>
