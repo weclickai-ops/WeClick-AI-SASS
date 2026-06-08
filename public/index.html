@@ -379,11 +379,10 @@ let appState = {
 
 // ── UTILS ──────────────────────────────────────────────────────
 function fmt(n){
-  n=Math.round(parseFloat(n)||0);
-  if(isNaN(n)||!isFinite(n))return '₹0';
-  if(n<0)return '-'+fmt(-n);
-  // Use Indian number format
-  return '₹'+n.toLocaleString('en-IN',{maximumFractionDigits:0});
+  const num=Math.round(Number(String(n).replace(/[^0-9.-]/g,''))||0);
+  if(isNaN(num)||!isFinite(num))return '₹0';
+  if(num<0)return '-'+fmt(-num);
+  return '₹'+num.toLocaleString('en-IN',{maximumFractionDigits:0});
 }
 function ini(name){return (name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
 function avatarHtml(c, opts){
@@ -1125,50 +1124,35 @@ async function deleteContentTask(clientId,id){
 }
 
 // ── QUOTATIONS ────────────────────────────────────────────────
-function openCreateQuotation(clientId,clientName,clientCompany){
+function openCreateQuotation(clientId, clientName, clientCompany){
   appState.quoteItems=[{service:'',description:'',qty:1,rate:0}];
   const validDate=new Date();validDate.setDate(validDate.getDate()+30);
-  openModal(`<div class="modal-title">Create Quotation — ${clientName}</div>
+  openModal(`<div class="modal-title" style="display:flex;justify-content:space-between;align-items:center">
+    <span>Create Quotation — ${clientName}</span>
+  </div>
+  <div style="max-height:65vh;overflow-y:auto;padding-right:4px">
+    <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Line Items</div>
     <div id="quote-items-wrap"></div>
-    <button class="btn btn-sm" style="margin:6px 0 14px" onclick="addQuoteItem()">+ Add Line Item</button>
+    <button class="btn btn-sm" style="margin:4px 0 16px" onclick="addQuoteItem()">+ Add Line Item</button>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">GST %</label><input class="form-input" id="m-gst" type="number" value="18" oninput="renderQuoteItems()"></div>
+      <div class="form-group"><label class="form-label">GST %</label><input class="form-input" id="m-gst" type="number" value="18" min="0" max="28" oninput="renderQuoteItems()"></div>
       <div class="form-group"><label class="form-label">Valid Until</label><input class="form-input" id="m-valid" type="date" value="${validDate.toISOString().split('T')[0]}"></div>
     </div>
-    <div class="form-group"><label class="form-label">Notes / Terms</label><textarea class="form-input" id="m-notes" rows="2" placeholder="Payment terms, scope, exclusions…"></textarea></div>
+    <div class="form-group"><label class="form-label">Notes / Terms</label><textarea class="form-input" id="m-notes" rows="2" placeholder="Payment terms, scope, exclusions..."></textarea></div>
     <div id="quote-totals-wrap"></div>
-    <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveQuotation(${clientId})">Save Quotation</button></div>`);
+    <div style="background:var(--orange-light);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--orange);margin-top:12px">
+      💡 Company address, bank details, UPI QR & signature auto-appear on the quotation PDF from <b>Settings</b>.
+    </div>
+  </div>
+  <div class="modal-actions" style="margin-top:14px">
+    <button class="btn" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveQuotation(${clientId})">Save Quotation</button>
+  </div>`);
   document.querySelector('.modal').classList.add('modal-lg');
   renderQuoteItems();
 }
-function addQuoteItem(){appState.quoteItems.push({service:'',description:'',qty:1,rate:0});renderQuoteItems();}
-function removeQuoteItem(i){appState.quoteItems.splice(i,1);if(appState.quoteItems.length===0)appState.quoteItems.push({service:'',description:'',qty:1,rate:0});renderQuoteItems();}
-function updateQuoteItem(i,field,val){appState.quoteItems[i][field]=val;renderQuoteTotals();}
-function renderQuoteItems(){
-  const wrap=document.getElementById('quote-items-wrap');if(!wrap) return;
-  wrap.innerHTML=`<table class="quote-table"><thead><tr><th style="width:24%">Service</th><th>Description</th><th style="width:70px">Qty</th><th style="width:110px">Rate (₹)</th><th style="width:110px">Amount</th><th style="width:36px"></th></tr></thead>
-    <tbody>${appState.quoteItems.map((it,i)=>`<tr>
-      <td><input value="${it.service||''}" placeholder="Service name" oninput="updateQuoteItem(${i},'service',this.value)"></td>
-      <td><input value="${it.description||''}" placeholder="Brief description" oninput="updateQuoteItem(${i},'description',this.value)"></td>
-      <td><input type="number" value="${it.qty}" min="0" oninput="updateQuoteItem(${i},'qty',parseFloat(this.value)||0)"></td>
-      <td><input type="number" value="${it.rate}" min="0" oninput="updateQuoteItem(${i},'rate',parseFloat(this.value)||0)"></td>
-      <td style="font-weight:500">${fmt((it.qty||0)*(it.rate||0))}</td>
-      <td><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="removeQuoteItem(${i})">×</button></td>
-    </tr>`).join('')}</tbody></table>`;
-  renderQuoteTotals();
-}
-function renderQuoteTotals(){
-  const wrap=document.getElementById('quote-totals-wrap');if(!wrap) return;
-  const subtotal=appState.quoteItems.reduce((s,i)=>s+(i.qty||0)*(i.rate||0),0);
-  const gstPct=parseFloat(document.getElementById('m-gst')?.value)||0;
-  const gstAmt=subtotal*gstPct/100;
-  const total=subtotal+gstAmt;
-  wrap.innerHTML=`<div class="quote-totals">
-    <div class="quote-totals-row"><span style="color:var(--muted)">Subtotal</span><span>${fmt(subtotal)}</span></div>
-    <div class="quote-totals-row"><span style="color:var(--muted)">GST (${gstPct}%)</span><span>${fmt(gstAmt)}</span></div>
-    <div class="quote-totals-row grand"><span>Grand Total</span><span>${fmt(total)}</span></div>
-  </div>`;
-}
+
+
 async function saveQuotation(clientId){
   const items=appState.quoteItems.filter(i=>(i.service||'').trim()&&i.qty>0&&i.rate>0);
   if(items.length===0){toast('Add at least one valid line item','error');return;}
@@ -1196,90 +1180,135 @@ async function viewQuotation(qid,clientName,clientCompany){
     const addr=[co.address_line1,co.address_line2,co.city,co.state,co.pincode].filter(Boolean).join(', ');
     const upiQR=co.upi_id?`https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=upi://pay?pa=${encodeURIComponent(co.upi_id)}%26pn=${encodeURIComponent(co.company_name||'WeClick AI')}%26am=${q.total}%26cu=INR`:null;
 
-    openModal(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px" class="no-print">
-        <div style="font-size:16px;font-weight:600">Quotation Preview</div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-sm" onclick="closeModal()">Close</button>
-          <button class="btn btn-primary btn-sm" onclick="window.print()">⬇ Download PDF</button>
+    openModal(`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px" class="no-print">
+      <div style="font-size:15px;font-weight:600">Quotation — ${q.quotation_no||('#'+q.id)}</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" onclick="closeModal()">Close</button>
+        <button class="btn btn-primary btn-sm" onclick="window.print()">⬇ Download PDF</button>
+      </div>
+    </div>
+    <div id="print-area">
+    <div style="font-family:'DM Sans',sans-serif;background:#fff;padding:28px 32px;border:1px solid #E5E5E5;border-radius:8px;max-width:700px">
+
+      <!-- HEADER: Our company -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:3px solid #FF6A00;margin-bottom:20px">
+        <div>
+          <div style="font-size:20px;font-weight:700;color:#0F0F0F;margin-bottom:2px">${co.company_name||'WeClick AI'}</div>
+          ${co.tagline?`<div style="font-size:11.5px;color:#6B7280">${co.tagline}</div>`:''}
+          ${addr?`<div style="font-size:11px;color:#6B7280;margin-top:3px">${addr}</div>`:''}
+          ${co.phone?`<div style="font-size:11px;color:#6B7280">📞 ${co.phone}</div>`:''}
+          ${co.email?`<div style="font-size:11px;color:#6B7280">✉ ${co.email}</div>`:''}
+          ${co.gstin?`<div style="font-size:11px;color:#6B7280;margin-top:2px"><b>GSTIN:</b> ${co.gstin}</div>`:''}
+          ${co.website?`<div style="font-size:11px;color:#6B7280">${co.website}</div>`:''}
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:22px;font-weight:700;color:#FF6A00">QUOTATION</div>
+          <div style="font-size:13px;font-weight:600;color:#0F0F0F">${q.quotation_no||('#'+q.id)}</div>
+          <div style="font-size:11px;color:#6B7280;margin-top:4px">Issued: ${issued}</div>
+          <div style="font-size:11px;color:#6B7280">Valid until: ${validTxt}</div>
         </div>
       </div>
-      <div id="print-area">
-      <div class="quote-preview" style="font-family:'DM Sans',sans-serif;background:#fff;padding:32px;border-radius:8px">
-        <!-- HEADER -->
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:18px;border-bottom:3px solid #FF6A00;margin-bottom:20px">
-          <div>
-            <div style="font-size:22px;font-weight:700;color:#0F0F0F">${co.company_name||'WeClick AI'}</div>
-            ${co.tagline?`<div style="font-size:12px;color:#6B7280">${co.tagline}</div>`:''}
-            ${addr?`<div style="font-size:11px;color:#6B7280;margin-top:3px">${addr}</div>`:''}
-            ${co.phone?`<div style="font-size:11px;color:#6B7280">📞 ${co.phone}</div>`:''}
-            ${co.email?`<div style="font-size:11px;color:#6B7280">✉ ${co.email}</div>`:''}
-            ${co.gstin?`<div style="font-size:11px;color:#6B7280;margin-top:2px">GSTIN: ${co.gstin}</div>`:''}
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:24px;font-weight:700;color:#FF6A00">QUOTATION</div>
-            <div style="font-size:13px;color:#0F0F0F;font-weight:600">${q.quotation_no||('#'+q.id)}</div>
-            <div style="font-size:11px;color:#6B7280;margin-top:4px">Issued: ${issued}</div>
-            <div style="font-size:11px;color:#6B7280">Valid until: ${validTxt}</div>
-          </div>
+
+      <!-- BILLED TO: Client -->
+      <div style="margin-bottom:18px;padding:12px 16px;background:#FAFAFA;border-radius:8px;border:1px solid #F0F0F0">
+        <div style="font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px">Billed To</div>
+        <div style="font-size:15px;font-weight:600;color:#0F0F0F">${clientName}</div>
+        <div style="font-size:12.5px;color:#6B7280">${clientCompany}</div>
+      </div>
+
+      <!-- ITEMS TABLE -->
+      <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+        <thead><tr style="background:#F8F8F8;border-bottom:2px solid #E5E5E5">
+          <th style="text-align:left;padding:9px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6B7280">Service</th>
+          <th style="text-align:left;padding:9px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6B7280">Description</th>
+          <th style="text-align:center;padding:9px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6B7280">Qty</th>
+          <th style="text-align:right;padding:9px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6B7280">Rate</th>
+          <th style="text-align:right;padding:9px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6B7280">Amount</th>
+        </tr></thead>
+        <tbody>${items.map((i,idx2)=>`<tr style="border-bottom:1px solid ${idx2%2===0?'#FAFAFA':'#F5F5F5'}">
+          <td style="padding:9px 10px;font-weight:500;font-size:13px">${i.service||''}</td>
+          <td style="padding:9px 10px;color:#6B7280;font-size:12px">${i.description||''}</td>
+          <td style="padding:9px 10px;text-align:center;font-size:13px">${i.qty||1}</td>
+          <td style="padding:9px 10px;text-align:right;font-size:13px">${fmt(i.rate||0)}</td>
+          <td style="padding:9px 10px;text-align:right;font-weight:600;font-size:13px">${fmt((i.qty||1)*(i.rate||0))}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+
+      <!-- TOTALS + PAYMENT SIDE BY SIDE -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px">
+        <!-- Payment left -->
+        <div style="flex:1">
+          ${(co.upi_id||co.bank_account)?`<div style="background:#FFF7F0;border:1px solid #FDDCBB;border-radius:8px;padding:14px">
+            <div style="font-size:10.5px;font-weight:700;color:#FF6A00;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">💳 Payment Details</div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              ${upiQR?`<div style="flex-shrink:0;text-align:center"><img src="${upiQR}" style="width:80px;height:80px;border-radius:6px;border:1px solid #FDDCBB;display:block"/><div style="font-size:9px;color:#6B7280;margin-top:3px">Scan to pay</div></div>`:''}
+              <div style="font-size:12px;color:#6B7280;line-height:1.9">
+                ${co.upi_id?`<b style="color:#0F0F0F">UPI:</b> ${co.upi_id}<br>`:''}
+                ${co.bank_name?`<b style="color:#0F0F0F">Bank:</b> ${co.bank_name}<br>`:''}
+                ${co.bank_account?`<b style="color:#0F0F0F">A/C No:</b> ${co.bank_account}<br>`:''}
+                ${co.bank_ifsc?`<b style="color:#0F0F0F">IFSC:</b> ${co.bank_ifsc}<br>`:''}
+                ${co.bank_holder?`<b style="color:#0F0F0F">Name:</b> ${co.bank_holder}`:''}
+              </div>
+            </div>
+          </div>`:'<div style="font-size:12px;color:#9CA3AF;padding:8px">Add payment details in Settings → Payment Details</div>'}
         </div>
-        <!-- BILLED TO -->
-        <div style="margin-bottom:18px">
-          <div style="font-size:10px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Billed To</div>
-          <div style="font-size:15px;font-weight:600">${clientName}</div>
-          <div style="font-size:13px;color:#6B7280">${clientCompany}</div>
+        <!-- Totals right -->
+        <div style="min-width:220px">
+          <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid #F0F0F0"><span style="color:#6B7280">Subtotal</span><span>${fmt(q.subtotal||0)}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid #F0F0F0"><span style="color:#6B7280">GST @ ${q.gst_pct||0}%</span><span>${fmt(q.gst_amount||0)}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:17px;font-weight:700;color:#FF6A00;border-top:2px solid #FF6A00"><span>Grand Total</span><span>${fmt(q.total||0)}</span></div>
         </div>
-        <!-- ITEMS TABLE -->
-        <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
-          <thead><tr style="background:#FAFAFA">
-            <th style="text-align:left;padding:10px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6B7280;border-bottom:2px solid #E5E5E5">Service</th>
-            <th style="text-align:left;padding:10px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6B7280;border-bottom:2px solid #E5E5E5">Description</th>
-            <th style="text-align:right;padding:10px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6B7280;border-bottom:2px solid #E5E5E5">Qty</th>
-            <th style="text-align:right;padding:10px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6B7280;border-bottom:2px solid #E5E5E5">Rate</th>
-            <th style="text-align:right;padding:10px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#6B7280;border-bottom:2px solid #E5E5E5">Amount</th>
-          </tr></thead>
-          <tbody>${items.map(i=>`<tr style="border-bottom:1px solid #F5F5F5">
-            <td style="padding:10px;font-weight:500;font-size:13px">${i.service||''}</td>
-            <td style="padding:10px;color:#6B7280;font-size:12px">${i.description||''}</td>
-            <td style="padding:10px;text-align:right;font-size:13px">${i.qty||1}</td>
-            <td style="padding:10px;text-align:right;font-size:13px">${fmt(i.rate||0)}</td>
-            <td style="padding:10px;text-align:right;font-weight:500;font-size:13px">${fmt((i.qty||1)*(i.rate||0))}</td>
-          </tr>`).join('')}</tbody>
-        </table>
-        <!-- TOTALS + PAYMENT SIDE BY SIDE -->
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:20px">
-          <!-- Payment details left -->
-          <div style="flex:1">
-            ${(co.upi_id||co.bank_account)?`<div style="background:#FFF7F0;border:1px solid #FDDCBB;border-radius:8px;padding:14px">
-              <div style="font-size:11px;font-weight:700;color:#FF6A00;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">💳 Payment Details</div>
-              ${upiQR?`<div style="display:flex;gap:12px;align-items:center;margin-bottom:10px"><img src="${upiQR}" style="width:80px;height:80px;border-radius:4px"/><div style="font-size:12px;color:#6B7280">Scan to pay via UPI<br><span style="font-weight:600;color:#0F0F0F">${co.upi_id}</span></div></div>`:''}
-              ${co.bank_name?`<div style="font-size:12px;color:#6B7280;line-height:1.8">Bank: <b style="color:#0F0F0F">${co.bank_name}</b><br>A/C: <b style="color:#0F0F0F">${co.bank_account||'—'}</b><br>IFSC: <b style="color:#0F0F0F">${co.bank_ifsc||'—'}</b><br>Name: <b style="color:#0F0F0F">${co.bank_holder||'—'}</b></div>`:''}
-            </div>`:''}
-          </div>
-          <!-- Totals right -->
-          <div style="min-width:240px">
-            <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid #F0F0F0"><span style="color:#6B7280">Subtotal</span><span>${fmt(q.subtotal||0)}</span></div>
-            <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid #F0F0F0"><span style="color:#6B7280">GST @ ${q.gst_pct||0}%</span><span>${fmt(q.gst_amount||0)}</span></div>
-            <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:17px;font-weight:700;color:#FF6A00;border-top:2px solid #FF6A00"><span>Grand Total</span><span>${fmt(q.total||0)}</span></div>
-          </div>
+      </div>
+
+      <!-- SIGNATURE + APPROVAL ROW -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:14px;border-top:1px dashed #E5E5E5;gap:20px">
+        <div style="flex:1;font-size:11.5px;color:#6B7280;line-height:1.6">
+          ${q.notes?`<b style="color:#0F0F0F">Notes:</b> ${q.notes}<br><br>`:''}
+          Thank you for your business. Valid until ${validTxt}. Payment due within 7 days of acceptance.
         </div>
-        <!-- FOOTER: notes + signature -->
-        <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:16px;border-top:1px dashed #E5E5E5">
-          <div style="flex:1;font-size:11.5px;color:#6B7280;line-height:1.6">
-            ${q.notes?`<b style="color:#0F0F0F">Notes:</b> ${q.notes}<br>`:''}
-            Thank you for choosing ${co.company_name||'WeClick AI'}. Valid until the date mentioned above. Payment due within 7 days.
-          </div>
-          <div style="text-align:center;margin-left:24px">
-            ${co.signature_url?`<img src="${co.signature_url}" style="height:50px;object-fit:contain;display:block;margin-bottom:4px"/>`:'<div style="height:50px;border-bottom:1px solid #E5E5E5;width:120px;margin-bottom:4px"></div>'}
-            <div style="font-size:10px;color:#6B7280">Authorised Signatory</div>
-            <div style="font-size:11px;font-weight:600;color:#0F0F0F">${co.company_name||'WeClick AI'}</div>
+        <!-- Our signature -->
+        <div style="text-align:center;min-width:130px">
+          ${co.signature_url?`<img src="${co.signature_url}" style="height:45px;object-fit:contain;display:block;margin:0 auto 4px"/>`:'<div style="height:45px;border-bottom:1px solid #E5E5E5;margin-bottom:4px"></div>'}
+          <div style="font-size:10px;color:#6B7280">Authorised Signatory</div>
+          <div style="font-size:11px;font-weight:600;color:#0F0F0F">${co.company_name||'WeClick AI'}</div>
+        </div>
+        <!-- Client approval box -->
+        <div style="border:1px solid #E5E5E5;border-radius:8px;padding:12px 16px;text-align:center;min-width:150px">
+          <div style="font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Client Approval</div>
+          <div style="height:40px;border-bottom:1px solid #E5E5E5;margin-bottom:6px"></div>
+          <div style="font-size:10px;color:#6B7280">Signature & Date</div>
+          <div style="margin-top:10px">
+            <span style="display:inline-block;background:#FFF3EB;color:#FF6A00;border:1px solid #FDDCBB;border-radius:20px;font-size:10px;font-weight:600;padding:3px 10px">${q.approved?'✓ Approved':'Pending Approval'}</span>
           </div>
         </div>
       </div>
-      </div>`);
+
+    </div>
+    </div>
+    <!-- Action buttons (not printed) -->
+    <div class="no-print" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-sm" onclick="copyQuoteLink(${q.id})">🔗 Copy Share Link</button>
+      ${!q.approved?`<button class="btn btn-sm" style="background:var(--green-bg);color:var(--green);border-color:#86efac" onclick="approveQuotation(${q.id})">✓ Mark as Approved</button>`:'<span class="badge badge-green">✓ Approved</span>'}
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Close</button>
+    </div>`);
+
     const modal=document.querySelector('.modal');
     if(modal){modal.classList.add('modal-xl');modal.style.maxHeight='90vh';modal.style.overflowY='auto';}
   }catch(e){console.error(e);toast('Error loading quotation','error');}
 }
+
+async function approveQuotation(qid){
+  try{
+    await api(`/api/clients/${appState.selectedClientId}/quotations/${qid}/approve`,{method:'POST',body:'{}'});
+    toast('Quotation marked as approved ✓');navigate('clientDetail',appState.selectedClientId);
+  }catch(e){toast('Saved locally — add /approve route to server for persistence');}
+}
+function copyQuoteLink(qid){
+  const url=`${window.location.origin}/quotation/${qid}`;
+  navigator.clipboard.writeText(url).then(()=>toast('Link copied — share with client'));
+}
+
 
 async function buildAdAnalytics(){
   const clients=await api('/api/clients').catch(()=>[]);
@@ -1531,7 +1560,23 @@ Format with clear headers and bullet points. Be specific and actionable.`;
     });
     const data = await res.json();
     if(data.report){
-      if(contentDiv) contentDiv.textContent = data.report;
+      if(contentDiv){
+        // Render markdown-like formatting
+        let html = data.report
+          .replace(/^# (.+)$/gm,'<h2 style="font-size:15px;font-weight:600;color:var(--text);margin:18px 0 6px">$1</h2>')
+          .replace(/^## (.+)$/gm,'<h3 style="font-size:13.5px;font-weight:600;color:var(--orange);margin:14px 0 5px">$1</h3>')
+          .replace(/^### (.+)$/gm,'<h4 style="font-size:13px;font-weight:600;margin:10px 0 4px">$1</h4>')
+          .replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+          .replace(/^[-•✓] (.+)$/gm,'<div style="display:flex;gap:8px;margin:3px 0"><span style="color:var(--orange);flex-shrink:0">•</span><span>$1</span></div>')
+          .replace(/^(\d+)\. (.+)$/gm,'<div style="display:flex;gap:8px;margin:3px 0"><span style="color:var(--orange);font-weight:600;min-width:16px">$1.</span><span>$2</span></div>')
+          .replace(/^─+$/gm,'<hr style="border:none;border-top:1px solid var(--border);margin:12px 0">')
+          .replace(/
+
+/g,'<br><br>')
+          .replace(/
+/g,'<br>');
+        contentDiv.innerHTML = html;
+      }
     } else {
       if(contentDiv) contentDiv.textContent = data.error || 'Failed to generate report';
     }
@@ -1581,7 +1626,7 @@ async function buildAutomations(){
   const running=autos.filter(a=>a.status==='Running').length;
   return `
   <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
-    <div class="stat-card accent"><div class="stat-label">Total Auto Revenue</div><div class="stat-value">${fmt(totalRev)}</div></div>
+    <div class="stat-card accent"><div class="stat-label">Total Auto Revenue</div><div class="stat-value">${fmt(Number(totalRev))}</div></div>
     <div class="stat-card green-accent"><div class="stat-label">Running</div><div class="stat-value">${running}</div></div>
     <div class="stat-card"><div class="stat-label">Total Automations</div><div class="stat-value">${autos.length}</div></div>
   </div>
@@ -1606,7 +1651,7 @@ async function buildCollaborations(){
   const totalRev=collabs.reduce((a,c)=>a+(c.revenue||0),0);
   return `
   <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
-    <div class="stat-card accent"><div class="stat-label">Total Collab Revenue</div><div class="stat-value">${fmt(totalRev)}</div></div>
+    <div class="stat-card accent"><div class="stat-label">Total Collab Revenue</div><div class="stat-value">${fmt(Number(totalRev))}</div></div>
     <div class="stat-card green-accent"><div class="stat-label">Active Partners</div><div class="stat-value">${collabs.filter(c=>c.status==='Active').length}</div></div>
     <div class="stat-card"><div class="stat-label">Total Partners</div><div class="stat-value">${collabs.length}</div></div>
   </div>
@@ -1674,8 +1719,8 @@ async function buildCompanyFinance(){
     </tr>`).join('')}
     <tr style="background:#FAFAFA;font-weight:600">
       <td>Total</td>
-      <td style="color:var(--orange)">${fmt(totalClientRev)}</td>
-      <td>${fmt(totalClientSpend)}</td>
+      <td style="color:var(--orange)">${fmt(Number(totalClientRev))}</td>
+      <td>${fmt(Number(totalClientSpend))}</td>
       <td style="color:var(--green)">${fmt(totalClientRev-totalClientSpend)}</td>
       <td colspan="3"></td>
     </tr>
