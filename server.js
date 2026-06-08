@@ -484,6 +484,33 @@ app.get('/api/clients/:id/creatives', async (req, res) => {
   catch (e) { res.json([]); }
 });
 
+
+// ── TALLY ALIASES (frontend compatibility) ──────────────────
+app.get('/api/tally', async (req, res) => {
+  try {
+    const month = req.query.month || new Date().toISOString().slice(0, 7);
+    const [yr, mo] = month.split('-').map(Number);
+    const nextMo = mo===12?`${yr+1}-01`:`${yr}-${String(mo+1).padStart(2,'0')}`;
+    const rows = (await db.query('SELECT ds.*, u.name as user_name FROM daily_spend ds LEFT JOIN users u ON u.id=ds.user_id WHERE ds.date >= $1 AND ds.date < $2 ORDER BY ds.date DESC',[month+'-01',nextMo+'-01'])).rows;
+    const total = rows.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+    const catMap={};
+    rows.forEach(e=>{const k=e.category||'Other';if(!catMap[k])catMap[k]=0;catMap[k]+=(parseFloat(e.amount)||0);});
+    const categories=Object.entries(catMap).map(([name,total])=>({name,total}));
+    res.json({entries:rows, summary:{total,categories}});
+  } catch(e){ res.json({entries:[],summary:{total:0,categories:[]}}); }
+});
+app.post('/api/tally', async (req, res) => {
+  try {
+    const {category,amount,description,date,user_id} = req.body;
+    const r = await db.query('INSERT INTO daily_spend (date,amount,category,description,added_by,created_at) VALUES ($1,$2,$3,$4,$5,NOW()) RETURNING *',[date,amount,category||'Other',description||'',req.body.added_by||'']);
+    res.json(r.rows[0]);
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+app.delete('/api/tally/:id', async (req, res) => {
+  try { await db.query('DELETE FROM daily_spend WHERE id=$1',[req.params.id]); res.json({ok:true}); }
+  catch(e){ res.status(500).json({error:e.message}); }
+});
+
 // ── SERVE FRONTEND ─────────────────────────────────────────────
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
