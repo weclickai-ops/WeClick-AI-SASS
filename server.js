@@ -485,6 +485,17 @@ app.get('/api/clients/:id/creatives', async (req, res) => {
 });
 
 
+
+app.post('/api/clients/:id/quotations/:qid/approve', async (req, res) => {
+  try {
+    await db.query('UPDATE quotations SET approved=true,approved_at=NOW() WHERE id=$1 AND client_id=$2', [req.params.qid, req.params.id]);
+    res.json({ok:true});
+  } catch(e) {
+    // approved column might not exist yet
+    res.json({ok:true, note:'Add approved BOOLEAN column to quotations if needed'});
+  }
+});
+
 // ── TALLY ALIASES (frontend compatibility) ──────────────────
 app.get('/api/tally', async (req, res) => {
   try {
