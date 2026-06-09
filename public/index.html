@@ -2063,59 +2063,72 @@ async function deleteSpend(id){
 
 // ── REMINDERS ────────────────────────────────────────────────
 async function buildReminders(){
-  let reminders=[];
-  try{reminders=await api('/api/reminders');}catch(e){}
+  let reminders=[], clients=[];
+  try{[reminders,clients]=await Promise.all([api('/api/reminders'),api('/api/clients')]);}catch(e){}
+  const clientMap={};clients.forEach(cl=>{clientMap[cl.id]=cl;});
   const now=new Date();
-  const overdue=reminders.filter(r=>r.status==='pending'&&new Date(r.due_date)<now);
-  const upcoming=reminders.filter(r=>r.status==='pending'&&new Date(r.due_date)>=now);
-  const sent=reminders.filter(r=>r.status==='sent');
 
-  return `
-  ${overdue.length?`<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:14px 18px;margin-bottom:16px">
-    <div style="font-size:12px;font-weight:700;color:#991B1B;margin-bottom:8px">🚨 Overdue Reminders (${overdue.length})</div>
-    ${overdue.map(r=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #FECACA">
-      <div style="flex:1"><span style="font-weight:500">${r.client_name||'—'}</span> — ${r.title} <span style="color:#991B1B;font-size:11px">(due ${new Date(r.due_date).toLocaleDateString('en-IN')})</span></div>
-      <button class="btn btn-sm" style="background:#991B1B;color:#fff;border-color:#991B1B" onclick="sendReminder(${r.id})">📧 Send Now</button>
-      <button class="btn btn-ghost btn-sm" onclick="markReminderSent(${r.id})">Mark Sent</button>
-    </div>`).join('')}
-  </div>`:''}
+  // Use actual DB fields: sent (boolean), due_date (date)
+  const unsent=reminders.filter(r=>!r.sent);
+  const sent=reminders.filter(r=>r.sent);
+  const overdue=unsent.filter(r=>r.due_date&&new Date(r.due_date)<now);
+  const upcoming=unsent.filter(r=>!r.due_date||new Date(r.due_date)>=now);
 
-  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
-    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
-      <div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Upcoming Reminders</div>
-    </div>
-    ${upcoming.length===0?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4" style="padding:32px 20px"><div class="empty-text" style="font-size:12.5px;line-height:1.5">No upcoming reminders. Add one using the button above.</div></div>`:`
-    <table><thead><tr><th>Client</th><th>Title</th><th>Amount</th><th>Due Date</th><th>Channel</th><th>Status</th><th></th></tr></thead><tbody>
-    ${upcoming.map(r=>`<tr>
-      <td style="font-weight:500">${r.client_name||'—'}</td>
-      <td>${r.title}</td>
-      <td style="font-weight:600;color:var(--orange)">${r.amount?fmt(r.amount):'—'}</td>
-      <td style="color:var(--text2)">${new Date(r.due_date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</td>
-      <td><div style="display:flex;gap:4px">${(r.channels||['email']).map(ch=>`<span class="badge ${ch==='whatsapp'?'badge-green':ch==='email'?'badge-blue':'badge-gray'}">${ch==='whatsapp'?'📱':'📧'} ${ch}</span>`).join('')}</div></td>
-      <td><span class="badge badge-orange" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#FFF3EA;color:#E96800">Pending</span></td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-primary btn-sm" onclick="sendReminder(${r.id})">Send Now</button>
-        <button class="btn btn-ghost btn-sm" onclick="markReminderSent(${r.id})">Mark Sent</button>
-        <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteReminder(${r.id})">Delete</button>
-      </td>
-    </tr>`).join('')}
-    </tbody></table>`}
-  </div>
+  const reminderRow=(r,showSend=true)=>{
+    const cl=clientMap[r.client_id]||{name:'Unknown',color:'#888'};
+    const due=r.due_date?new Date(r.due_date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'No due date';
+    const channels=(r.send_email?'📧 ':'')+( r.send_whatsapp?'💬 ':'');
+    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #ECECEA">'
+      +'<div style="width:32px;height:32px;border-radius:50%;background:'+cl.color+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0">'+ini(cl.name)+'</div>'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:13px;font-weight:500;color:#111110">'+r.title+'</div>'
+        +'<div style="font-size:11.5px;color:#6F6F6B;margin-top:2px">'+cl.name+' · Due: '+due+' · '+channels+(r.amount?'₹'+parseFloat(r.amount).toLocaleString('en-IN'):'')+'</div>'
+      +'</div>'
+      +(showSend?'<button class="btn btn-primary btn-sm" onclick="sendReminder('+r.id+')">Send Now</button>':'<span style="font-size:11px;color:var(--green);font-weight:500">✓ Sent</span>')
+      +'<button class="btn btn-ghost btn-sm" style="color:#DC2626" onclick="deleteReminder('+r.id+')">Delete</button>'
+      +'</div>';
+  };
 
-  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
-    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Sent Reminders</div></div>
-    ${sent.length===0?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4" style="padding:24px 20px"><div class="empty-text" style="font-size:12.5px;line-height:1.5">No reminders sent yet.</div></div>`:`
-    <table><thead><tr><th>Client</th><th>Title</th><th>Amount</th><th>Sent At</th><th>Channel</th></tr></thead><tbody>
-    ${sent.map(r=>`<tr>
-      <td style="font-weight:500">${r.client_name||'—'}</td>
-      <td>${r.title}</td>
-      <td>${r.amount?fmt(r.amount):'—'}</td>
-      <td style="color:var(--text2)">${r.sent_at?new Date(r.sent_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—'}</td>
-      <td><span class="badge badge-green" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#F0FDF4;color:#15803D">✓ Sent</span></td>
-    </tr>`).join('')}
-    </tbody></table>`}
-  </div>`;
+  const statsHtml='<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">'
+    +'<div class="stat-card accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #E96800;border-radius:12px;padding:16px 18px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total</div><div class="stat-value" style="font-size:21px;font-weight:700;color:#111110">'+reminders.length+'</div></div>'
+    +'<div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 18px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Upcoming</div><div class="stat-value" style="font-size:21px;font-weight:700;color:#111110">'+upcoming.length+'</div></div>'
+    +'<div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #DC2626;border-radius:12px;padding:16px 18px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Overdue</div><div class="stat-value" style="font-size:21px;font-weight:700;color:#DC2626">'+overdue.length+'</div></div>'
+    +'<div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 18px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Sent</div><div class="stat-value" style="font-size:21px;font-weight:700;color:#111110">'+sent.length+'</div></div>'
+    +'</div>';
+
+  const overdueHtml=overdue.length?'<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;overflow:hidden;margin-bottom:16px">'
+    +'<div style="padding:12px 16px;border-bottom:1px solid #FECACA;display:flex;align-items:center;justify-content:space-between"><div style="font-size:13px;font-weight:600;color:#991B1B">🚨 Overdue ('+overdue.length+')</div></div>'
+    +overdue.map(r=>reminderRow(r,true)).join('')+'</div>':'';
+
+  const upcomingHtml='<div style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">'
+    +'<div style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between">'
+    +'<div style="font-size:13px;font-weight:600;color:#111110">Upcoming Reminders</div>'
+    +'</div>'
+    +(upcoming.length===0
+      ?'<div style="padding:40px;text-align:center;color:#A8A8A4;font-size:13px">No upcoming reminders. Add one using the button above.</div>'
+      :upcoming.map(r=>reminderRow(r,true)).join(''))
+    +'</div>';
+
+  const sentHtml=sent.length?'<div style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden">'
+    +'<div style="padding:12px 16px;border-bottom:1px solid #ECECEA"><div style="font-size:13px;font-weight:600;color:#111110">Sent Reminders</div></div>'
+    +sent.map(r=>reminderRow(r,false)).join('')+'</div>':'';
+
+  return statsHtml+overdueHtml+upcomingHtml+sentHtml;
 }
+
+async function sendReminder(id){
+  try{
+    await api('/api/reminders/'+id+'/send',{method:'POST',body:'{}'});
+    toast('Reminder sent ✓');navigate('reminders');
+  }catch(e){toast('Error sending: '+e.message,'error');}
+}
+
+async function deleteReminder(id){
+  if(!confirm('Delete this reminder?'))return;
+  await api('/api/reminders/'+id,{method:'DELETE'});
+  toast('Reminder deleted');navigate('reminders');
+}
+
 
 async function openAddReminder(){
   const clients=await api('/api/clients');
