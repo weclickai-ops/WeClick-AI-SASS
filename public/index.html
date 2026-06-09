@@ -2276,12 +2276,22 @@ function buildSettingsAgency(co){
     +'<div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between"><div style="font-size:13px;font-weight:600">Agency Settings</div></div>'
     +'<div style="padding:20px;display:flex;flex-direction:column;gap:14px">'
     +'<div class="form-group"><label class="form-label">Default GST %</label><input class="form-input" id="s-gst" type="number" placeholder="18" value="'+(co.default_gst||'18')+'"></div>'
-    +'<div class="form-group"><label class="form-label">Low Balance Alert (Rs.) — alert when Meta balance is below this amount</label><input class="form-input" id="s-alert" type="number" placeholder="500" value="'+(co.low_balance_alert||'500')+'"></div>'
+    +'<div class="form-group"><label class="form-label">Low Balance Alert (Rs.)</label><input class="form-input" id="s-alert" type="number" placeholder="500" value="'+(co.low_balance_alert||'500')+'"></div>'
     +'<div class="form-group"><label class="form-label">Alert Email</label><input class="form-input" id="s-alert-email" type="email" placeholder="you@agency.com" value="'+(co.alert_email||'')+'"></div>'
     +'<div style="border-top:1px solid #E5E5E3;padding-top:14px">'
-    +'<div style="font-size:12px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">Email Integration</div>'
-    +'<div class="form-group"><label class="form-label">SendGrid API Key <span style="font-weight:400;color:#A8A8A4">(for meeting & reminder emails)</span></label><input class="form-input" type="password" id="s-sg" placeholder="SG.xxxxx..." value="'+(co.sendgrid_key||'')+'"></div>'
-    +'</div>'
+    +'<div style="font-size:13px;font-weight:600;color:#111110;margin-bottom:4px">Email Setup</div>'
+    +'<div style="font-size:12px;color:#6F6F6B;margin-bottom:12px">Use Gmail OR SendGrid to send emails to your clients. Gmail is easier to set up.</div>'
+    +'<div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:8px;padding:14px;margin-bottom:14px">'
+    +'<div style="font-size:12px;font-weight:700;color:#15803D;margin-bottom:8px">Option 1: Gmail (Recommended)</div>'
+    +'<div class="form-group"><label class="form-label">Gmail Address (e.g. weclickai@gmail.com)</label><input class="form-input" id="s-smtp-user" type="email" placeholder="weclickai@gmail.com" value="'+(co.smtp_user||'')+'"></div>'
+    +'<div class="form-group"><label class="form-label">Gmail App Password <span style="font-weight:400;color:#6F6F6B">(not your regular password)</span></label><input class="form-input" type="password" id="s-smtp-pass" placeholder="xxxx xxxx xxxx xxxx" value="'+(co.smtp_pass||'')+'"></div>'
+    +'<div style="font-size:11px;color:#6F6F6B;background:#fff;border-radius:6px;padding:8px 10px;line-height:1.7">'
+    +'<b>How to get App Password:</b><br>1. Go to myaccount.google.com/apppasswords<br>2. Select "Mail" + "Other"<br>3. Name it "WeClick" → Generate<br>4. Copy the 16-character password'
+    +'</div></div>'
+    +'<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:14px">'
+    +'<div style="font-size:12px;font-weight:700;color:#1D4ED8;margin-bottom:8px">Option 2: SendGrid</div>'
+    +'<div class="form-group"><label class="form-label">SendGrid API Key</label><input class="form-input" type="password" id="s-sg" placeholder="SG.xxxxx..." value="'+(co.sendgrid_key||'')+'"></div>'
+    +'</div></div>'
     +'<button class="btn btn-primary" style="width:fit-content" onclick="saveAgencySettings()">Save Agency Settings</button>'
     +'</div></div>';
 }
@@ -2301,7 +2311,7 @@ async function savePaymentSettings(){
 }
 
 async function saveAgencySettings(){
-  const data={default_gst:v('s-gst'),alert_email:v('s-alert-email'),low_balance_alert:v('s-alert'),sendgrid_key:v('s-sg')};
+  const data={default_gst:v('s-gst'),alert_email:v('s-alert-email'),low_balance_alert:v('s-alert'),sendgrid_key:v('s-sg'),smtp_user:v('s-smtp-user'),smtp_pass:v('s-smtp-pass')};
   await api('/api/settings/company',{method:'POST',body:JSON.stringify(data)});
   toast('Agency settings saved ✓');
 }
