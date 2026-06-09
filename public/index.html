@@ -2144,20 +2144,19 @@ async function openAddReminder(){
 async function saveReminder(){
   const clientId=document.getElementById('m-client').value;
   if(!clientId){toast('Select a client','error');return;}
-  const channels=[];
-  if(document.getElementById('ch-email').checked) channels.push('email');
-  if(document.getElementById('ch-wa').checked) channels.push('whatsapp');
-  if(channels.length===0){toast('Select at least one channel','error');return;}
+  const sendEmail=document.getElementById('ch-email').checked;
+  const sendWA=document.getElementById('ch-wa').checked;
   await api('/api/reminders',{method:'POST',body:JSON.stringify({
     client_id:parseInt(clientId),
     title:document.getElementById('m-title').value||'Payment Reminder',
     amount:parseFloat(document.getElementById('m-amount').value)||null,
     due_date:document.getElementById('m-due').value,
-    channels,
+    send_email:sendEmail,
+    send_whatsapp:sendWA,
     message:document.getElementById('m-msg').value,
     recurring:document.getElementById('m-recurring').checked
   })});
-  toast('Reminder added');closeModal();navigate('reminders');
+  toast('Reminder saved ✓');closeModal();navigate('reminders');
 }
 async function sendReminder(id){
   await api(`/api/reminders/${id}/send`,{method:'POST',body:JSON.stringify({})});
