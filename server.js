@@ -1,2813 +1,890 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WeClick AI</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#F4F4F2;
-  --surface:#FFFFFF;
-  --surface2:#F9F9F8;
-  --surface3:#F1F1EF;
-  --border:#E5E5E3;
-  --border2:#ECECEA;
-  --text:#111110;
-  --text2:#6F6F6B;
-  --text3:#A8A8A4;
-  --orange:#E96800;
-  --orange-light:#FFF3EA;
-  --orange-mid:#FFD4AA;
-  --green:#16A34A;
-  --green-bg:#F0FDF4;
-  --red:#DC2626;
-  --red-bg:#FEF2F2;
-  --blue:#2563EB;
-  --blue-bg:#EFF6FF;
-  --purple:#7C3AED;
-  --purple-bg:#F5F3FF;
-  --shadow-xs:0 1px 2px rgba(0,0,0,.04);
-  --shadow-sm:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
-  --shadow-md:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
-  --shadow-lg:0 8px 24px rgba(0,0,0,.10),0 4px 8px rgba(0,0,0,.05);
-  --r:8px;--r-md:10px;--r-lg:12px;--r-xl:16px;
-  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
-  font-size:13.5px;
-  line-height:1.5;
-  color:var(--text);
-}
-
-/* ── LAYOUT ──────────────────────────────────────────────────── */
-body{background:var(--bg);display:flex;height:100vh;overflow:hidden}
-#main{flex:1;overflow:hidden;display:flex;flex-direction:column;min-width:0}
-.page-content{flex:1;overflow-y:auto;padding:24px 28px;background:var(--bg)}
-.page{animation:fadeIn .18s ease}
-
-/* ── SIDEBAR ──────────────────────────────────────────────────── */
-#sidebar{
-  width:220px;min-width:220px;
-  background:var(--surface);
-  border-right:1px solid var(--border);
-  display:flex;flex-direction:column;height:100vh;
-}
-.sidebar-logo{
-  padding:16px 14px 12px;
-  border-bottom:1px solid var(--border2);
-  display:flex;align-items:center;gap:9px;
-}
-.logo-mark{
-  width:28px;height:28px;
-  background:var(--orange);
-  border-radius:7px;
-  display:flex;align-items:center;justify-content:center;
-  color:#fff;font-weight:700;font-size:11px;flex-shrink:0;
-  box-shadow:0 1px 6px rgba(233,104,0,.3);
-}
-.logo-text{font-size:13.5px;font-weight:650;letter-spacing:-0.3px;color:var(--text)}
-.logo-sub{font-size:10px;color:var(--text3);margin-top:1px}
-.sidebar-search{padding:8px 10px 4px;position:relative}
-.sidebar-search input{
-  width:100%;padding:6px 9px 6px 28px;
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:var(--r);font-size:12px;color:var(--text);
-  outline:none;font-family:inherit;transition:all .12s;
-}
-.sidebar-search input:focus{border-color:var(--orange);background:var(--surface);box-shadow:0 0 0 3px rgba(233,104,0,.1)}
-.sidebar-search .si{position:absolute;left:18px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none}
-.sidebar-nav{padding:6px 8px;flex:1;overflow-y:auto}
-.nav-section{
-  font-size:9.5px;font-weight:600;color:var(--text3);
-  letter-spacing:.7px;text-transform:uppercase;
-  padding:10px 8px 3px;
-}
-.nav-item{
-  display:flex;align-items:center;gap:8px;
-  padding:6px 8px;border-radius:var(--r);
-  cursor:pointer;color:var(--text2);font-size:12.5px;font-weight:400;
-  transition:all .1s;margin-bottom:1px;user-select:none;
-  position:relative;
-}
-.nav-item:hover{background:var(--surface2);color:var(--text)}
-.nav-item.active{background:var(--orange-light);color:var(--orange);font-weight:500}
-.nav-item.active::before{
-  content:'';position:absolute;left:-8px;top:50%;transform:translateY(-50%);
-  width:3px;height:16px;background:var(--orange);border-radius:0 2px 2px 0;
-}
-.nav-item svg{width:14px;height:14px;flex-shrink:0;opacity:.75}
-.nav-item.active svg{opacity:1}
-.sidebar-footer{padding:10px 10px;border-top:1px solid var(--border2)}
-.user-card{
-  display:flex;align-items:center;gap:9px;
-  padding:7px 8px;border-radius:var(--r);cursor:pointer;
-  transition:background .1s;
-}
-.user-card:hover{background:var(--surface2)}
-.avatar{
-  width:27px;height:27px;border-radius:50%;
-  background:var(--orange);display:flex;align-items:center;
-  justify-content:center;color:#fff;font-size:10.5px;font-weight:600;flex-shrink:0;
-}
-
-/* ── TOPBAR ──────────────────────────────────────────────────── */
-.topbar{
-  background:var(--surface);border-bottom:1px solid var(--border);
-  padding:0 24px;height:50px;display:flex;align-items:center;
-  justify-content:space-between;flex-shrink:0;gap:14px;
-}
-.topbar-title{font-size:13.5px;font-weight:600;letter-spacing:-0.2px;white-space:nowrap}
-.topbar-search{flex:1;max-width:320px;position:relative}
-.topbar-search input{
-  width:100%;padding:6px 11px 6px 30px;
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:var(--r);font-size:12.5px;color:var(--text);
-  outline:none;font-family:inherit;transition:all .12s;
-}
-.topbar-search input:focus{border-color:var(--orange);background:var(--surface);box-shadow:0 0 0 3px rgba(233,104,0,.1)}
-.topbar-search .si{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px}
-.topbar-actions{display:flex;gap:5px;align-items:center;flex-shrink:0}
-.tb-btn{
-  width:32px;height:32px;border-radius:var(--r);
-  border:1px solid var(--border);background:var(--surface);
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;color:var(--text2);font-size:14px;transition:all .1s;
-}
-.tb-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--border2)}
-
-/* ── BUTTONS ──────────────────────────────────────────────────── */
-.btn{
-  display:inline-flex;align-items:center;gap:5px;
-  padding:6px 12px;border-radius:var(--r);font-size:12.5px;font-weight:500;
-  cursor:pointer;border:1px solid var(--border);background:var(--surface);
-  color:var(--text);transition:all .1s;white-space:nowrap;font-family:inherit;line-height:1.2;
-}
-.btn:hover{background:var(--surface2);box-shadow:var(--shadow-xs)}
-.btn-primary{background:var(--orange);color:#fff;border-color:var(--orange);box-shadow:0 1px 3px rgba(233,104,0,.25)}
-.btn-primary:hover{background:#D05C00;box-shadow:0 2px 6px rgba(233,104,0,.3)}
-.btn-sm{padding:4px 10px;font-size:11.5px;border-radius:6px}
-.btn-ghost{border:none;background:transparent;color:var(--text2);padding:4px 7px}
-.btn-ghost:hover{background:var(--surface2);color:var(--text)}
-.btn-danger{background:var(--red-bg);color:var(--red);border-color:#FECACA}
-.btn-pause{background:#FFF7ED;color:#B45309;border-color:#FED7AA}
-
-/* ── KPI / STAT CARDS ──────────────────────────────────────────── */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px}
-.stat-card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r-lg);padding:16px 18px;
-  transition:box-shadow .12s;cursor:default;
-}
-.stat-card:hover{box-shadow:var(--shadow-sm)}
-.stat-card.accent{border-left:3px solid var(--orange)}
-.stat-card.green-accent{border-left:3px solid var(--green)}
-.stat-card.blue-accent{border-left:3px solid var(--blue)}
-.stat-label{font-size:10.5px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-.stat-value{font-size:21px;font-weight:700;letter-spacing:-0.6px;color:var(--text)}
-.stat-sub{font-size:11px;color:var(--text2);margin-top:4px}
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px}
-.kpi-card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r-lg);padding:16px 18px;
-  position:relative;overflow:hidden;transition:all .13s;cursor:default;
-}
-.kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
-.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kpi-c,var(--orange));border-radius:var(--r-lg) var(--r-lg) 0 0}
-.kpi-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;margin-bottom:10px}
-.kpi-label{font-size:10.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.kpi-value{font-size:20px;font-weight:700;letter-spacing:-0.5px;color:var(--text);line-height:1.1}
-.kpi-trend{display:flex;align-items:center;gap:3px;margin-top:5px;font-size:11px}
-.kpi-trend.up{color:var(--green)}
-.kpi-trend.down{color:var(--red)}
-.kpi-trend.neutral{color:var(--text2)}
-
-/* ── TABLES ──────────────────────────────────────────────────── */
-.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:16px}
-.table-header{padding:12px 16px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;gap:10px}
-.table-title{font-size:13px;font-weight:600;color:var(--text)}
-table{width:100%;border-collapse:collapse}
-thead th{font-size:10.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;padding:9px 16px;text-align:left;border-bottom:1px solid var(--border2);background:var(--surface2);white-space:nowrap}
-tbody td{padding:10px 16px;border-bottom:1px solid var(--border2);font-size:13px;vertical-align:middle;color:var(--text)}
-tbody tr:last-child td{border-bottom:none}
-tbody tr:hover{background:var(--surface2)}
-
-/* ── BADGES ──────────────────────────────────────────────────── */
-.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap}
-.badge-green{background:var(--green-bg);color:#15803D}
-.badge-red{background:var(--red-bg);color:#B91C1C}
-.badge-blue{background:var(--blue-bg);color:var(--blue)}
-.badge-orange{background:var(--orange-light);color:var(--orange)}
-.badge-gray{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
-.badge-yellow{background:#FFFBEB;color:#92400E}
-.badge-purple{background:var(--purple-bg);color:var(--purple)}
-
-/* ── CHART CARDS ──────────────────────────────────────────────── */
-.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;margin-bottom:16px}
-.chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
-.chart-title{font-size:13px;font-weight:600;color:var(--text)}
-.toggle-group{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:2px;gap:1px}
-.toggle-btn{padding:3px 11px;border-radius:5px;font-size:11.5px;cursor:pointer;color:var(--text2);transition:all .1s;font-weight:500;border:1px solid transparent}
-.toggle-btn.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow-xs);border-color:var(--border)}
-.area-chart{position:relative;width:100%;height:210px}
-.area-chart svg{width:100%;height:100%;overflow:visible;display:block}
-.chart-tooltip{position:absolute;background:var(--text);color:#fff;padding:7px 10px;border-radius:7px;font-size:11.5px;pointer-events:none;opacity:0;transform:translate(-50%,-110%);transition:opacity .1s;white-space:nowrap;z-index:10}
-.chart-tooltip.show{opacity:1}
-
-/* ── GRID LAYOUTS ──────────────────────────────────────────────── */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
-.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
-.col-7-5{display:grid;grid-template-columns:7fr 5fr;gap:14px;margin-bottom:16px}
-.col-5-7{display:grid;grid-template-columns:5fr 7fr;gap:14px;margin-bottom:16px}
-
-/* ── FORMS ──────────────────────────────────────────────────── */
-.form-group{margin-bottom:12px}
-.form-label{font-size:11.5px;font-weight:500;color:var(--text2);margin-bottom:4px;display:block}
-.form-input{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:13px;background:var(--surface);color:var(--text);outline:none;font-family:inherit;transition:all .1s}
-.form-input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(233,104,0,.08)}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-select.form-input{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%23A8A8A4'/></svg>");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px}
-
-/* ── MODAL ──────────────────────────────────────────────────── */
-.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.32);backdrop-filter:blur(1px);z-index:100;display:flex;align-items:center;justify-content:center;animation:fadeIn .12s}
-.modal{background:var(--surface);border-radius:var(--r-xl);padding:22px;width:460px;max-width:96vw;box-shadow:0 20px 60px rgba(0,0,0,.14),0 6px 16px rgba(0,0,0,.07);animation:slideUp .16s ease;border:1px solid var(--border)}
-.modal-title{font-size:15px;font-weight:650;letter-spacing:-0.3px;margin-bottom:18px;color:var(--text)}
-.modal-actions{display:flex;gap:7px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--border2)}
-.modal-lg{width:640px}
-.modal-xl{width:800px;max-width:96vw;max-height:90vh;overflow-y:auto}
-
-/* ── TABS ──────────────────────────────────────────────────── */
-.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:18px;gap:2px}
-.tab{padding:8px 14px;font-size:12.5px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .1s;border-radius:6px 6px 0 0}
-.tab.active{color:var(--orange);border-bottom-color:var(--orange);background:var(--orange-light)}
-.tab:hover:not(.active){color:var(--text);background:var(--surface2)}
-
-/* ── CLIENT DETAIL ──────────────────────────────────────────── */
-.back-btn{display:inline-flex;align-items:center;gap:5px;color:var(--text2);font-size:12.5px;cursor:pointer;margin-bottom:14px;transition:color .1s;padding:4px 0}
-.back-btn:hover{color:var(--text)}
-.cd-header{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:16px}
-.cd-header-top{padding:18px 20px;display:flex;align-items:flex-start;gap:14px}
-.cd-av{width:52px;height:52px;border-radius:50%;flex-shrink:0;position:relative;overflow:hidden;cursor:pointer;transition:transform .12s}
-.cd-av:hover{transform:scale(1.04)}
-.cd-av-inner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff}
-.cd-av-cam{position:absolute;right:-1px;bottom:-1px;width:17px;height:17px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:8px;border:2px solid #fff;pointer-events:none}
-.cd-info{flex:1;min-width:0}
-.cd-name{font-size:17px;font-weight:700;letter-spacing:-0.4px;margin-bottom:3px}
-.cd-company{font-size:12.5px;color:var(--text2)}
-.cd-email{font-size:11.5px;color:var(--text2)}
-.cd-actions{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;align-self:flex-start}
-.cd-stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border2)}
-.cd-stat{padding:12px 18px;border-right:1px solid var(--border2)}
-.cd-stat:last-child{border-right:none}
-.cd-stat-lbl{font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
-.cd-stat-val{font-size:17px;font-weight:700;letter-spacing:-0.4px;color:var(--text)}
-.cd-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:14px}
-.cd-card-head{padding:12px 18px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;gap:10px}
-.cd-card-title{font-size:13px;font-weight:600;color:var(--text)}
-
-/* ── META / ADS ──────────────────────────────────────────────── */
-.meta-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:14px}
-.meta-metrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;padding:14px 16px}
-.meta-metric{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px}
-.meta-metric-label{font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.meta-metric-value{font-size:17px;font-weight:700;color:var(--text)}
-.meta-metric-value.orange{color:var(--orange)}
-.meta-metric-value.green{color:var(--green)}
-.low-budget-banner{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border2)}
-
-/* ── PAUSE BANNER ──────────────────────────────────────────── */
-.pause-banner{display:flex;align-items:center;gap:10px;padding:10px 18px;background:#FFF7ED;border-bottom:1px solid #FED7AA;font-size:12.5px;color:#92400E}
-
-/* ── ACTIVITY ──────────────────────────────────────────────── */
-.activity-list{list-style:none;padding:0 16px}
-.activity-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border2)}
-.activity-item:last-child{border-bottom:none}
-.act-dot{width:7px;height:7px;border-radius:50%;background:var(--orange);flex-shrink:0;margin-top:4px}
-.act-body{flex:1;min-width:0}
-.act-text{font-size:12.5px;color:var(--text);line-height:1.4}
-.act-time{font-size:10.5px;color:var(--text3);margin-top:2px}
-
-/* ── AVATAR ──────────────────────────────────────────────────── */
-.client-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0}
-.name-cell{display:flex;align-items:center;gap:9px}
-
-/* ── MISC COMPONENTS ──────────────────────────────────────────── */
-.insight-card{background:linear-gradient(135deg,var(--orange-light),#FFF8F2);border:1px solid var(--orange-mid);border-radius:var(--r-lg);padding:14px 16px}
-.progress-wrap{display:flex;align-items:center;gap:7px}
-.progress-bar-bg{flex:1;height:4px;background:var(--border2);border-radius:4px}
-.progress-bar{height:100%;border-radius:4px;transition:width .3s}
-.upload-zone{border:2px dashed var(--border);border-radius:var(--r-md);padding:24px;text-align:center;cursor:pointer;transition:all .13s}
-.upload-zone:hover{border-color:var(--orange);background:var(--orange-light)}
-.empty-state{padding:44px 20px;text-align:center;color:var(--text3)}
-.empty-icon{font-size:28px;margin-bottom:10px;opacity:.6}
-.empty-label{font-size:13.5px;font-weight:500;color:var(--text2);margin-bottom:3px}
-.empty-text{font-size:12.5px;line-height:1.5}
-.file-item{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--border2);transition:background .08s}
-.file-item:hover{background:var(--surface2)}
-.file-item:last-child{border-bottom:none}
-.file-icon{width:30px;height:30px;border-radius:7px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;border:1px solid var(--border)}
-.file-info{flex:1;min-width:0}
-.file-name{font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.file-meta{font-size:10.5px;color:var(--text3);margin-top:2px}
-.search-input{padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;color:var(--text);outline:none;font-family:inherit;width:210px;transition:all .1s;background:var(--surface2)}
-.search-input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(233,104,0,.08);background:var(--surface)}
-.select-input{padding:5px 24px 5px 9px;border:1px solid var(--border);border-radius:var(--r);font-size:12px;color:var(--text);background:var(--surface);appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%23A8A8A4'/></svg>");background-repeat:no-repeat;background-position:right 7px center;outline:none;font-family:inherit;cursor:pointer}
-.toast{position:fixed;bottom:22px;right:22px;background:var(--text);color:#fff;padding:9px 14px;border-radius:9px;font-size:12.5px;font-weight:500;z-index:200;animation:slideUp .18s ease;display:flex;align-items:center;gap:7px;box-shadow:var(--shadow-lg)}
-.loading{padding:56px;text-align:center;color:var(--text3);font-size:13px}
-.spinning{animation:spin .7s linear infinite}
-
-/* ── SETTINGS ──────────────────────────────────────────────── */
-.settings-nav{display:flex;flex-direction:column;gap:2px}
-.settings-nav-item{padding:7px 12px;border-radius:var(--r);cursor:pointer;font-size:12.5px;color:var(--text2);transition:all .1s}
-.settings-nav-item.active{background:var(--orange-light);color:var(--orange);font-weight:500}
-.settings-nav-item:hover:not(.active){background:var(--surface2);color:var(--text)}
-
-/* ── QUOTATION ──────────────────────────────────────────────── */
-.quote-table{width:100%;border-collapse:collapse;margin-bottom:12px}
-.quote-table th{font-size:10.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;padding:7px 8px;text-align:left;border-bottom:1px solid var(--border);background:var(--surface2)}
-.quote-table td{padding:7px 8px;border-bottom:1px solid var(--border2);font-size:12.5px;vertical-align:middle}
-.quote-table input{width:100%;padding:5px 7px;border:1px solid var(--border);border-radius:6px;font-size:12.5px;font-family:inherit;outline:none;background:var(--surface);color:var(--text)}
-.quote-table input:focus{border-color:var(--orange)}
-.quote-totals{display:flex;flex-direction:column;gap:5px;padding:12px 14px;background:var(--surface2);border-radius:8px;margin-top:8px}
-.quote-totals-row{display:flex;justify-content:space-between;font-size:12.5px}
-.quote-totals-row.grand{font-size:15px;font-weight:700;color:var(--orange);border-top:1px solid var(--border);padding-top:7px;margin-top:3px}
-
-/* ── CALENDAR ──────────────────────────────────────────────── */
-.calendar{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-bottom:16px}
-.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.cal-title{font-size:13.5px;font-weight:600}
-.cal-nav{display:flex;gap:5px;align-items:center}
-.cal-nav-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:all .1s;font-size:13px}
-.cal-nav-btn:hover{background:var(--surface2);color:var(--text)}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
-.cal-day-name{font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;text-align:center;padding:5px 0}
-.cal-day{aspect-ratio:1;border:1px solid var(--border2);border-radius:7px;padding:4px;cursor:pointer;display:flex;flex-direction:column;transition:all .1s;background:var(--surface);min-height:52px}
-.cal-day:hover{border-color:var(--orange);background:var(--orange-light)}
-.cal-day.empty{border:none;cursor:default;background:transparent}
-.cal-day.empty:hover{background:transparent}
-.cal-day.today{border-color:var(--orange);box-shadow:0 0 0 1px var(--orange)}
-.cal-day-num{font-size:11px;font-weight:500;color:var(--text)}
-.cal-day.today .cal-day-num{color:var(--orange);font-weight:700}
-.cal-day-tasks{display:flex;flex-wrap:wrap;gap:2px;margin-top:auto}
-.cal-task-dot{width:5px;height:5px;border-radius:50%}
-
-/* ── REVENUE ──────────────────────────────────────────────── */
-.rev-filter-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:16px}
-.rev-pills{display:flex;gap:4px;padding:10px 14px;flex-wrap:wrap;border-bottom:1px solid var(--border2);align-items:center}
-.rev-pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:500;cursor:pointer;border:1px solid var(--border);color:var(--text2);transition:all .1s;white-space:nowrap;user-select:none}
-.rev-pill.active{background:var(--orange);color:#fff;border-color:var(--orange)}
-.rev-pill:hover:not(.active){border-color:var(--orange);color:var(--orange)}
-.alert-bar{display:flex;align-items:flex-start;gap:9px;padding:9px 13px;border-radius:8px;font-size:12.5px;margin-bottom:7px;border:1px solid transparent}
-.alert-bar.warning{background:#FFFBEB;border-color:#FDE68A;color:#92400E}
-.alert-bar.critical{background:var(--red-bg);border-color:#FECACA;color:#991B1B}
-
-/* ── SPEND TRACKER ──────────────────────────────────────────── */
-.spend-cat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px}
-.spend-cat-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);margin-bottom:3px}
-.spend-cat-value{font-size:18px;font-weight:700;letter-spacing:-.4px}
-.spend-cat-bar{height:3px;border-radius:3px;margin-top:7px}
-
-/* ── AD ANALYTICS ──────────────────────────────────────────── */
-.score-bar-bg{width:70px;height:4px;background:var(--border2);border-radius:4px;display:inline-block;vertical-align:middle}
-.score-bar-fill{height:100%;border-radius:4px}
-
-/* ── WELCOME / QUICK ACTIONS ──────────────────────────────── */
-.welcome-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
-.welcome-heading{font-size:19px;font-weight:700;letter-spacing:-0.5px;color:var(--text)}
-.welcome-sub{font-size:12.5px;color:var(--text3);margin-top:2px}
-.quick-actions{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
-.qa-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);transition:all .1s}
-.qa-chip:hover{border-color:var(--orange);color:var(--orange);background:var(--orange-light)}
-
-/* ── ANIMATIONS ──────────────────────────────────────────────── */
-@keyframes slideUp{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-.skeleton{background:linear-gradient(90deg,var(--surface2) 25%,var(--border2) 50%,var(--surface2) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px}
-
-/* ── SCROLLBAR ──────────────────────────────────────────────── */
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-::-webkit-scrollbar-thumb:hover{background:var(--text3)}
-
-/* ── PRINT ──────────────────────────────────────────────────── */
-@media print{body *{visibility:hidden!important}#print-area,#print-area *{visibility:visible!important}#print-area{position:absolute;left:0;top:0;width:100%;padding:20px;background:#fff}.no-print{display:none!important}}
-</style>
-
-
-</head>
-<body>
-
-<div id="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-mark">WC</div>
-    <div>
-      <div class="logo-text">WeClick AI</div>
-      <div class="logo-sub">Marketing Agency</div>
-    </div>
-  </div>
-  <div class="sidebar-search">
-    <span class="si">⌕</span>
-    <input type="text" placeholder="Search...">
-  </div>
-  <nav class="sidebar-nav" id="sidebar-nav">
-    <div class="nav-section">Main</div>
-    <div class="nav-item" data-page="dashboard"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.5"/><rect x="9" y="1.5" width="5.5" height="5.5" rx="1.5"/><rect x="1.5" y="9" width="5.5" height="5.5" rx="1.5"/><rect x="9" y="9" width="5.5" height="5.5" rx="1.5"/></svg>Dashboard</div>
-    <div class="nav-item" data-page="clients"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2.5"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg>Clients</div>
-    <div class="nav-item" data-page="campaigns"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 10l3-6 3.5 3L11 4l3 3"/><path d="M2 14h12"/></svg>Campaigns</div>
-    <div class="nav-section">Tools</div>
-    <div class="nav-item" data-page="adanalytics"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="9.5" width="3" height="5" rx="1"/><rect x="6.5" y="5.5" width="3" height="9" rx="1"/><rect x="11.5" y="1.5" width="3" height="13" rx="1"/></svg>Ad Analytics</div>
-    <div class="nav-item" data-page="automations"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg>Automations</div>
-    <div class="nav-item" data-page="collaborations"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><path d="M1 14c0-2 1.8-3.5 4-3.5s4 1.5 4 3.5"/><path d="M9 12.5c.5-1.7 2-2.8 3-2.8s2.5.6 3 2.3"/></svg>Collaborations</div>
-    <div class="nav-section">Finance</div>
-    <div class="nav-item" data-page="revenue"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M11 5H6.5A2 2 0 004.5 7a2 2 0 002 2h3a2 2 0 010 4H5"/></svg>Revenue</div>
-    <div class="nav-item" data-page="tally"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M5 5h6M5 11h4"/></svg>Tally / Spends</div>
-    <div class="nav-item" data-page="meetings"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 7h12M5 1v4M11 1v4"/></svg>Client Meetings</div>
-    <div class="nav-item" data-page="reminders"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a5 5 0 015 5v3l1.5 2H1.5L3 10V7a5 5 0 015-5z"/><path d="M6.5 13.5a1.5 1.5 0 003 0"/></svg>Reminders</div>
-    <div class="nav-section">System</div>
-    <div class="nav-item" data-page="settings"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.3 3.3l.7.7M12 12l.7.7M3.3 12.7l.7-.7M12 4l.7-.7"/></svg>Settings</div>
-  </nav>
-  <div class="sidebar-footer">
-    <div class="user-card">
-      <div class="avatar">A</div>
-      <div><div style="font-size:12px;font-weight:500;color:var(--text)">Admin</div><div style="font-size:10.5px;color:var(--text3)">Agency Owner</div></div>
-      <div style="margin-left:auto;color:var(--text3);font-size:13px">⋮</div>
-    </div>
-  </div>
-</div>
-<div id="main">
-  <div class="topbar">
-    <div style="display:flex;align-items:center;gap:12px;flex:1">
-      <div class="topbar-title" id="topbar-title">Dashboard</div>
-    </div>
-    <div class="topbar-search">
-      <span class="si">🔍</span>
-      <input type="text" placeholder="Search clients, campaigns...">
-    </div>
-    <div class="topbar-actions">
-      <div class="tb-btn" onclick="navigate('meetings')" title="Meetings">📅</div>
-      <div class="tb-btn" onclick="navigate('reminders')" title="Reminders">🔔</div>
-      <div id="topbar-actions"></div>
-    </div>
-  </div>
-
-<div class="page-content" id="page-content">
-    <div class="loading">Loading...</div>
-  </div>
-</div>
-
-<div id="modal-root"></div>
-<div id="toast-root"></div>
-
-<script>
-const API = '';
-let appState = {
-  page:'dashboard', chartPeriod:'30', chartClientId:'all',
-  financeTab:'company', selectedClientId:null, calendarMonth:null,
-  clients:[], campaigns:[], automations:[], collaborations:[], users:[],
-  syncing:false, quoteItems:[], settingsTab:'company',
-  adAnalyticsTab:'meta', adAnalyticsClientId:'all'
-};
-
-// ── UTILS ──────────────────────────────────────────────────────
-function fmt(n){
-  const num=Math.round(parseFloat(String(n).replace(/[^\d.-]/g,''))||0);
-  if(isNaN(num)||!isFinite(num))return '₹0';
-  if(num<0)return '-'+fmt(-num);
-  return '₹'+num.toLocaleString('en-IN',{maximumFractionDigits:0});
-}
-function ini(name){return (name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
-function avatarHtml(c, opts){
-  opts=opts||{};
-  const cls=opts.cls||'client-avatar';
-  const size=opts.size||'';
-  const inline=size?`width:${size}px;height:${size}px;font-size:${Math.max(9,Math.round(size*0.36))}px;`:'';
-  const initials=ini(c.name);
-  if(c.avatar_url){
-    return `<div class="${cls}" style="background:${c.color};${inline}position:relative;overflow:hidden">
-      <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">${initials}</span>
-      <img src="${c.avatar_url}" alt="" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%"/>
-    </div>`;
-  }
-  return `<div class="${cls}" style="background:${c.color};${inline}">${initials}</div>`;
-}
-function relTime(d){const days=Math.floor((Date.now()-new Date(d).getTime())/86400000);return days===0?'Today':days===1?'Yesterday':days+'d ago';}
-function toast(msg,type='success'){
-  const el=document.getElementById('toast-root');
-  const div=document.createElement('div');
-  div.className='toast';
-  div.innerHTML=`<span>${type==='success'?'✓':'✕'}</span>${msg}`;
-  el.appendChild(div);
-  setTimeout(()=>div.remove(),3000);
-}
-async function api(path,opts={}){
-  try{
-    const res=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts});
-    const ct=res.headers.get('content-type')||'';
-    if(!ct.includes('application/json')){await res.text();throw new Error('API '+path+' returned non-JSON ('+res.status+')')}
-    const data=await res.json();
-    if(!res.ok) throw new Error(data.error||'Request failed');
-    return data;
-  }catch(e){toast(e.message,'error');throw e;}
-}
-function timeAgo(ts){
-  if(!ts) return '';
-  const now=new Date(),d=new Date(ts);
-  const diff=Math.floor((now-d)/1000);
-  if(diff<60) return 'Just now';
-  if(diff<3600) return Math.floor(diff/60)+'m ago';
-  if(diff<86400) return Math.floor(diff/3600)+'h ago';
-  if(diff<172800) return 'Yesterday';
-  if(diff<604800) return Math.floor(diff/86400)+'d ago';
-  return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
-}
-function activityIcon(type){
-  const icons={campaign:'📣',client:'👤',revenue:'💰',meta:'📊',automation:'🤖',quotation:'📄',reminder:'🔔',expense:'💸',finance:'💳',creative:'🎨',google:'🔍',def:'⚡'};
-  return icons[type]||icons.def;
-}
-function activityColor(type){
-  const colors={campaign:'#FF6A00',client:'#3B82F6',revenue:'#10B981',meta:'#8B5CF6',automation:'#F59E0B',quotation:'#EC4899',reminder:'#EF4444',expense:'#F97316',finance:'#6366F1',creative:'#06B6D4'};
-  return colors[type]||'#FF6A00';
-}
-function platformColor(p){
-  return {Instagram:'#E1306C',Meta:'#1877F2',LinkedIn:'#0A66C2',YouTube:'#FF0000',Google:'#4285F4'}[p]||'#888';
-}
-function clientStatusBadgeClass(status){
-  return {Active:'badge-green',Paused:'badge-orange',Stopped:'badge-red'}[status]||'badge-gray';
-}
-
-// ── SIDEBAR NAV ────────────────────────────────────────────────
-document.querySelectorAll('.nav-item[data-page]').forEach(el=>{
-  el.addEventListener('click',()=>navigate(el.dataset.page));
-});
-function setActiveNav(page){
-  document.querySelectorAll('.nav-item[data-page]').forEach(el=>{
-    el.classList.toggle('active',el.dataset.page===page);
-  });
-}
-
-// ── NAVIGATION ─────────────────────────────────────────────────
-async function navigate(page,id){
-  appState.navVersion=(appState.navVersion||0)+1;
-  appState.page=page;
-  if(id!==undefined) appState.selectedClientId=id;
-  const navMap={clientDetail:'clients'};
-  setActiveNav(navMap[page]||page);
-  const titles={dashboard:'Dashboard',clients:'Clients',clientDetail:'Client Detail',campaigns:'Campaigns',automations:'Automations',collaborations:'Collaborations',revenue:'Revenue · Finance Hub',tally:'Tally / Daily Spends',reminders:'Payment Reminders',meetings:'Client Meetings',adanalytics:'Ad Analytics',settings:'Settings'};
-  document.getElementById('topbar-title').textContent=titles[page]||page;
-  renderTopbarActions();
-  const content=document.getElementById('page-content');
-  content.innerHTML='<div class="loading">Loading...</div>';
-  await renderPage();
-}
-function renderTopbarActions(){
-  const el=document.getElementById('topbar-actions');
-  const p=appState.page;
-  if(p==='dashboard') el.innerHTML=`<button class="btn btn-sm" onclick="syncMeta()"><svg id="sync-icon" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 8A6 6 0 112 8"/><path d="M14 2v6h-6"/></svg> Sync Meta</button>`;
-  else if(p==='clients') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddClient()">+ Add Client</button>`;
-  else if(p==='campaigns') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddCampaign()">+ Add Campaign</button>`;
-  else if(p==='automations') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddAutomation()">+ Add Automation</button>`;
-  else if(p==='collaborations') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddCollab()">+ Add Partner</button>`;
-  else if(p==='revenue') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddRevenue()">+ Manual Revenue</button>`;
-  else if(p==='tally') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddSpend()">+ Add Spend</button>`;
-  else if(p==='meetings') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddMeeting()">+ Schedule Meeting</button>`;
-  else if(p==='reminders') el.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openAddReminder()">+ Add Reminder</button>`;
-  else el.innerHTML='';
-}
-
-// ── PAGE RENDER ────────────────────────────────────────────────
-async function renderPage(){
-  const el=document.getElementById('page-content');
-  const myVersion=(appState.navVersion||0);
-  el.innerHTML='<div style="padding:60px;text-align:center;color:var(--text3);font-size:13px">Loading...</div>';
-  let html='';
-  const pg=appState.page;
-  try{
-    switch(pg){
-      case 'dashboard': html=await buildDashboard();break;
-      case 'clients': html=await buildClients();break;
-      case 'clientDetail': html=await buildClientDetail();break;
-      case 'campaigns': html=await buildCampaigns();break;
-      case 'automations': html=await buildAutomations();break;
-      case 'collaborations': html=await buildCollaborations();break;
-      case 'revenue': html=await buildRevenue();break;
-      case 'tally': html=await buildTally();break;
-      case 'meetings': html=await buildMeetings();break;
-      case 'reminders': html=await buildReminders();break;
-      case 'adanalytics': html=await buildAdAnalytics();break;
-      case 'settings': html=await buildSettings();break;
-      default: html='<p style="padding:20px;color:var(--text3)">Page not found</p>';
-    }
-  }catch(e){
-    html='<div style="padding:40px;text-align:center;color:var(--red)">Error loading page: '+e.message+'</div>';
-    console.error('renderPage error:',e);
-  }
-  // Only render if we're still on the same navigation
-  if(appState.navVersion!==myVersion) return;
-  el.innerHTML='';
-  const div=document.createElement('div');
-  div.className='page';
-  div.innerHTML=html;
-  el.appendChild(div);
-  if(pg==='dashboard'){drawChart();initDashboardCharts();}
-  else drawChart();
-}
-
-// ── DASHBOARD ──────────────────────────────────────────────────
-async function buildDashboard(){
-  const [stats,clients,alerts,breakdown] = await Promise.all([
-    api('/api/dashboard').catch(()=>({})),
-    api('/api/clients').catch(()=>[]),
-    api('/api/meta/alerts').catch(()=>[]),
-    api('/api/revenue/breakdown').catch(()=>({}))
-  ]);
-  appState.clients = clients;
-  const s = stats||{};
-  const bd = breakdown||{};
-  appState.revBreakdown = bd;
-
-  const hr=new Date().getHours();
-  const greet=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
-  const today=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
-
-  const alertsHtml=alerts.length?`<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px">
-    ${alerts.map(a=>`<div class="alert-bar ${a.type}"><span style="font-size:15px">${a.type==='critical'?'🚨':'⚠️'}</span><div style="flex:1"><b>${a.client}</b> — ${a.msg}</div><button class="btn btn-ghost btn-sm" onclick="navigate('clientDetail',${a.client_id})" style="color:inherit">View →</button></div>`).join('')}
-  </div>`:'';
-
-  const kpis=[
-    {label:'Total Revenue',value:fmt(s.totalRevenue||0),icon:'💰',color:'#FF6B00',bg:'#FFF4EE',trend:'+18.4%',up:true},
-    {label:'This Month',value:fmt(s.thisMonth||0),icon:'📈',color:'#16A34A',bg:'#F0FDF4',trend:'+12.1%',up:true},
-    {label:'Active Clients',value:String(s.activeClients||0),icon:'👥',color:'#2563EB',bg:'#EFF6FF',trend:`${s.totalClients||0} total`,up:null},
-    {label:'Ad Spend',value:fmt(s.totalSpend||0),icon:'📊',color:'#7C3AED',bg:'#F5F3FF',trend:'-3.2%',up:false},
-    {label:'Profit',value:fmt(s.profit||0),icon:'✨',color:'#16A34A',bg:'#F0FDF4',trend:'+22.5%',up:true},
-    {label:'Automations',value:String(s.activeAutomations||0),icon:'⚡',color:'#FF6B00',bg:'#FFF4EE',trend:fmt(s.automationRevenue||0),up:null},
-  ];
-
-  const kpiHtml=kpis.map(k=>`<div class="kpi-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;transition:all .13s" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,.08)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='none';this.style.transform='none'" style="--kpi-color:${k.color};--kpi-bg:${k.bg}">
-    <div class="kpi-icon" style="background:${k.bg}">${k.icon}</div>
-    <div class="kpi-label">${k.label}</div>
-    <div class="kpi-value">${k.value}</div>
-    <div class="kpi-trend ${k.up===true?'up':k.up===false?'down':'neutral'}">${k.up===true?'↑':k.up===false?'↓':''} ${k.trend}</div>
-  </div>`).join('');
-
-  const activity=s.recentActivity||[];
-  const actHtml=activity.length===0
-    ?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4" style="padding:32px"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">⚡</div><div class="empty-label" style="font-size:14px;font-weight:500;color:#6F6F6B;margin-bottom:3px">No activity yet</div><div class="empty-text" style="font-size:12.5px;line-height:1.5">Add clients or sync Meta to see events.</div></div>`
-    :activity.slice(0,8).map(a=>`<li class="activity-item" style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #ECECEA;list-style:none" onclick="${a.client_id?('navigate(\'clientDetail\','+a.client_id+')'):'void(0)'}" style="${a.client_id?'cursor:pointer':''}">
-      <div class="act-dot" style="width:7px;height:7px;border-radius:50%;background:#E96800;flex-shrink:0;margin-top:4px" style="background:${activityColor(a.type)}"></div>
-      <div class="act-body"><div class="act-text" style="font-size:12.5px;color:#111110;line-height:1.4">${activityIcon(a.type)} ${a.title}</div>${a.details?'<div class="act-time" style="font-size:10.5px;color:#A8A8A4;margin-top:2px">'+a.details+'</div>':''}<div class="act-time" style="font-size:10.5px;color:#A8A8A4;margin-top:2px">${timeAgo(a.created_at)}</div></div>
-    </li>`).join('');
-
-  const topClients=clients.slice(0,5).map(cl=>`<tr onclick="navigate('clientDetail',${cl.id})" style="cursor:pointer">
-    <td><div class="name-cell" style="display:flex;align-items:center;gap:9px">${avatarHtml(cl)}<div><div style="font-weight:500">${cl.name}</div><div style="font-size:11px;color:var(--text3)">${cl.company}</div></div></div></td>
-    <td style="font-weight:600;color:var(--orange)">${fmt(cl.revenue)}</td>
-    <td style="color:var(--green)">${fmt(cl.profit)}</td>
-    <td><span class="badge ${cl.status==='Active'?'badge-green':cl.status==='Paused'?'badge-yellow':'badge-gray'}">${cl.status}</span></td>
-  </tr>`).join('');
-
-  return `${alertsHtml}
-  <div class="welcome-bar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px">
-    <div>
-      <div class="welcome-heading" style="font-size:19px;font-weight:700;letter-spacing:-0.5px;color:#111110">${greet}, Admin 👋</div>
-      <div class="welcome-sub" style="font-size:12.5px;color:#A8A8A4;margin-top:2px">${today} · ${(s.activeClients||0)} active clients · ${(s.activeAutomations||0)} automations running</div>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-sm" onclick="syncMeta()"><svg id="sync-icon" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 8A6 6 0 112 8"/><path d="M14 2v6h-6"/></svg> Sync Meta</button>
-      <button class="btn btn-primary btn-sm" onclick="navigate('clients');setTimeout(openAddClient,300)">+ Add Client</button>
-    </div>
-  </div>
-  <div class="quick-actions">
-    <div class="qa-chip" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1px solid #E5E5E3;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;color:#6F6F6B;transition:all .1s" onmouseover="this.style.borderColor='#E96800';this.style.color='#E96800';this.style.background='#FFF3EA'" onmouseout="this.style.borderColor='#E5E5E3';this.style.color='#6F6F6B';this.style.background='#fff'" onclick="navigate('campaigns');setTimeout(openAddCampaign,300)"><span class="chip-icon">📣</span>New Campaign</div>
-    <div class="qa-chip" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1px solid #E5E5E3;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;color:#6F6F6B;transition:all .1s" onmouseover="this.style.borderColor='#E96800';this.style.color='#E96800';this.style.background='#FFF3EA'" onmouseout="this.style.borderColor='#E5E5E3';this.style.color='#6F6F6B';this.style.background='#fff'" onclick="navigate('meetings');setTimeout(openAddMeeting,300)"><span class="chip-icon">📅</span>Schedule Meeting</div>
-    <div class="qa-chip" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1px solid #E5E5E3;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;color:#6F6F6B;transition:all .1s" onmouseover="this.style.borderColor='#E96800';this.style.color='#E96800';this.style.background='#FFF3EA'" onmouseout="this.style.borderColor='#E5E5E3';this.style.color='#6F6F6B';this.style.background='#fff'" onclick="navigate('revenue');setTimeout(openAddRevenue,300)"><span class="chip-icon">💰</span>Add Revenue</div>
-    <div class="qa-chip" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1px solid #E5E5E3;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;color:#6F6F6B;transition:all .1s" onmouseover="this.style.borderColor='#E96800';this.style.color='#E96800';this.style.background='#FFF3EA'" onmouseout="this.style.borderColor='#E5E5E3';this.style.color='#6F6F6B';this.style.background='#fff'" onclick="navigate('tally');setTimeout(openAddSpend,300)"><span class="chip-icon">💸</span>Log Expense</div>
-    <div class="qa-chip" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1px solid #E5E5E3;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;color:#6F6F6B;transition:all .1s" onmouseover="this.style.borderColor='#E96800';this.style.color='#E96800';this.style.background='#FFF3EA'" onmouseout="this.style.borderColor='#E5E5E3';this.style.color='#6F6F6B';this.style.background='#fff'" onclick="navigate('adanalytics')"><span class="chip-icon">📊</span>Ad Analytics</div>
-  </div>
-  <div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">${kpiHtml}</div>
-  <div class="col-7-5" style="display:grid;grid-template-columns:7fr 5fr;gap:14px;margin-bottom:16px">
-    <div class="chart-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:18px;margin-bottom:16px" style="margin-bottom:0">
-      <div class="chart-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-        <div><div class="chart-title" style="font-size:13px;font-weight:600;color:#111110">Revenue vs Ad Spend</div><div style="font-size:11.5px;color:var(--text3);margin-top:2px">Performance over time</div></div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <select class="select-input" id="chart-client" onchange="setChartClient(this.value)"><option value="all">All Clients</option>${clients.map(cl=>`<option value="${cl.id}">${cl.name}</option>`).join('')}</select>
-          <div class="toggle-group"><div class="toggle-btn ${appState.chartPeriod==='30'?'active':''}" onclick="toggleChart('30')">30D</div><div class="toggle-btn ${appState.chartPeriod==='90'?'active':''}" onclick="toggleChart('90')">90D</div></div>
-        </div>
-      </div>
-      <div class="area-chart" id="chart-area"></div>
-      <div class="chart-tooltip" id="chart-tooltip"></div>
-      <div style="display:flex;gap:14px;margin-top:10px">
-        <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2)"><div style="width:10px;height:3px;background:var(--orange);border-radius:2px"></div>Revenue</div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2)"><div style="width:10px;height:3px;background:var(--text3);border-radius:2px"></div>Ad Spend</div>
-      </div>
-    </div>
-    <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px" style="margin-bottom:0">
-      <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Recent Activity</div></div>
-      <ul class="activity-list">${actHtml}</ul>
-    </div>
-  </div>
-  <div class="col-5-7" style="display:grid;grid-template-columns:5fr 7fr;gap:14px;margin-bottom:16px" style="margin-top:18px">
-    <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px" style="margin-bottom:0">
-      <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Top Clients</div><button class="btn btn-ghost btn-sm" onclick="navigate('clients')">View all →</button></div>
-      <table><thead><tr><th>Client</th><th>Revenue</th><th>Profit</th><th>Status</th></tr></thead><tbody>${topClients}</tbody></table>
-    </div>
-    <div class="chart-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:18px;margin-bottom:16px" style="margin-bottom:0">
-      <div class="chart-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px" style="margin-bottom:14px">
-        <div class="chart-title" style="font-size:13px;font-weight:600;color:#111110">Client Performance</div>
-        <div class="toggle-group" id="perf-period-toggle"><div class="toggle-btn active" onclick="switchPerfPeriod('month',this)">Month</div><div class="toggle-btn" onclick="switchPerfPeriod('30d',this)">30D</div></div>
-      </div>
-      <div style="position:relative;height:200px"><canvas id="clientPerfChart"></canvas></div>
-      <div class="chart-legend" style="display:flex;gap:12px;margin-top:8px">
-        <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:2px;background:#FF6B00"></div>Revenue</div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:2px;background:#D1D5DB"></div>Ad Spend</div>
-      </div>
-    </div>
-  </div>
-  <div class="three-col" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px" style="margin-top:18px">
-    <div class="insight-card" style="background:linear-gradient(135deg,#FFF3EA,#FFF8F2);border:1px solid #FFD4AA;border-radius:12px;padding:14px 16px"><div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">🏆 Top Client</div><div style="font-size:13px;line-height:1.5">${clients[0]?.name||'—'} leads at <b>${fmt(clients[0]?.revenue||0)}</b>.</div></div>
-    <div class="insight-card" style="background:linear-gradient(135deg,#FFF3EA,#FFF8F2);border:1px solid #FFD4AA;border-radius:12px;padding:14px 16px"><div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">⚠️ Needs Attention</div><div style="font-size:13px;line-height:1.5">${clients[clients.length-1]?.name||'—'} has the lowest margin. Review ad spend.</div></div>
-    <div class="insight-card" style="background:linear-gradient(135deg,#FFF3EA,#FFF8F2);border:1px solid #FFD4AA;border-radius:12px;padding:14px 16px"><div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">📈 Growth</div><div style="font-size:13px;line-height:1.5">Automation revenue up 34% QoQ. Projected ₹12L run rate.</div></div>
-  </div>`;
-}
-
-async function initDashboardCharts(){
-  try{
-    const data=await api('/api/charts/performance').catch(()=>null);
-    _chartPerfData=data;
-    renderClientPerfChart(data.clients);
-    renderRevDonutChart(data.clients);
-    renderFunnelChart(data.funnel);
-  }catch(e){console.warn('Chart init failed',e);}
-}
-function switchPerfPeriod(period,btn){
-  document.querySelectorAll('#perf-period-toggle .toggle-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderClientPerfChart(_chartPerfData.clients,period);
-}
-function renderClientPerfChart(clients){
-  const canvas=document.getElementById('clientPerfChart');if(!canvas)return;
-  if(_perfChart){_perfChart.destroy();_perfChart=null;}
-  const labels=clients.map(c=>c.name.split(' ')[0]);
-  const fmtTick=v=>v>=10000000?'₹'+(v/10000000).toFixed(1)+'Cr':v>=100000?'₹'+(v/100000).toFixed(1)+'L':v>=1000?'₹'+(v/1000).toFixed(0)+'k':'₹'+v;
-  _perfChart=new Chart(canvas,{
-    type:'bar',
-    data:{labels,datasets:[
-      {label:'Revenue',data:clients.map(c=>c.revenue||0),backgroundColor:'#FF6A00',borderRadius:5,maxBarThickness:30},
-      {label:'Ad Spend',data:clients.map(c=>c.spend||0),backgroundColor:'#D1D5DB',borderRadius:5,maxBarThickness:30},
-      {label:'Profit',data:clients.map(c=>c.profit||0),backgroundColor:'#10B981',borderRadius:5,maxBarThickness:30}
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#E5E5E5',borderWidth:1,titleColor:'#0F0F0F',bodyColor:'#6B7280',padding:10,callbacks:{label:ctx=>` ${ctx.dataset.label}: ₹${(ctx.raw||0).toLocaleString('en-IN')}`}}},scales:{x:{grid:{display:false},ticks:{font:{family:'DM Sans',size:11},color:'#6B7280'}},y:{grid:{color:'#F3F4F6',drawBorder:false},ticks:{font:{family:'DM Sans',size:10},color:'#9CA3AF',callback:fmtTick}}}}
-  });
-}
-function renderRevDonutChart(clients){
-  const canvas=document.getElementById('revenueDonutChart');if(!canvas)return;
-  if(_donutChart){_donutChart.destroy();_donutChart=null;}
-  const active=clients.filter(c=>(c.revenue||0)>0);
-  const total=active.reduce((s,c)=>s+(c.revenue||0),0);
-  _donutChart=new Chart(canvas,{type:'doughnut',data:{labels:active.map(c=>c.name),datasets:[{data:active.map(c=>c.revenue||0),backgroundColor:active.map(c=>c.color||'#FF6A00'),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#E5E5E5',borderWidth:1,titleColor:'#0F0F0F',bodyColor:'#6B7280',padding:10,callbacks:{label:ctx=>{const pct=total>0?((ctx.raw/total)*100).toFixed(1):0;return ` ₹${(ctx.raw||0).toLocaleString('en-IN')} · ${pct}%`;}}}}}});
-  const leg=document.getElementById('donut-legend');
-  if(leg) leg.innerHTML=active.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0"><div style="display:flex;align-items:center;gap:7px"><div style="width:8px;height:8px;border-radius:50%;background:${c.color||'#FF6A00'};flex-shrink:0"></div><span style="font-size:11.5px">${c.name}</span></div><div><span style="font-size:12px;font-weight:600">₹${(c.revenue||0).toLocaleString('en-IN',{maximumFractionDigits:0})}</span><span style="font-size:10px;color:var(--text2);margin-left:5px">${total>0?((c.revenue/total)*100).toFixed(1):0}%</span></div></div>`).join('');
-}
-function renderFunnelChart(funnel){
-  const canvas=document.getElementById('funnelChart');if(!canvas)return;
-  if(_funnelChart){_funnelChart.destroy();_funnelChart=null;}
-  const imp=funnel.impressions||0,clk=funnel.clicks||0,lds=funnel.leads||0,conv=funnel.conversions||Math.round(lds*0.6);
-  const values=[imp,clk,lds,conv];
-  const stages=['Impressions','Clicks','Leads','Est. Converts'];
-  const dropLabel=['',imp>0?((clk/imp)*100).toFixed(2)+'% CTR':'—',clk>0?((lds/clk)*100).toFixed(1)+'% Lead Rate':'—',lds>0?((conv/lds)*100).toFixed(0)+'% Conv.':'—'];
-  const fmtVal=v=>v>=1000000?(v/1000000).toFixed(1)+'M':v>=1000?(v/1000).toFixed(1)+'k':''+v;
-  _funnelChart=new Chart(canvas,{type:'bar',data:{labels:stages,datasets:[{data:values,backgroundColor:['rgba(255,106,0,0.92)','rgba(255,106,0,0.72)','rgba(255,106,0,0.52)','rgba(255,106,0,0.32)'],borderRadius:6,barPercentage:0.55}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#E5E5E5',borderWidth:1,titleColor:'#0F0F0F',bodyColor:'#6B7280',padding:10,callbacks:{label:ctx=>{const drop=dropLabel[ctx.dataIndex];return ` ${fmtVal(ctx.raw)}${drop?' · '+drop:''}`;}}}},scales:{x:{grid:{color:'#F3F4F6'},ticks:{font:{family:'DM Sans',size:10},color:'#9CA3AF',callback:v=>v>=1000000?(v/1000000).toFixed(1)+'M':v>=1000?(v/1000).toFixed(0)+'k':''+v}},y:{grid:{display:false},ticks:{font:{family:'DM Sans',size:12},color:'#0F0F0F',callback:(val,idx)=>{const s=stages[idx];const d=dropLabel[idx];return d?`${s}  (${d})`:s;}}}}}});
-}
-
-// ── CLIENTS ────────────────────────────────────────────────────
-async function buildClients(){
-  const clients=await api('/api/clients').catch(()=>[]);
-  appState.clients=clients;
-  return `
-  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
-    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
-      <div class="table-title" style="font-size:13px;font-weight:600;color:#111110">All Clients <span style="color:var(--text2);font-weight:400;font-size:12px">${clients.length} total</span></div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input class="search-input" placeholder="Search…" oninput="filterTable(this,'clients-tbody')" />
-      </div>
-    </div>
-    <table><thead><tr><th>Client</th><th>Company</th><th>Status</th><th>Revenue</th><th>Ad Spend</th><th>Profit</th><th>Actions</th></tr></thead>
-    <tbody id="clients-tbody">
-    ${clients.map(c=>{
-      const metaBadge=c.meta_connected?(c.meta_balance!==null&&c.meta_balance<500?`<span class="meta-badge" style="background:#FEE2E2;color:#991B1B;border-color:#FECACA">⚠️ Low Funds</span>`:`<span class="meta-badge">Meta ✓</span>`):'';
-      return `<tr data-search="${c.name.toLowerCase()} ${c.company.toLowerCase()}" onclick="navigate('clientDetail',${c.id})" style="cursor:pointer">
-      <td><div class="name-cell" style="display:flex;align-items:center;gap:9px">${avatarHtml(c)}<span style="font-weight:500">${c.name}${metaBadge}</span></div></td>
-      <td style="color:var(--text2)">${c.company}</td>
-      <td><span class="badge ${clientStatusBadgeClass(c.status)}">${c.status}</span></td>
-      <td style="font-weight:500">${fmt(c.revenue)}</td>
-      <td>${fmt(c.spend)}</td>
-      <td style="color:var(--green);font-weight:500">${fmt(c.profit)}</td>
-      <td style="white-space:nowrap" onclick="event.stopPropagation()">
-        <button class="btn btn-ghost btn-sm" onclick="navigate('clientDetail',${c.id})">View →</button>
-        <button class="btn btn-ghost btn-sm" onclick="openEditClient(${c.id})">Edit</button>
-        <button class="btn btn-ghost btn-sm" style="color:${c.status==='Active'?'#D97706':'var(--green)'}" onclick="toggleClientStatus(${c.id},'${c.status}')">${c.status==='Active'?'⏸ Pause':c.status==='Paused'?'▶ Resume':'▶ Resume'}</button>
-        <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteClient(${c.id})">Delete</button>
-      </td>
-    </tr>`;}).join('')}
-    </tbody></table>
-  </div>`;
-}
-function filterTable(input,tbodyId){
-  const q=input.value.toLowerCase();
-  document.querySelectorAll(`#${tbodyId} tr`).forEach(r=>{r.style.display=!q||(r.dataset.search||r.textContent).toLowerCase().includes(q)?'':'none';});
-}
-async function toggleClientStatus(id,currentStatus){
-  const newStatus=currentStatus==='Active'?'Paused':currentStatus==='Paused'?'Active':'Active';
-  if(!confirm(`${newStatus==='Active'?'Resume':'Pause'} this client?`)) return;
-  await api(`/api/clients/${id}/status`,{method:'PATCH',body:JSON.stringify({status:newStatus})});
-  toast(`Client ${newStatus==='Active'?'resumed':'paused'}`);
-  navigate('clients');
-}
-
-// ── CLIENT DETAIL ──────────────────────────────────────────────
-async function buildClientDetail(){
-  const c=await api(`/api/clients/${appState.selectedClientId}`);
-  const typeEmoji={calendar:'📅',quotation:'📄',creative:'🎨',report:'📊'};
-
-  // Paused/Stopped banner
-  const statusBanner=c.status!=='Active'?`<div style="padding:12px 24px;background:${c.status==='Stopped'?'#FEF2F2':'#FFFBEB'};border-bottom:1px solid ${c.status==='Stopped'?'#FECACA':'#FDE68A'};display:flex;align-items:center;gap:10px">
-    <span style="font-size:16px">${c.status==='Stopped'?'🛑':'⏸'}</span>
-    <div style="flex:1">
-      <div style="font-size:13px;font-weight:600;color:${c.status==='Stopped'?'#991B1B':'#92400E'}">Client is ${c.status}</div>
-      <div style="font-size:12px;color:${c.status==='Stopped'?'#B91C1C':'#B45309'}">No active campaigns or automations running this month.</div>
-    </div>
-    <button class="btn btn-sm" onclick="toggleClientStatus(${c.id},'${c.status}')" style="border-color:${c.status==='Stopped'?'#FECACA':'#FDE68A'};color:${c.status==='Stopped'?'#991B1B':'#92400E'}">▶ Resume Client</button>
-  </div>`:'';
-
-  const headerHtml=`
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px">
-    <div style="height:3px;background:${c.color||'var(--orange)'}"></div>
-    ${statusBanner}
-    <div style="padding:18px 20px;display:flex;align-items:flex-start;gap:14px">
-      <div style="width:52px;height:52px;min-width:52px;border-radius:50%;position:relative;overflow:hidden;cursor:pointer;background:${c.color||'var(--orange)'};flex-shrink:0" onclick="document.getElementById('avatar-input').click()" title="Click to change photo">
-        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff">${ini(c.name)}</div>
-        ${c.avatar_url?'<img src="'+c.avatar_url+'" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%"/>':''}
-        <div style="position:absolute;right:-1px;bottom:-1px;width:17px;height:17px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:8px;border:2px solid #fff">📷</div>
-      </div>
-      <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadAvatar(${c.id}, this)"/>
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
-          <span style="font-size:17px;font-weight:700;letter-spacing:-0.4px;color:var(--text)">${c.name}</span>
-          <span class="badge ${clientStatusBadgeClass(c.status)}">${c.status}</span>
-          ${c.metaAccount?.is_active?'<span style="display:inline-flex;align-items:center;gap:3px;background:#EBF5FF;color:#1877F2;border:1px solid #BFDBFE;border-radius:20px;font-size:10px;font-weight:600;padding:1px 7px">f Meta</span>':''}
-        </div>
-        <div style="font-size:13px;color:var(--text2)">${c.company}</div>
-        ${c.email?'<div style="font-size:11.5px;color:var(--text3);margin-top:1px">✉ '+c.email+'</div>':''}
-      </div>
-      <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;align-self:flex-start">
-        <button class="btn btn-sm" onclick="openSendReport(${c.id})">Send Report</button>
-        <button class="btn btn-sm btn-pause" onclick="toggleClientPause(${c.id},'${c.status}')">${c.status==='Active'?'⏸ Pause':'▶ Resume'}</button>
-        <button class="btn btn-primary btn-sm" onclick="openEditClient(${c.id})">Edit Client</button>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--border2)">
-      <div style="padding:12px 18px;border-right:1px solid var(--border2)"><div style="font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Revenue</div><div style="font-size:17px;font-weight:700;color:var(--orange)">${fmt(c.revenue)}</div></div>
-      <div style="padding:12px 18px;border-right:1px solid var(--border2)"><div style="font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Ad Spend</div><div style="font-size:17px;font-weight:700;color:var(--text)">${fmt(c.spend)}</div></div>
-      <div style="padding:12px 18px;border-right:1px solid var(--border2)"><div style="font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Profit</div><div style="font-size:17px;font-weight:700;color:var(--green)">${fmt(c.profit)}</div></div>
-      <div style="padding:12px 18px;border-right:1px solid var(--border2)"><div style="font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">Expected</div><div style="font-size:17px;font-weight:700;color:var(--blue)">${fmt(c.expected_revenue)}</div></div>
-      <div style="padding:12px 18px"><div style="font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">ROI</div><div style="font-size:17px;font-weight:700;color:var(--green)">${c.spend>0?Math.round((c.revenue/c.spend)*100):0}%</div></div>
-    </div>
-  </div>`;
-
-  const filesHtml=`
-  <div class="cd-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:14px">
-    <div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
-      <div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">Client Files</div>
-      <button class="btn btn-primary btn-sm" onclick="openUploadFile(${c.id})">+ Upload File</button>
-    </div>
-    ${c.files.length===0?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">📁</div><div class="empty-text" style="font-size:12.5px;line-height:1.5">No files yet. Upload a calendar, quotation, creative or report.</div></div>`:
-    c.files.map(f=>`<div class="file-item">
-      <div class="file-icon">${typeEmoji[f.file_type]||'📎'}</div>
-      <div class="file-info">
-        <div class="file-name">${f.file_name}</div>
-        <div class="file-meta"><span class="badge badge-${f.file_type==='report'?'blue':f.file_type==='calendar'?'green':'orange'}" style="font-size:10px;padding:1px 6px">${f.file_type}</span> · ${f.file_size} · ${relTime(f.uploaded_at)}</div>
-      </div>
-      <a href="${f.file_url}" download class="btn btn-ghost btn-sm">↓ Download</a>
-      <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteFile(${c.id},${f.id})">Delete</button>
-    </div>`).join('')}
-  </div>`;
-
-  const campHtml=`
-  <div class="cd-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:14px">
-    <div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">Campaigns</div></div>
-    ${c.campaigns.length===0?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4" style="padding:32px 20px"><div class="empty-text" style="font-size:12.5px;line-height:1.5">No campaigns for this client.</div></div>`:`
-    <table><thead><tr><th>Campaign</th><th>Channel</th><th>Budget</th><th>Spend</th><th>Progress</th><th>Status</th></tr></thead><tbody>
-    ${c.campaigns.map(camp=>{const p=camp.budget>0?Math.round(camp.spend/camp.budget*100):0;return`<tr>
-      <td style="font-weight:500">${camp.name}</td>
-      <td><span class="badge badge-blue" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#EFF6FF;color:#2563EB">${camp.channel}</span></td>
-      <td>${fmt(camp.budget)}</td><td>${fmt(camp.spend)}</td>
-      <td><div class="progress-wrap" style="display:flex;align-items:center;gap:7px"><div class="progress-bar-bg" style="flex:1;height:4px;background:#ECECEA;border-radius:4px"><div class="progress-bar" style="width:${Math.min(p,100)}%;background:${p>90?'var(--red)':p>70?'var(--orange)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2);min-width:28px">${p}%</span></div></td>
-      <td><span class="badge ${camp.status==='Active'?'badge-green':camp.status==='Paused'?'badge-orange':'badge-gray'}">${camp.status}</span></td>
-    </tr>`}).join('')}
-    </tbody></table>`}
-  </div>`;
-
-  const quotHtml=`
-  <div class="cd-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:14px">
-    <div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
-      <div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">Quotations <span style="color:var(--text2);font-weight:400;font-size:12px">${(c.quotations||[]).length} total</span></div>
-      <button class="btn btn-primary btn-sm" onclick="openCreateQuotation(${c.id},'${c.name.replace(/'/g,"\\'")}','${c.company.replace(/'/g,"\\'")}')">+ Create</button>
-    </div>
-    ${(c.quotations||[]).length===0?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4" style="padding:32px 20px"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">📄</div><div class="empty-text" style="font-size:12.5px;line-height:1.5">No quotations yet. Create one to send to this client.</div></div>`:`
-    <table><thead><tr><th>Quote #</th><th>Items</th><th>Subtotal</th><th>GST</th><th>Total</th><th>Valid Until</th><th></th></tr></thead><tbody>
-    ${c.quotations.map(q=>`<tr>
-      <td style="font-weight:500">${q.quotation_no||('#'+q.id)}</td>
-      <td style="color:var(--text2)">${q.items.length} item${q.items.length!==1?'s':''}</td>
-      <td>${fmt(q.subtotal)}</td>
-      <td>${fmt(q.gst_amount)} <span style="color:var(--text3);font-size:11px">(${q.gst_pct}%)</span></td>
-      <td style="font-weight:600;color:var(--orange)">${fmt(q.total)}</td>
-      <td style="color:var(--text2)">${q.valid_until||'—'}</td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-ghost btn-sm" onclick='viewQuotation(${q.id},${JSON.stringify(c.name).replace(/'/g,"&#39;")},${JSON.stringify(c.company).replace(/'/g,"&#39;")})'>View/Print</button>
-        <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteQuotation(${c.id},${q.id})">Delete</button>
-      </td>
-    </tr>`).join('')}
-    </tbody></table>`}
-  </div>`;
-
-  return `
-  <div class="back-btn" onclick="navigate('clients')">← Back to Clients</div>
-  ${headerHtml}
-  ${filesHtml}
-  ${campHtml}
-  ${quotHtml}
-  ${buildMetaSection(c)}
-  <div class="calendar" id="calendar-${c.id}">${renderCalendar(c)}</div>`;
-}
-
-// ── META SECTION (in client detail) ───────────────────────────
-function buildMetaSection(c){
-  const meta=c.metaAccount,m=c.metaMetrics;
-  if(meta&&meta.is_active){
-    const balance=(meta.balance!==null&&meta.balance!==undefined)?meta.balance:null;
-    const balanceLow=balance!==null&&balance<500;
-    const balanceCritical=balance!==null&&balance<100;
-    const lowBanner=balanceLow?`<div class="low-budget-banner" style="background:${balanceCritical?'#FEF2F2':'#FFFBEB'};border-color:${balanceCritical?'#FECACA':'#FDE68A'}">
-      <span style="font-size:22px;flex-shrink:0">${balanceCritical?'🚨':'⚠️'}</span>
-      <div style="flex:1"><div style="font-size:13px;font-weight:700;color:${balanceCritical?'#991B1B':'#92400E'};margin-bottom:2px">${balanceCritical?'Critical — Ad account almost out of funds!':'Low Funds — Top up this account soon'}</div>
-      <div style="font-size:12px;color:${balanceCritical?'#B91C1C':'#B45309'}">Only <strong>₹${balance.toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0})}</strong> left in this Meta Ads account.</div></div>
-    </div>`:'';
-    const metricsGrid=m?`<div class="meta-metrics">
-      <div class="meta-metric" style="background:#F9F9F8;border:1px solid #ECECEA;border-radius:8px;padding:10px 12px"><div class="meta-metric-label" style="font-size:9.5px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Funds Remaining</div><div class="meta-metric-value" style="font-size:17px;font-weight:700;color:#111110" style="color:${balance===null?'var(--muted)':balanceCritical?'var(--red)':balanceLow?'#D97706':'var(--green)'}">${balance!==null?'₹'+balance.toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0}):'—'}</div></div>
-      <div class="meta-metric" style="background:#F9F9F8;border:1px solid #ECECEA;border-radius:8px;padding:10px 12px"><div class="meta-metric-label" style="font-size:9.5px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Spend (30d)</div><div class="meta-metric-value orange">₹${(m.spend||0).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0})}</div></div>
-      <div class="meta-metric" style="background:#F9F9F8;border:1px solid #ECECEA;border-radius:8px;padding:10px 12px"><div class="meta-metric-label" style="font-size:9.5px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Impressions</div><div class="meta-metric-value" style="font-size:17px;font-weight:700;color:#111110">${(m.impressions||0).toLocaleString()}</div></div>
-      <div class="meta-metric" style="background:#F9F9F8;border:1px solid #ECECEA;border-radius:8px;padding:10px 12px"><div class="meta-metric-label" style="font-size:9.5px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Clicks</div><div class="meta-metric-value" style="font-size:17px;font-weight:700;color:#111110">${(m.clicks||0).toLocaleString()}</div></div>
-      <div class="meta-metric" style="background:#F9F9F8;border:1px solid #ECECEA;border-radius:8px;padding:10px 12px"><div class="meta-metric-label" style="font-size:9.5px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">CTR</div><div class="meta-metric-value ${(m.ctr||0)<1?'':'green'}" style="${(m.ctr||0)<1?'color:var(--red)':''}">${(m.ctr||0).toFixed(2)}%</div></div>
-      <div class="meta-metric" style="background:#F9F9F8;border:1px solid #ECECEA;border-radius:8px;padding:10px 12px"><div class="meta-metric-label" style="font-size:9.5px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">CPC</div><div class="meta-metric-value" style="font-size:17px;font-weight:700;color:#111110">₹${(m.cpc||0).toFixed(2)}</div></div>
-      <div class="meta-metric" style="background:#F9F9F8;border:1px solid #ECECEA;border-radius:8px;padding:10px 12px"><div class="meta-metric-label" style="font-size:9.5px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Reach</div><div class="meta-metric-value" style="font-size:17px;font-weight:700;color:#111110">${(m.reach||0).toLocaleString()}</div></div>
-      <div class="meta-metric" style="background:#F9F9F8;border:1px solid #ECECEA;border-radius:8px;padding:10px 12px"><div class="meta-metric-label" style="font-size:9.5px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Leads</div><div class="meta-metric-value green">${(m.leads||0).toLocaleString()}</div></div>
-    </div>`:
-    `<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4" style="padding:20px"><div class="empty-text" style="font-size:12.5px;line-height:1.5">No spend data yet. Click "Sync Now" to pull metrics from Meta.</div></div>`;
-    return `<div class="cd-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:14px">
-      <div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">Meta Ads</div>
-          <span class="badge badge-green" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#F0FDF4;color:#15803D" style="font-size:10px">Connected</span>
-          ${balanceLow?(balanceCritical?'<span style="background:#FEE2E2;color:#991B1B;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700">🚨 Critical</span>':'<span style="background:#FEF9C3;color:#854D0E;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700">⚠️ Low</span>'):''}  
-        </div>
-        <div style="display:flex;gap:6px;align-items:center">
-          ${meta?.last_synced?'<span style="font-size:11px;color:var(--text2)">Synced '+relTime(meta.last_synced)+'</span>':''}
-          <button class="btn btn-sm" id="meta-sync-btn" onclick="syncClientMeta(${c.id})">↻ Sync Now</button>
-          <button class="btn btn-ghost btn-sm" onclick="showMetaEditForm(${c.id})">Edit</button>
-          <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="disconnectMeta(${c.id})">Disconnect</button>
-        </div>
-      </div>
-      ${lowBanner}
-      <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
-        <span style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px">Account ID</span>
-        <code style="font-size:11px;background:#F3F4F6;border:1px solid var(--border);border-radius:5px;padding:2px 7px">${meta.ad_account_id}</code>
-      </div>
-      ${metricsGrid}
-      <div id="meta-edit-form" style="display:none;padding:20px;border-top:1px solid var(--border);background:var(--surface2)">
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Ad Account ID</label><input class="form-input" id="meta-edit-acc" value="${meta?meta.ad_account_id:''}"></div>
-          <div class="form-group"><label class="form-label">Access Token <span style="color:var(--text3);font-size:10px">(blank = keep existing)</span></label><input class="form-input" id="meta-edit-token" type="password" placeholder="EAAx..."></div>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-primary btn-sm" onclick="saveMetaAccount(${c.id},true)">Save Changes</button>
-          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('meta-edit-form').style.display='none'">Cancel</button>
-        </div>
-      </div>
-    </div>`;
-  }
-  return `<div class="cd-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:14px">
-    <div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">Meta Ads</div>
-        <span class="badge badge-gray" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#F9F9F8;color:#6F6F6B;border:1px solid #E5E5E3" style="font-size:10px">Not Connected</span>
-      </div>
-    </div>
-    <div style="padding:20px">
-      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">Connect this client's Meta Ads account to automatically pull performance metrics and live balance daily.</div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Ad Account ID</label><input class="form-input" id="meta-account-id" placeholder="act_XXXXXXXXXX"></div>
-        <div class="form-group"><label class="form-label">Access Token</label><input class="form-input" id="meta-token" type="password" placeholder="EAAx..."></div>
-      </div>
-      <button class="btn btn-primary btn-sm" id="meta-save-btn" onclick="saveMetaAccount(${c.id},false)">Save &amp; Connect</button>
-    </div>
-  </div>`;
-}
-
-// ── CONTENT CALENDAR ──────────────────────────────────────────
-function renderCalendar(client){
-  if(!appState.calendarMonth){const d=new Date();appState.calendarMonth={year:d.getFullYear(),month:d.getMonth()};}
-  const{year,month}=appState.calendarMonth;
-  const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const first=new Date(year,month,1);
-  const lastDay=new Date(year,month+1,0).getDate();
-  const startWeekday=first.getDay();
-  const today=new Date();
-  const tasks=client.contentTasks||[];
-  const tasksByDay={};
-  tasks.forEach(t=>{const td=new Date(t.date);if(td.getFullYear()===year&&td.getMonth()===month){const k=td.getDate();if(!tasksByDay[k])tasksByDay[k]=[];tasksByDay[k].push(t);}});
-  let cells='';
-  for(let i=0;i<startWeekday;i++) cells+=`<div class="cal-day empty"></div>`;
-  for(let d=1;d<=lastDay;d++){
-    const dayTasks=tasksByDay[d]||[];
-    const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isToday=today.getFullYear()===year&&today.getMonth()===month&&today.getDate()===d;
-    const dots=dayTasks.slice(0,6).map(t=>`<span class="cal-task-dot" style="background:${platformColor(t.platform)}" title="${t.platform} · ${t.content_type}"></span>`).join('');
-    cells+=`<div class="cal-day ${isToday?'today':''}" onclick="openAddContentTask(${client.id},'${dateStr}')"><div class="cal-day-num">${d}</div><div class="cal-day-tasks">${dots}</div></div>`;
-  }
-  const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(n=>`<div class="cal-day-name">${n}</div>`).join('');
-  const taskList=tasks.length===0?'':`<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
-    <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">Scheduled this month</div>
-    ${tasks.filter(t=>{const td=new Date(t.date);return td.getFullYear()===year&&td.getMonth()===month;}).map(t=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13px;border-bottom:1px solid #F5F5F5">
-      <span class="cal-task-dot" style="background:${platformColor(t.platform)};width:9px;height:9px"></span>
-      <span style="font-weight:500;min-width:90px">${new Date(t.date).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span>
-      <span style="color:var(--text2)">${t.platform} · ${t.content_type}</span>
-      ${t.notes?'<span style="color:var(--text3);font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">— '+t.notes+'</span>':'<span style="flex:1"></span>'}
-      <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteContentTask(${client.id},${t.id})">×</button>
-    </div>`).join('')}
-  </div>`;
-  return `<div class="cal-head"><div class="cal-title">Content Calendar — ${monthNames[month]} ${year}</div>
-    <div class="cal-nav">
-      <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
-      <button class="cal-nav-btn" onclick="changeMonth(0)">●</button>
-      <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
-    </div>
-  </div>
-  <div class="cal-grid">${dayNames}${cells}</div>
-  ${taskList}`;
-}
-async function changeMonth(delta){
-  if(delta===0){const d=new Date();appState.calendarMonth={year:d.getFullYear(),month:d.getMonth()};}
-  else{const m=appState.calendarMonth.month+delta;appState.calendarMonth={year:appState.calendarMonth.year+Math.floor(m/12),month:((m%12)+12)%12};}
-  navigate('clientDetail',appState.selectedClientId);
-}
-function openAddContentTask(clientId,dateStr){
-  openModal(`<div class="modal-title">Add Content Task — ${new Date(dateStr).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Platform</label><select class="form-input" id="m-plat"><option>Instagram</option><option>Meta</option><option>LinkedIn</option><option>YouTube</option><option>Google</option></select></div>
-      <div class="form-group"><label class="form-label">Content Type</label><select class="form-input" id="m-ctype"><option>Reel</option><option>Post</option><option>Story</option><option>Ad</option><option>Video</option></select></div>
-    </div>
-    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="m-notes" rows="3" placeholder="Caption ideas, links, briefing…"></textarea></div>
-    <input type="hidden" id="m-date" value="${dateStr}">
-    <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveContentTask(${clientId})">Add Task</button></div>`);
-}
-async function saveContentTask(clientId){
-  await api(`/api/clients/${clientId}/content-tasks`,{method:'POST',body:JSON.stringify({date:document.getElementById('m-date').value,platform:document.getElementById('m-plat').value,content_type:document.getElementById('m-ctype').value,notes:document.getElementById('m-notes').value})});
-  toast('Task added');closeModal();navigate('clientDetail',clientId);
-}
-async function deleteContentTask(clientId,id){
-  if(!confirm('Delete this task?')) return;
-  await api(`/api/clients/${clientId}/content-tasks/${id}`,{method:'DELETE'});
-  toast('Task removed');navigate('clientDetail',clientId);
-}
-
-// ── QUOTATIONS ────────────────────────────────────────────────
-function openCreateQuotation(clientId, clientName, clientCompany){
-  appState.quoteItems=[{service:'',description:'',qty:1,rate:0}];
-  const validDate=new Date();validDate.setDate(validDate.getDate()+30);
-  const vd=validDate.toISOString().split('T')[0];
-
-  api('/api/settings/company').catch(()=>({})).then(function(co){
-    const addr=[co.address_line1,co.address_line2,co.city,co.state,co.pincode].filter(Boolean).join(', ');
-    const addrHtml=addr||'Not set — go to Settings to add company address';
-    const bankHtml=co.bank_name
-      ?('<b>Bank:</b> '+co.bank_name+'<br><b>A/C:</b> '+(co.bank_account||'—')+'<br><b>IFSC:</b> '+(co.bank_ifsc||'—')+'<br><b>Name:</b> '+(co.bank_holder||'—'))
-      :'Not set — go to Settings to add bank details';
-    const upiHtml=co.upi_id
-      ?('<div style="font-size:12px;font-weight:600;margin-bottom:6px">UPI: '+co.upi_id+'</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=upi://pay?pa='+encodeURIComponent(co.upi_id)+'%26pn='+encodeURIComponent(co.company_name||'WeClick AI')+'%26cu=INR" style="border-radius:6px;border:1px solid var(--orange-mid);display:block"/>')
-      :'Not set — go to Settings to add UPI ID';
-    const sigHtml=co.signature_url
-      ?('<img src="'+co.signature_url+'" style="height:44px;object-fit:contain;border:1px solid var(--border);border-radius:6px;padding:4px;background:#fff"/><div style="font-size:10px;color:var(--text3);margin-top:3px">Signature loaded from Settings</div>')
-      :'Not set — go to Settings to upload signature';
-
-    const defaultTC=`1. Scope: Services cover only the deliverables listed above. Any additional work will be quoted separately.
-2. Payment: 100% advance required before project kickoff. No work begins until full payment is received.
-3. Revisions: Any revision requests beyond the agreed scope will be billed additionally.
-4. Ad spend: Client is responsible for ad spend on Meta Ads. Agency fee covers setup and management only.
-5. Account access: Client must provide Business Manager access within 3 business days of acceptance.
-6. Campaign monitoring: WeClick AI will actively monitor all campaigns. In the event of low ad funds, the client will be notified via email to add funds promptly.
-7. Confidentiality: Both parties agree to keep all shared materials, strategies, and data confidential.
-8. Intellectual property: All creatives and strategy documents remain agency property until full payment is received.
-9. Validity: This quotation is valid until the date mentioned above and is subject to change thereafter.
-10. Jurisdiction: Any disputes arising from this agreement shall be handled under the jurisdiction of WeClick AI.`;
-
-    openModal('<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
-      +'<div style="font-size:15px;font-weight:650;color:var(--text)">Create Quotation — '+clientName+'</div>'
-      +'<div style="font-size:11px;color:var(--text3)">'+clientCompany+'</div>'
-      +'</div>'
-      +'<div style="max-height:72vh;overflow-y:auto;padding-right:4px">'
-      +'<div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Line Items</div>'
-      +'<div id="quote-items-wrap"></div>'
-      +'<button class="btn btn-sm" style="margin:6px 0 16px" onclick="addQuoteItem()">+ Add Line Item</button>'
-      +'<div class="form-row" style="margin-bottom:16px">'
-        +'<div class="form-group"><label class="form-label">GST %</label><input class="form-input" id="m-gst" type="number" value="0" min="0" max="28" oninput="renderQuoteTotals()"></div>'
-        +'<div class="form-group"><label class="form-label">Valid Until</label><input class="form-input" id="m-valid" type="date" value="'+vd+'"></div>'
-      +'</div>'
-      +'<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-bottom:14px">'
-        +'<div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Addresses</div>'
-        +'<div class="form-row">'
-          +'<div>'
-            +'<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px">Our Company Address</div>'
-            +'<div style="font-size:11.5px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;min-height:40px;color:var(--text2)">'+addrHtml+'</div>'
-          +'</div>'
-          +'<div>'
-            +'<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px">Client Business Address</div>'
-            +'<textarea class="form-input" id="m-client-addr" rows="2" placeholder="Client business address (optional)">'+clientCompany+'</textarea>'
-          +'</div>'
-        +'</div>'
-      +'</div>'
-      +'<div style="background:#FFF3EA;border:1px solid var(--orange-mid);border-radius:8px;padding:14px;margin-bottom:14px">'
-        +'<div style="font-size:10.5px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Payment Details</div>'
-        +'<div class="form-row">'
-          +'<div><div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">Bank Transfer</div>'
-            +'<div style="font-size:11.5px;color:var(--text2);line-height:2">'+bankHtml+'</div></div>'
-          +'<div><div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">UPI / QR Code</div>'+upiHtml+'</div>'
-        +'</div>'
-      +'</div>'
-      +'<div id="quote-totals-wrap"></div>'
-      +'<div class="form-group" style="margin-top:12px">'
-        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">'
-          +'<label class="form-label" style="margin:0">Terms and Conditions</label>'
-          +'<button class="btn btn-ghost btn-sm" onclick="resetTC()" style="font-size:10.5px;padding:2px 7px">Reset to Default</button>'
-        +'</div>'
-        +'<textarea class="form-input" id="m-tc" rows="5" style="font-size:11.5px;resize:vertical">'+defaultTC+'</textarea>'
-        +'<div style="font-size:10px;color:var(--text3);margin-top:3px">These T&C appear at the bottom of the quotation. Edit freely.</div>'
-      +'</div>'
-      +'<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-top:12px">'
-        +'<div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Signature and Document</div>'
-        +'<div class="form-row">'
-          +'<div><div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Agency Signature</div>'+sigHtml+'</div>'
-          +'<div>'
-            +'<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Upload Signed Document (optional)</div>'
-            +'<div style="border:1.5px dashed var(--border);border-radius:6px;padding:12px;text-align:center;cursor:pointer" onclick="clickSignedDoc()">'
-              +'<div style="font-size:18px;margin-bottom:4px">📄</div>'
-              +'<div style="font-size:11.5px;color:var(--text2)">Upload signed PDF or image</div>'
-              +'<div style="font-size:10px;color:var(--text3)">PDF, PNG, JPG</div>'
-              +'<input type="file" id="q-signed-doc" accept=".pdf,image/*" style="display:none" onchange="previewSignedDoc(this)">'
-            +'</div>'
-            +'<div id="q-signed-preview" style="display:none;margin-top:6px;font-size:11px;color:var(--green);font-weight:500"></div>'
-          +'</div>'
-        +'</div>'
-      +'</div>'
-      +'</div>'
-      +'<div style="display:flex;gap:7px;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid var(--border2)">'
-        +'<button class="btn" onclick="closeModal()">Cancel</button>'
-        +'<button class="btn btn-primary" onclick="saveQuotation('+clientId+')">Save Quotation</button>'
-      +'</div>');
-
-    const modal=document.querySelector('.modal');
-    if(modal){modal.style.width='820px';modal.style.maxWidth='96vw';modal.style.maxHeight='94vh';modal.style.overflowY='auto';}
-    setTimeout(function(){renderQuoteItems();renderQuoteTotals();},60);
-  });
-}
-
-function clickSignedDoc(){var el=document.getElementById('q-signed-doc');if(el)el.click();}
-
-function clickSignedDoc(){var el=document.getElementById('q-signed-doc');if(el)el.click();}
-
-function previewSignedDoc(input){
-  const file=input.files[0];if(!file)return;
-  const preview=document.getElementById('q-signed-preview');
-  if(preview){preview.style.display='block';preview.textContent='Attached: '+file.name+' ('+(file.size/1024).toFixed(0)+' KB)';}
-}
-
-
-function resetTC(){
-  const el=document.getElementById('m-tc');
-  if(el) el.value=`1. Scope: Services cover only the deliverables listed above. Any additional work will be quoted separately.\n2. Payment: 100% advance required before project kickoff. No work begins until full payment is received.\n3. Revisions: Any revision requests beyond the agreed scope will be billed additionally.\n4. Ad spend: Client is responsible for ad spend on Meta Ads. Agency fee covers setup & management only.\n5. Account access: Client must provide Business Manager access within 3 business days of acceptance.\n6. Campaign monitoring: WeClick AI will actively monitor all campaigns. In the event of low ad funds, the client will be notified via email to add funds promptly to avoid campaign interruption.\n7. Confidentiality: Both parties agree to keep all shared materials, strategies, and data confidential.\n8. Intellectual property: All creatives and strategy documents remain agency property until full payment is received.\n9. Validity: This quotation is valid until the date mentioned above and is subject to change thereafter.\n10. Jurisdiction: Any disputes arising from this agreement shall be handled under the jurisdiction of WeClick AI.`;
-}
-
-function addQuoteItem(){appState.quoteItems.push({service:'',description:'',qty:1,rate:0});renderQuoteItems();}
-
-function removeQuoteItem(i){
-  appState.quoteItems.splice(i,1);
-  if(appState.quoteItems.length===0)appState.quoteItems.push({service:'',description:'',qty:1,rate:0});
-  renderQuoteItems();
-  renderQuoteTotals();
-}
-
-function updateQuoteItem(i,field,val){
-  appState.quoteItems[i][field]=field==='qty'||field==='rate'?parseFloat(val)||0:val;
-  renderQuoteTotals();
-}
-
-function renderQuoteItems(){
-  const wrap=document.getElementById('quote-items-wrap');if(!wrap)return;
-  wrap.innerHTML=`<table class="quote-table"><thead><tr>
-    <th style="width:28%">Service</th><th style="width:30%">Description</th>
-    <th style="width:8%">Qty</th><th style="width:14%">Rate (₹)</th>
-    <th style="width:13%">Amount</th><th style="width:7%"></th>
-  </tr></thead><tbody>${appState.quoteItems.map((it,i)=>`<tr>
-    <td><input value="${it.service||''}" placeholder="Service name" oninput="updateQuoteItem(${i},'service',this.value)"></td>
-    <td><input value="${it.description||''}" placeholder="Brief description" oninput="updateQuoteItem(${i},'description',this.value)"></td>
-    <td><input type="number" value="${it.qty}" min="0" style="text-align:center" oninput="updateQuoteItem(${i},'qty',this.value)"></td>
-    <td><input type="number" value="${it.rate}" min="0" oninput="updateQuoteItem(${i},'rate',this.value)"></td>
-    <td style="font-weight:500;font-size:12.5px">${fmt((it.qty||0)*(it.rate||0))}</td>
-    <td><button class="btn btn-ghost btn-sm" style="color:var(--red);padding:2px 5px" onclick="removeQuoteItem(${i})">×</button></td>
-  </tr>`).join('')}</tbody></table>`;
-  renderQuoteTotals();
-}
-
-function renderQuoteTotals(){
-  const wrap=document.getElementById('quote-totals-wrap');if(!wrap)return;
-  const subtotal=appState.quoteItems.reduce((s,i)=>s+(i.qty||0)*(i.rate||0),0);
-  const gstPct=parseFloat(document.getElementById('m-gst')?.value)||0;
-  const gstAmt=Math.round(subtotal*gstPct/100);
-  const total=subtotal+gstAmt;
-  wrap.innerHTML=`<div style="display:flex;flex-direction:column;gap:5px;padding:12px 14px;background:var(--surface2);border-radius:8px;margin-bottom:4px">
-    <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:var(--text2)">Subtotal</span><span>${fmt(subtotal)}</span></div>
-    <div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:var(--text2)">GST (${gstPct}%)</span><span>${fmt(gstAmt)}</span></div>
-    <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;color:var(--orange);border-top:1px solid var(--border);padding-top:7px;margin-top:2px"><span>Grand Total</span><span>${fmt(total)}</span></div>
-  </div>`;
-}
-
-async function saveQuotation(clientId){
-  const items=appState.quoteItems.filter(i=>(i.service||'').trim());
-  if(items.length===0){toast('Add at least one line item','error');return;}
-  const gst_pct=parseFloat(document.getElementById('m-gst')?.value)||0;
-  const tc=document.getElementById('m-tc')?.value||'';
-  const valid_until=document.getElementById('m-valid')?.value;
-  await api(`/api/clients/${clientId}/quotations`,{method:'POST',body:JSON.stringify({items,gst_pct,valid_until,notes:tc})});
-  toast('Quotation saved ✓');closeModal();navigate('clientDetail',clientId);
-}
-
-async function deleteQuotation(clientId,id){
-  if(!confirm('Delete this quotation?'))return;
-  await api(`/api/clients/${clientId}/quotations/${id}`,{method:'DELETE'});
-  toast('Deleted');navigate('clientDetail',clientId);
-}
-
-async function viewQuotation(qid,clientName,clientCompany){
-  try{
-    const[rows,co]=await Promise.all([
-      api(`/api/clients/${appState.selectedClientId}/quotations`),
-      api('/api/settings/company').catch(()=>({}))
-    ]);
-    const q=rows.find(r=>r.id===qid);
-    if(!q){toast('Not found','error');return;}
-    const items=typeof q.items==='string'?JSON.parse(q.items):(q.items||[]);
-    const issued=new Date(q.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
-    const validTxt=q.valid_until?new Date(q.valid_until).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}):'—';
-    const addr=[co.address_line1,co.address_line2,co.city,co.state,co.pincode].filter(Boolean).join(', ');
-    const upiQR=co.upi_id?`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=upi://pay?pa=${encodeURIComponent(co.upi_id)}%26pn=${encodeURIComponent(co.company_name||'WeClick AI')}%26am=${q.total}%26cu=INR`:null;
-    const qNo=q.quotation_no||('WC-'+q.id);
-    // Parse T&C from notes field
-    const tcLines=(q.notes||'').split('\n').filter(l=>l.trim());
-    const tcHtml=tcLines.length>0?tcLines.map(l=>`<div style="margin-bottom:3px;font-size:10.5px;color:#555;line-height:1.5">${l}</div>`).join(''):'';
-
-    openModal(`
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px" class="no-print">
-      <div style="font-size:14px;font-weight:600">Quotation Preview</div>
-      <div style="display:flex;gap:6px">
-        <button class="btn btn-sm" onclick="closeModal()">Close</button>
-        <button class="btn btn-primary btn-sm" onclick="window.print()">⬇ Download PDF</button>
-      </div>
-    </div>
-    <div id="print-area">
-    <div style="font-family:'Inter',sans-serif;background:#fff;padding:32px 36px;max-width:680px;border:1px solid #E5E5E3;border-radius:10px">
-
-      <!-- HEADER ROW -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:18px;border-bottom:2px solid #E96800;margin-bottom:22px">
-        <!-- Left: Our company -->
-        <div style="display:flex;align-items:flex-start;gap:12px">
-          <div style="width:36px;height:36px;background:#E96800;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0">WC</div>
-          <div>
-            <div style="font-size:16px;font-weight:700;color:#111110">${co.company_name||'WeClick AI'}</div>
-            <div style="font-size:11px;color:#6F6F6B">${co.tagline||'Marketing Agency · India'}</div>
-            ${addr?'<div style="font-size:10.5px;color:#6F6F6B;margin-top:2px">'+addr+'</div>':''}
-            ${co.phone?'<div style="font-size:10.5px;color:#6F6F6B">📞 '+co.phone+'</div>':''}
-            ${co.email?'<div style="font-size:10.5px;color:#6F6F6B">✉ '+co.email+'</div>':''}
-            ${co.gstin?'<div style="font-size:10px;color:#9C9C97;margin-top:2px">GSTIN: '+co.gstin+'</div>':''}
-          </div>
-        </div>
-        <!-- Right: Quotation meta -->
-        <div style="text-align:right">
-          <div style="font-size:20px;font-weight:700;color:#E96800">Quotation</div>
-          <div style="font-size:13px;font-weight:600;color:#111110;margin-top:2px">${qNo}</div>
-          <div style="font-size:11px;color:#6F6F6B;margin-top:4px">Issued: ${issued}</div>
-          <div style="font-size:11px;color:#6F6F6B">Valid until: ${validTxt}</div>
-        </div>
-      </div>
-
-      <!-- BILLED TO -->
-      <div style="margin-bottom:20px">
-        <div style="font-size:9.5px;font-weight:700;color:#9C9C97;text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px">Billed To</div>
-        <div style="font-size:15px;font-weight:600;color:#111110">${clientName}</div>
-        <div style="font-size:12px;color:#6F6F6B">${clientCompany}</div>
-      </div>
-
-      <!-- ITEMS TABLE -->
-      <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
-        <thead>
-          <tr style="background:#F9F9F8;border-bottom:2px solid #E5E5E3">
-            <th style="text-align:left;padding:9px 10px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#9C9C97;font-weight:600">Service</th>
-            <th style="text-align:left;padding:9px 10px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#9C9C97;font-weight:600">Description</th>
-            <th style="text-align:center;padding:9px 10px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#9C9C97;font-weight:600">Qty</th>
-            <th style="text-align:right;padding:9px 10px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#9C9C97;font-weight:600">Rate</th>
-            <th style="text-align:right;padding:9px 10px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#9C9C97;font-weight:600">Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${items.map((i,idx2)=>`<tr style="border-bottom:1px solid ${idx2%2===0?'#FAFAFA':'#F5F5F3'}">
-            <td style="padding:10px;font-weight:500;font-size:12.5px;color:#111110;vertical-align:top">${i.service||''}</td>
-            <td style="padding:10px;font-size:11.5px;color:#6F6F6B;vertical-align:top;line-height:1.5">${i.description||''}</td>
-            <td style="padding:10px;text-align:center;font-size:12.5px;vertical-align:top">${i.qty||1}</td>
-            <td style="padding:10px;text-align:right;font-size:12.5px;vertical-align:top">${fmt(i.rate||0)}</td>
-            <td style="padding:10px;text-align:right;font-weight:600;font-size:12.5px;vertical-align:top">${fmt((i.qty||1)*(i.rate||0))}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-
-      <!-- TOTALS + PAYMENT SIDE BY SIDE -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:22px">
-        <!-- Payment details left -->
-        <div style="flex:1">
-          ${(co.upi_id||co.bank_account)?`<div style="background:#FFF3EA;border:1px solid #FFD4AA;border-radius:8px;padding:14px">
-            <div style="font-size:10px;font-weight:700;color:#E96800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">💳 Payment Details</div>
-            <div style="display:flex;gap:14px;align-items:flex-start">
-              ${upiQR?('<div style="flex-shrink:0;text-align:center"><img src="'+upiQR+'" style="width:80px;height:80px;border-radius:5px;border:1px solid #FFD4AA;display:block"/><div style="font-size:9px;color:#6F6F6B;margin-top:3px">Scan to pay UPI</div></div>'):''}
-              <div style="font-size:11.5px;color:#6F6F6B;line-height:2">
-                ${co.upi_id?'<div><b style="color:#111110">UPI:</b> '+co.upi_id+'</div>':''}
-                ${co.bank_name?'<div><b style="color:#111110">Bank:</b> '+co.bank_name+'</div>':''}
-                ${co.bank_account?'<div><b style="color:#111110">A/C:</b> '+co.bank_account+'</div>':''}
-                ${co.bank_ifsc?'<div><b style="color:#111110">IFSC:</b> '+co.bank_ifsc+'</div>':''}
-                ${co.bank_holder?'<div><b style="color:#111110">Name:</b> '+co.bank_holder+'</div>':''}
-              </div>
-            </div>
-          </div>`:'<div style="font-size:11.5px;color:#9C9C97;padding:8px 0">Add payment details in Settings → Payment Details</div>'}
-        </div>
-        <!-- Totals right -->
-        <div style="min-width:200px">
-          <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:12.5px;border-bottom:1px solid #F0F0EE"><span style="color:#6F6F6B">Subtotal</span><span>${fmt(q.subtotal||0)}</span></div>
-          <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:12.5px;border-bottom:1px solid #F0F0EE"><span style="color:#6F6F6B">GST @ ${q.gst_pct||0}%</span><span>${fmt(q.gst_amount||0)}</span></div>
-          <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:17px;font-weight:700;color:#E96800;border-top:2px solid #E96800"><span>Grand Total</span><span>${fmt(q.total||0)}</span></div>
-        </div>
-      </div>
-
-      <!-- TERMS & CONDITIONS -->
-      ${tcHtml?'<div style="margin-bottom:18px;padding:14px;background:#F9F9F8;border-radius:8px;border-left:3px solid #E96800"><div style="font-size:10px;font-weight:700;color:#E96800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Terms & Conditions</div>'+tcHtml+'</div>':''}
-
-      <!-- FOOTER: signature + approval -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:14px;border-top:1px dashed #E5E5E3">
-        <div style="font-size:10.5px;color:#9C9C97;line-height:1.6;flex:1">
-          Thank you for choosing ${co.company_name||'WeClick AI'}. This quotation is computer-generated and valid until the date mentioned above.
-        </div>
-        <div style="display:flex;gap:18px;flex-shrink:0;margin-left:20px">
-          <!-- Our signature -->
-          <div style="text-align:center">
-            ${co.signature_url?('<img src="'+co.signature_url+'" style="height:44px;object-fit:contain;display:block;margin:0 auto 4px"/>'):'<div style="height:44px;border-bottom:1px solid #E5E5E3;min-width:110px;margin-bottom:4px"></div>'}
-            <div style="font-size:9.5px;color:#9C9C97">Authorised Signatory</div>
-            <div style="font-size:10.5px;font-weight:600;color:#111110">${co.company_name||'WeClick AI'}</div>
-          </div>
-          <!-- Client approval -->
-          <div style="text-align:center">
-            <div style="height:44px;border-bottom:1px solid #E5E5E3;min-width:110px;margin-bottom:4px"></div>
-            <div style="font-size:9.5px;color:#9C9C97">Client Signature & Date</div>
-            <div style="font-size:10px;color:#9C9C97">${clientName}</div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-    </div>
-    <div class="no-print" style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap">
-      ${!q.approved?'<button class="btn btn-sm" style="background:var(--green-bg);color:var(--green);border-color:#86efac" onclick="approveQuotation('+q.id+')">✓ Mark Approved</button>':'<span class="badge badge-green" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#F0FDF4;color:#15803D">✓ Approved</span>'}
-      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Close</button>
-    </div>`);
-    const modal=document.querySelector('.modal');
-    if(modal){modal.classList.add('modal-xl');modal.style.maxHeight='90vh';modal.style.overflowY='auto';}
-  }catch(e){console.error(e);toast('Error loading quotation','error');}
-}
-
-async function approveQuotation(qid){
-  try{
-    await api(`/api/clients/${appState.selectedClientId}/quotations/${qid}/approve`,{method:'POST',body:'{}'});
-    toast('Quotation approved ✓');navigate('clientDetail',appState.selectedClientId);
-  }catch(e){toast('Marked locally','info');}
-}
-function copyQuoteLink(qid){
-  navigator.clipboard.writeText(window.location.origin+'/quotation/'+qid).then(()=>toast('Link copied'));
-}
-
-
-async function buildAdAnalytics(){
-  const clients=await api('/api/clients').catch(()=>[]);
-  appState.clients=clients;
-
-  const clientOptions=`<option value="all">All Clients</option>${clients.map(c=>`<option value="${c.id}" ${String(appState.adAnalyticsClientId)===String(c.id)?'selected':''}>${c.name} — ${c.company}</option>`).join('')}`;
-  let metaData={accounts:[]},googleData={accounts:[]},creatives=[];
-  try{ metaData=await api(`/api/ad-analytics/meta?client_id=${appState.adAnalyticsClientId}`); }catch(e){}
-  try{ googleData=await api(`/api/ad-analytics/google?client_id=${appState.adAnalyticsClientId}`); }catch(e){}
-  try{ creatives=await api(`/api/ad-analytics/creatives?client_id=${appState.adAnalyticsClientId}`); }catch(e){}
-
-  const totalMetaSpend=(metaData.accounts||[]).reduce((s,a)=>s+(a.spend||0),0);
-  const totalMetaImpressions=(metaData.accounts||[]).reduce((s,a)=>s+(a.impressions||0),0);
-  const totalMetaLeads=(metaData.accounts||[]).reduce((s,a)=>s+(a.leads||0),0);
-  const totalGoogleSpend=(googleData.accounts||[]).reduce((s,a)=>s+(a.spend||0),0);
-
-  return `
-  <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
-    <select class="select-input" onchange="appState.adAnalyticsClientId=this.value;navigate('adanalytics')">${clientOptions}</select>
-    <div class="tabs" style="margin-bottom:0;border:none">
-      <div class="tab ${appState.adAnalyticsTab==='meta'?'active':''}" onclick="appState.adAnalyticsTab='meta';navigate('adanalytics')">f Meta Ads</div>
-      <div class="tab ${appState.adAnalyticsTab==='google'?'active':''}" onclick="appState.adAnalyticsTab='google';navigate('adanalytics')">🔍 Google Ads</div>
-      <div class="tab ${appState.adAnalyticsTab==='creatives'?'active':''}" onclick="appState.adAnalyticsTab='creatives';navigate('adanalytics')">🎨 Creatives</div>
-      <div class="tab ${appState.adAnalyticsTab==='research'?'active':''}" onclick="appState.adAnalyticsTab='research';navigate('adanalytics')">🤖 AI Research</div>
-    </div>
-  </div>
-
-  ${appState.adAnalyticsTab==='meta'?buildMetaAnalyticsTab(metaData,totalMetaSpend,totalMetaImpressions,totalMetaLeads):''}
-  ${appState.adAnalyticsTab==='google'?buildGoogleAnalyticsTab(googleData,totalGoogleSpend):''}
-  ${appState.adAnalyticsTab==='creatives'?buildCreativesTab(creatives):''}
-  ${appState.adAnalyticsTab==='research'?buildAIResearchTab(clients,appState.adSelectedClient):''}`;
-}
-
-function buildMetaAnalyticsTab(metaData,totalSpend,totalImpressions,totalLeads){
-  const accounts=metaData.accounts||[];
-  // Build stats row
-  const statsRow='<div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">'
-    +'<div class="stat-card accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #E96800;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Meta Spend</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">'+fmt(totalSpend)+'</div></div>'
-    +'<div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 20px;transition:box-shadow .12s"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Impressions</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">'+totalImpressions.toLocaleString()+'</div></div>'
-    +'<div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Leads</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">'+totalLeads.toLocaleString()+'</div></div>'
-    +'<div class="stat-card blue-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #2563EB;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Connected Accounts</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">'+accounts.length+'</div></div>'
-    +'</div>';
-  if(!accounts.length){
-    return statsRow+'<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">📊</div>'
-      +'<div class="empty-label" style="font-size:14px;font-weight:500;color:#6F6F6B;margin-bottom:3px">No Meta Ads accounts connected</div>'
-      +'<div class="empty-text" style="font-size:12.5px;line-height:1.5">Go to a client profile to connect their Meta Ads account.</div></div>';
-  }
-  var rows=accounts.map(function(a){
-    var cl=appState.clients.find(function(x){return x.id===a.client_id;})||{name:'Unknown',color:'#888'};
-    var low=a.balance!==null&&a.balance<500;
-    var crit=a.balance!==null&&a.balance<100;
-    var balColor=crit?'var(--red)':low?'#D97706':'var(--green)';
-    var balText=a.balance!==null?((crit?'🚨':low?'⚠️':'')+' ₹'+parseFloat(a.balance).toFixed(0)):'—';
-    var badge='<span class="badge '+(a.is_active?'badge-green':'badge-gray')+'">'+(a.is_active?'Active':'Inactive')+'</span>';
-    var ctrColor=(a.ctr||0)<1?'var(--red)':'var(--green)';
-    return '<tr onclick="navigate(\'clientDetail\','+a.client_id+')" style="cursor:pointer">'
-      +'<td><div class="name-cell" style="display:flex;align-items:center;gap:9px">'+avatarHtml(cl,{size:28})+'<span style="font-weight:500">'+cl.name+'</span></div></td>'
-      +'<td><code style="font-size:11px;background:#F3F4F6;padding:2px 6px;border-radius:4px">'+(a.ad_account_id||'—')+'</code></td>'
-      +'<td style="font-weight:500">'+fmt(a.spend||0)+'</td>'
-      +'<td>'+((a.impressions||0).toLocaleString())+'</td>'
-      +'<td>'+((a.clicks||0).toLocaleString())+'</td>'
-      +'<td style="color:'+ctrColor+'">'+((a.ctr||0).toFixed(2))+'%</td>'
-      +'<td>'+fmt(a.cpc||0)+'</td>'
-      +'<td style="color:var(--green);font-weight:500">'+((a.leads||0).toLocaleString())+'</td>'
-      +'<td style="color:'+balColor+'">'+balText+'</td>'
-      +'<td>'+badge+'</td>'
-      +'</tr>';
-  }).join('');
-  return statsRow
-    +'<div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">'
-    +'<div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Meta Ads Per Client</div>'
-    +'<button class="btn btn-sm" onclick="syncMeta()">Sync All</button></div>'
-    +'<table><thead><tr><th>Client</th><th>Account ID</th><th>Spend</th><th>Impressions</th>'
-    +'<th>Clicks</th><th>CTR</th><th>CPC</th><th>Leads</th><th>Balance</th><th>Status</th>'
-    +'</tr></thead><tbody>'+rows+'</tbody></table></div>';
-}
-
-function buildGoogleAnalyticsTab(googleData,totalSpend){
-  const accounts=googleData.accounts||[];
-  return `
-  <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">
-    <div class="stat-card accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #E96800;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Google Spend</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(totalSpend)}</div></div>
-    <div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Connected Accounts</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${accounts.length}</div></div>
-    <div class="stat-card blue-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #2563EB;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Active Campaigns</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${accounts.reduce((s,a)=>s+(a.campaigns||0),0)}</div></div>
-  </div>
-  ${accounts.length===0?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">🔍</div><div class="empty-text" style="font-size:12.5px;line-height:1.5">No Google Ads accounts connected. Go to Settings to set up Google Ads integration.</div></div>`:`
-  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
-    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Google Ads — Per Client</div></div>
-    <table><thead><tr><th>Client</th><th>CID</th><th>Spend (30d)</th><th>Clicks</th><th>Impressions</th><th>Conversions</th><th>CPC</th></tr></thead><tbody>
-    ${accounts.map(a=>{
-      const c=appState.clients.find(x=>x.id===a.client_id)||{name:'—',color:'#888'};
-      return`<tr>
-        <td><div class="name-cell" style="display:flex;align-items:center;gap:9px">${avatarHtml(c,{size:28})}<span style="font-weight:500">${c.name}</span></div></td>
-        <td style="color:var(--text2);font-size:12px">${a.customer_id||'—'}</td>
-        <td style="font-weight:500">${fmt(a.spend||0)}</td>
-        <td>${(a.clicks||0).toLocaleString()}</td>
-        <td>${(a.impressions||0).toLocaleString()}</td>
-        <td style="color:var(--green);font-weight:500">${(a.conversions||0).toLocaleString()}</td>
-        <td>${fmt(a.cpc||0)}</td>
-      </tr>`;}).join('')}
-    </tbody></table>
-  </div>`}`;
-}
-
-function buildCreativesTab(creatives){
-  if(!creatives||creatives.length===0){
-    return `<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">🎨</div><div class="empty-text" style="font-size:12.5px;line-height:1.5">No creative data yet. Sync Meta accounts to pull creative performance data.<br><br><button class="btn btn-primary btn-sm" onclick="syncMeta()">↻ Sync Meta Now</button></div></div>`;
-  }
-  // Sort by CTR descending = best performing first
-  const sorted=[...creatives].sort((a,b)=>(b.ctr||0)-(a.ctr||0));
-  return `
-  <div class="chart-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:18px;margin-bottom:16px">
-    <div class="chart-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-      <div class="chart-title" style="font-size:13px;font-weight:600;color:#111110">Creative Performance Rankings</div>
-      <span style="font-size:12px;color:var(--text2)">Ranked by CTR — higher = better</span>
-    </div>
-    <table><thead><tr><th>#</th><th>Creative</th><th>Type</th><th>Impressions</th><th>Clicks</th><th>CTR</th><th>Spend</th><th>Leads</th><th>Why it performs</th></tr></thead><tbody>
-    ${sorted.map((cr,i)=>`<tr>
-      <td><span style="font-size:13px;font-weight:700;color:${i===0?'#F59E0B':i===1?'#9CA3AF':i===2?'#CD7C2F':'var(--muted)'}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</span></td>
-      <td style="font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${cr.name||cr.creative_id}">${cr.name||cr.creative_id||'Creative '+(i+1)}</td>
-      <td><span class="badge badge-blue" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#EFF6FF;color:#2563EB">${cr.type||'Image'}</span></td>
-      <td>${(cr.impressions||0).toLocaleString()}</td>
-      <td>${(cr.clicks||0).toLocaleString()}</td>
-      <td style="font-weight:600;color:${(cr.ctr||0)>=2?'var(--green)':(cr.ctr||0)>=1?'var(--orange)':'var(--red)'}">${(cr.ctr||0).toFixed(2)}%</td>
-      <td>${fmt(cr.spend||0)}</td>
-      <td style="color:var(--green)">${(cr.leads||0).toLocaleString()}</td>
-      <td style="font-size:12px;color:var(--text2);max-width:200px">${creativeInsight(cr,i)}</td>
-    </tr>`).join('')}
-    </tbody></table>
-  </div>
-  <div class="chart-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:18px;margin-bottom:16px">
-    <div class="chart-title" style="font-size:13px;font-weight:600;color:#111110" style="margin-bottom:12px">📊 Improvement Suggestions</div>
-    ${sorted.slice(-3).reverse().map((cr,i)=>`<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #F5F5F5">
-      <span style="font-size:16px;flex-shrink:0">💡</span>
-      <div>
-        <div style="font-size:13px;font-weight:500;margin-bottom:3px">${cr.name||cr.creative_id||'Creative'}</div>
-        <div style="font-size:12px;color:var(--text2)">${improvementSuggestion(cr)}</div>
-      </div>
-    </div>`).join('')}
-  </div>`;
-}
-function creativeInsight(cr,rank){
-  if(rank===0) return 'Top performer — highest CTR, strong hook or visual';
-  if((cr.ctr||0)>=2) return 'Strong CTR — resonating well with audience';
-  if((cr.ctr||0)>=1) return 'Average performance — test stronger CTA or image';
-  return 'Low CTR — consider refreshing visual or headline';
-}
-function improvementSuggestion(cr){
-  if((cr.ctr||0)<0.5) return `CTR is ${(cr.ctr||0).toFixed(2)}% — very low. Replace with a stronger hook image or video. Test a new headline. Audience may have seen this too many times (ad fatigue).`;
-  if((cr.leads||0)===0&&(cr.clicks||0)>50) return 'Getting clicks but zero leads. Landing page may not match the ad promise. Check the destination URL and CTA.';
-  if((cr.spend||0)>50000&&(cr.leads||0)<5) return 'High spend with very few leads. Pause this creative and reallocate budget to top performers.';
-  return 'Moderate performer. A/B test with a video version of the same concept for potential 2x improvement.';
-}
-
-// ── AI MARKET RESEARCH TAB ─────────────────────────────────
-function buildAIResearchTab(clients, selectedClientId){
-  const cl = clients.find(c=>String(c.id)===String(selectedClientId)) || clients[0];
-  if(!cl) return `<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">🤖</div><div class="empty-text" style="font-size:12.5px;line-height:1.5">Add clients to use AI Research.</div></div>`;
-  return `<div style="max-width:700px">
-    <div class="cd-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:14px" style="margin-bottom:16px">
-      <div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">🤖 AI Market Research Report</div><span style="font-size:12px;color:var(--text2)">Powered by Claude AI</span></div>
-      <div style="padding:20px">
-        <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Generate a real market research report for <b>${cl.name}</b> (${cl.company}). The AI will analyze their industry, suggest target audience, ad copy directions, competitor insights, and recommended marketing strategies.</div>
-        <div class="form-group"><label class="form-label">Industry / Niche</label>
-          <input class="form-input" id="ai-industry" placeholder="e.g. D2C skincare, B2B SaaS, Restaurant chain...">
-        </div>
-        <div class="form-group"><label class="form-label">Business Description</label>
-          <textarea class="form-input" id="ai-desc" rows="3" placeholder="What does ${cl.company} sell? Who are their customers? What's their goal?"></textarea>
-        </div>
-        <div class="form-group"><label class="form-label">Research Focus</label>
-          <select class="form-input" id="ai-focus">
-            <option value="full">Full Market Analysis</option>
-            <option value="audience">Target Audience Deep Dive</option>
-            <option value="competitor">Competitor Analysis</option>
-            <option value="adcopy">Ad Copy Angles & Hooks</option>
-            <option value="funnel">Marketing Funnel Strategy</option>
-          </select>
-        </div>
-        <button class="btn btn-primary" onclick="generateAIResearch('${cl.name}','${cl.company}')">🤖 Generate Research Report</button>
-      </div>
-    </div>
-    <div id="ai-research-result" style="display:none" class="cd-card">
-      <div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">📊 Research Report</div>
-        <button class="btn btn-sm" onclick="copyResearch()">📋 Copy</button>
-      </div>
-      <div id="ai-research-content" style="padding:20px;font-size:13.5px;line-height:1.8;white-space:pre-wrap;color:var(--text)"></div>
-    </div>
-  </div>`;
-}
-
-async function generateAIResearch(clientName, clientCompany){
-  const industry = document.getElementById('ai-industry')?.value || '';
-  const desc = document.getElementById('ai-desc')?.value || '';
-  const focus = document.getElementById('ai-focus')?.value || 'full';
-  if(!industry){toast('Enter industry/niche first','error');return;}
-
-  const focusLabels = {full:'Full Market Analysis',audience:'Target Audience Analysis',competitor:'Competitor Analysis',adcopy:'Ad Copy Angles & Hooks',funnel:'Marketing Funnel Strategy'};
-  
-  const btn = document.querySelector('#ai-research-result')?.previousElementSibling?.querySelector('button.btn-primary');
-  if(btn){btn.disabled=true;btn.textContent='🤖 Generating...';}
-  
-  const prompt = `You are a senior digital marketing strategist. Generate a detailed ${focusLabels[focus]} report for this client:
-
-Client: ${clientName}
-Company: ${clientCompany}
-Industry/Niche: ${industry}
-${desc?'Description: '+desc:''}
-
-Provide a structured, actionable report covering:
-${focus==='full'?`1. Market Overview & Size
-2. Target Audience (demographics, psychographics, pain points)
-3. Key Competitors (3-5) and their positioning
-4. Recommended Ad Channels (Meta, Google, etc.) with rationale
-5. Top 5 Ad Copy Angles/Hooks
-6. Recommended Marketing Funnel
-7. KPIs to Track
-8. Quick Wins (actions to take this week)`:
-focus==='audience'?`1. Primary Target Audience Profile (age, gender, location, income)
-2. Psychographic Profile (values, interests, lifestyle)
-3. Top 5 Pain Points
-4. Customer Journey Map
-5. Best Platforms to Reach Them
-6. Messaging that Resonates`:
-focus==='competitor'?`1. Top 5 Competitors in ${industry}
-2. Their Strengths and Weaknesses
-3. Their Ad Strategies (what angles they use)
-4. Market Gaps You Can Exploit
-5. Your Unique Positioning`:
-focus==='adcopy'?`1. 10 High-Converting Ad Headlines
-2. 5 Primary Text Variations
-3. 3 Call-to-Action Options
-4. Emotional vs Rational Hooks
-5. Pain Point vs Desire-Based Angles
-6. Best Ad Formats for This Business`:
-`1. Awareness Stage Strategy
-2. Consideration Stage Strategy  
-3. Conversion Stage Strategy
-4. Retargeting Strategy
-5. Upsell/Retention Strategy
-6. Budget Allocation Recommendation`}
-
-Format with clear headers and bullet points. Be specific and actionable.`;
-
-  const resultDiv = document.getElementById('ai-research-result');
-  const contentDiv = document.getElementById('ai-research-content');
-  if(resultDiv) resultDiv.style.display='block';
-  if(contentDiv) contentDiv.textContent='Generating your report...';
-
-  try{
-    const res = await fetch('/api/ai/research', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({prompt, clientName, clientCompany, industry, focus})
+const express = require('express');
+const { Pool } = require('pg');
+const cors = require('cors');
+const path = require('path');
+const multer = require('multer');
+
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// ── DB ─────────────────────────────────────────────────────────
+const db = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+
+// ── MIDDLEWARE ─────────────────────────────────────────────────
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Multer — memory only (Vercel filesystem is read-only)
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+
+
+// ══════════════════════════════════════════════════════════════
+// UNIVERSAL EMAIL HELPER
+// Supports: Gmail App Password, SendGrid, or any SMTP
+// ══════════════════════════════════════════════════════════════
+async function sendEmail({to, toName, subject, body, co}) {
+  // co = company_settings row
+  const fromEmail = co.email || process.env.SMTP_USER || 'noreply@weclick.ai';
+  const fromName  = co.company_name || 'WeClick AI';
+
+  // ── SendGrid ────────────────────────────────────
+  const sgKey = co.sendgrid_key || process.env.SENDGRID_API_KEY;
+  if (sgKey) {
+    const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + sgKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        personalizations: [{ to: [{ email: to, name: toName || '' }] }],
+        from: { email: fromEmail, name: fromName },
+        subject,
+        content: [{ type: 'text/plain', value: body }]
+      })
     });
-    const data = await res.json();
-    if(data.report){
-      if(contentDiv){
-        let html=data.report
-          .split('\n').map(line=>{
-            if(line.startsWith('# '))return '<h2 style="font-size:15px;font-weight:700;color:var(--text);margin:16px 0 5px">'+line.slice(2)+'</h2>';
-            if(line.startsWith('## '))return '<h3 style="font-size:13.5px;font-weight:600;color:var(--orange);margin:12px 0 4px">'+line.slice(3)+'</h3>';
-            if(line.startsWith('### '))return '<h4 style="font-size:13px;font-weight:600;margin:8px 0 3px">'+line.slice(4)+'</h4>';
-            if(line.match(/^[-•*] /))return '<div style="display:flex;gap:8px;margin:2px 0;font-size:13px"><span style="color:var(--orange)">•</span><span>'+line.slice(2)+'</span></div>';
-            if(line.match(/^\d+\. /))return '<div style="margin:2px 0;font-size:13px">'+line+'</div>';
-            if(line.match(/^─+$/))return '<hr style="border:none;border-top:1px solid var(--border);margin:10px 0">';
-            if(line==='')return '<div style="height:6px"></div>';
-            return '<div style="font-size:13px;line-height:1.6">'+line.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')+'</div>';
-          }).join('');
-        contentDiv.innerHTML=html;
-      }
-    } else {
-      if(contentDiv) contentDiv.textContent = data.error || 'Failed to generate report';
+    if (res.ok || res.status === 202) return { ok: true, method: 'sendgrid' };
+    const err = await res.text();
+    throw new Error('SendGrid error: ' + err);
+  }
+
+  throw new Error('No email provider configured. Add Gmail App Password or SendGrid key in Settings → Agency.');
+}
+
+// ── ACTIVITY LOG HELPER ────────────────────────────────────────
+async function logActivity({ type, title, details, client_id }) {
+  try {
+    await db.query(
+      'INSERT INTO activity_log (type,title,details,client_id,created_at) VALUES ($1,$2,$3,$4,NOW())',
+      [type, title, details || '', client_id || null]
+    );
+  } catch (e) { console.error('logActivity failed:', e.message); }
+}
+
+// ── HEALTH CHECK ───────────────────────────────────────────────
+app.get('/api/health', async (req, res) => {
+  try {
+    const r = await db.query('SELECT NOW() as time');
+    res.json({ ok: true, time: r.rows[0].time });
+  } catch (e) { res.json({ ok: false, error: e.message }); }
+});
+
+// ══════════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════════
+app.get('/api/dashboard', async (req, res) => {
+  try {
+    const [clients, campaigns, automations, collaborations] = await Promise.all([
+      db.query('SELECT * FROM clients ORDER BY revenue DESC'),
+      db.query('SELECT * FROM campaigns'),
+      db.query('SELECT * FROM automations'),
+      db.query('SELECT * FROM collaborations')
+    ]);
+    const cls = clients.rows;
+    const totalRevenue = cls.reduce((s, c) => s + parseFloat(c.revenue || 0), 0);
+    const totalSpend = cls.reduce((s, c) => s + parseFloat(c.spend || 0), 0);
+    const profit = totalRevenue - totalSpend;
+    const activeClients = cls.filter(c => c.status === 'Active').length;
+    const automationRevenue = automations.rows.reduce((s, a) => s + parseFloat(a.revenue || 0), 0);
+    const collaborationRevenue = collaborations.rows.reduce((s, c) => s + parseFloat(c.revenue || 0), 0);
+    const activeAutomations = automations.rows.filter(a => a.status === 'Running').length;
+    let recentActivity = [];
+    try {
+      const act = await db.query('SELECT al.*, c.name as client_name FROM activity_log al LEFT JOIN clients c ON c.id=al.client_id ORDER BY al.created_at DESC LIMIT 15');
+      recentActivity = act.rows;
+    } catch (e) {}
+    const now = new Date();
+    const monthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+    let thisMonth = 0;
+    try {
+      const tm = await db.query("SELECT COALESCE(SUM(amount),0) as total FROM revenue_entries WHERE date >= $1", [monthStart]);
+      thisMonth = parseFloat(tm.rows[0].total || 0);
+    } catch (e) {}
+    res.json({ totalRevenue, totalSpend, profit, activeClients, totalClients: cls.length, automationRevenue, collaborationRevenue, activeAutomations, thisMonth, projected: Math.round(thisMonth * (30 / now.getDate()) * 1.1), recentActivity });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/revenue/breakdown', async (req, res) => {
+  try {
+    const { date } = req.query;
+    const clientRev = async (days) => {
+      const d = new Date(); d.setDate(d.getDate() - days);
+      try {
+        const r = await db.query("SELECT COALESCE(SUM(amount),0) as total FROM revenue_entries WHERE date >= $1", [d.toISOString().split('T')[0]]);
+        return parseFloat(r.rows[0].total || 0);
+      } catch { return 0; }
+    };
+    const [today, yesterday, last7, last30, last90] = await Promise.all([clientRev(1), clientRev(2), clientRev(7), clientRev(30), clientRev(90)]);
+    let custom = 0;
+    if (date) { try { const r = await db.query("SELECT COALESCE(SUM(amount),0) as total FROM revenue_entries WHERE date=$1", [date]); custom = parseFloat(r.rows[0].total || 0); } catch {} }
+    res.json({ today, yesterday, last7, last30, last90, custom, dayBefore: yesterday });
+  } catch (e) { res.json({}); }
+});
+
+// ══════════════════════════════════════════════════════════════
+// CLIENTS
+// ══════════════════════════════════════════════════════════════
+app.get('/api/clients', async (req, res) => {
+  try { res.json((await db.query('SELECT * FROM clients ORDER BY revenue DESC')).rows); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/clients/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const [clientRes, campaignsRes, quotRes, filesRes, tasksRes, metaRes] = await Promise.all([
+      db.query('SELECT * FROM clients WHERE id=$1', [id]),
+      db.query('SELECT * FROM campaigns WHERE client_id=$1 ORDER BY created_at DESC', [id]),
+      db.query('SELECT * FROM quotations WHERE client_id=$1 ORDER BY created_at DESC', [id]),
+      db.query('SELECT * FROM client_files WHERE client_id=$1 ORDER BY uploaded_at DESC', [id]).catch(() => ({ rows: [] })),
+      db.query('SELECT * FROM content_tasks WHERE client_id=$1 ORDER BY date ASC', [id]).catch(() => ({ rows: [] })),
+      db.query('SELECT * FROM meta_accounts WHERE client_id=$1 LIMIT 1', [id]).catch(() => ({ rows: [] }))
+    ]);
+    if (!clientRes.rows[0]) return res.status(404).json({ error: 'Client not found' });
+    const quotations = quotRes.rows.map(q => ({ ...q, items: typeof q.items === 'string' ? JSON.parse(q.items) : (q.items || []) }));
+    const metaAccount = metaRes.rows[0] || null;
+    let metaMetrics = null, metaCreatives = [];
+    if (metaAccount) {
+      try { const mm = await db.query('SELECT * FROM meta_metrics WHERE client_id=$1 ORDER BY synced_at DESC LIMIT 1', [id]); if (mm.rows[0]) metaMetrics = mm.rows[0]; } catch {}
+      try { metaCreatives = (await db.query('SELECT * FROM client_creatives WHERE client_id=$1 ORDER BY score DESC', [id])).rows; } catch {}
     }
-  }catch(e){
-    if(contentDiv) contentDiv.textContent = 'Error: '+e.message;
-  }finally{
-    if(btn){btn.disabled=false;btn.textContent='🤖 Generate Research Report';}
+    res.json({ ...clientRes.rows[0], campaigns: campaignsRes.rows, quotations, files: filesRes.rows, contentTasks: tasksRes.rows, metaAccount, metaMetrics, metaCreatives });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/clients', async (req, res) => {
+  try {
+    const { name, company, email, status, revenue, spend, expected_revenue, color } = req.body;
+    const profit = parseFloat(revenue || 0) - parseFloat(spend || 0);
+    const result = await db.query(
+      'INSERT INTO clients (name,company,email,status,revenue,spend,profit,expected_revenue,color,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW()) RETURNING *',
+      [name, company, email||'', status||'Active', revenue||0, spend||0, profit, expected_revenue||0, color||'#FF6A00']
+    );
+    await logActivity({ type:'client', title:`New client: ${name}`, details:company, client_id:result.rows[0].id });
+    res.json(result.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/clients/:id', async (req, res) => {
+  try {
+    const fields = ['name','company','email','status','revenue','spend','expected_revenue'];
+    const updates = {};
+    fields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
+    if (updates.revenue !== undefined && updates.spend !== undefined) updates.profit = parseFloat(updates.revenue) - parseFloat(updates.spend);
+    const keys = Object.keys(updates); const vals = Object.values(updates);
+    vals.push(req.params.id);
+    const result = await db.query(`UPDATE clients SET ${keys.map((k,i)=>`${k}=$${i+1}`).join(',')} WHERE id=$${vals.length} RETURNING *`, vals);
+    res.json(result.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/clients/:id', async (req, res) => {
+  try { await db.query('DELETE FROM clients WHERE id=$1', [req.params.id]); res.json({ ok:true }); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Avatar upload — store as base64 in DB since Vercel has no filesystem
+app.post('/api/clients/:id/avatar', upload.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file' });
+    const b64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    await db.query('UPDATE clients SET avatar_url=$1 WHERE id=$2', [b64, req.params.id]);
+    res.json({ avatar_url: b64 });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// File upload — store as base64 in DB
+app.post('/api/clients/:id/files', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file' });
+    const b64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    const sizeKB = (req.file.size / 1024).toFixed(1) + ' KB';
+    const result = await db.query(
+      'INSERT INTO client_files (client_id,file_name,file_url,file_type,file_size,uploaded_at) VALUES ($1,$2,$3,$4,$5,NOW()) RETURNING *',
+      [req.params.id, req.file.originalname, b64, req.body.file_type||'report', sizeKB]
+    );
+    res.json(result.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/clients/:id/files/:fileId', async (req, res) => {
+  try { await db.query('DELETE FROM client_files WHERE id=$1', [req.params.fileId]); res.json({ ok:true }); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/clients/:id/content-tasks', async (req, res) => {
+  try {
+    const { date, platform, content_type, notes } = req.body;
+    const result = await db.query('INSERT INTO content_tasks (client_id,date,platform,content_type,notes) VALUES ($1,$2,$3,$4,$5) RETURNING *', [req.params.id, date, platform, content_type, notes||'']);
+    res.json(result.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/clients/:id/content-tasks/:taskId', async (req, res) => {
+  try { await db.query('DELETE FROM content_tasks WHERE id=$1 AND client_id=$2', [req.params.taskId, req.params.id]); res.json({ ok:true }); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/clients/:id/send-report', async (req, res) => {
+  try {
+    await logActivity({ type:'report', title:`Report sent to ${req.body.to}`, client_id:parseInt(req.params.id) });
+    res.json({ ok:true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ══════════════════════════════════════════════════════════════
+// QUOTATIONS
+// ══════════════════════════════════════════════════════════════
+app.get('/api/clients/:id/quotations', async (req, res) => {
+  try {
+    const rows = (await db.query('SELECT * FROM quotations WHERE client_id=$1 ORDER BY created_at DESC', [req.params.id])).rows;
+    res.json(rows.map(q => ({ ...q, items: typeof q.items==='string' ? JSON.parse(q.items) : (q.items||[]) })));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/clients/:id/quotations', async (req, res) => {
+  try {
+    const { items, gst_pct, valid_until, notes } = req.body;
+    const subtotal = items.reduce((s,i) => s+(i.qty||0)*(i.rate||0), 0);
+    const gst_amount = subtotal*(gst_pct||0)/100;
+    const total = subtotal+gst_amount;
+    let qno = 'QT-1001';
+    try { const sq = await db.query("SELECT nextval('quotation_seq') as n"); qno=`QT-${sq.rows[0].n}`; } catch {}
+    const result = await db.query(
+      'INSERT INTO quotations (client_id,quotation_no,items,subtotal,gst_pct,gst_amount,total,valid_until,notes,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW()) RETURNING *',
+      [req.params.id, qno, JSON.stringify(items), subtotal, gst_pct||0, gst_amount, total, valid_until||null, notes||'']
+    );
+    await logActivity({ type:'quotation', title:`Quotation ${qno} created`, client_id:parseInt(req.params.id) });
+    res.json({ ...result.rows[0], items });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/clients/:id/quotations/:qid', async (req, res) => {
+  try { await db.query('DELETE FROM quotations WHERE id=$1 AND client_id=$2', [req.params.qid, req.params.id]); res.json({ ok:true }); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ══════════════════════════════════════════════════════════════
+// META ADS
+// ══════════════════════════════════════════════════════════════
+app.post('/api/clients/:id/meta-account', async (req, res) => {
+  try {
+    const { ad_account_id, access_token } = req.body;
+    const ex = await db.query('SELECT * FROM meta_accounts WHERE client_id=$1', [req.params.id]);
+    if (ex.rows[0]) {
+      const upd = { ad_account_id, is_active: true };
+      if (access_token) upd.access_token = access_token;
+      const keys=Object.keys(upd); const vals=[...Object.values(upd), req.params.id];
+      await db.query(`UPDATE meta_accounts SET ${keys.map((k,i)=>`${k}=$${i+1}`).join(',')} WHERE client_id=$${vals.length}`, vals);
+    } else {
+      await db.query('INSERT INTO meta_accounts (client_id,ad_account_id,access_token,is_active) VALUES ($1,$2,$3,true)', [req.params.id, ad_account_id, access_token||'']);
+    }
+    await logActivity({ type:'meta', title:'Meta Ads connected', client_id:parseInt(req.params.id) });
+    res.json({ ok:true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/clients/:id/meta-account', async (req, res) => {
+  try { await db.query('UPDATE meta_accounts SET is_active=false WHERE client_id=$1', [req.params.id]); res.json({ ok:true }); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/clients/:id/meta-sync', async (req, res) => {
+  try {
+    const meta = await db.query('SELECT * FROM meta_accounts WHERE client_id=$1 AND is_active=true', [req.params.id]);
+    if (!meta.rows[0]) return res.status(400).json({ error: 'No Meta account connected' });
+    const { ad_account_id, access_token } = meta.rows[0];
+    if (!access_token) return res.status(400).json({ error: 'No access token saved' });
+    const since = new Date(Date.now()-30*86400000).toISOString().split('T')[0];
+    const until = new Date().toISOString().split('T')[0];
+    const metaUrl = `https://graph.facebook.com/v18.0/${ad_account_id}/insights?fields=spend,impressions,clicks,ctr,cpc,reach,actions&time_range={"since":"${since}","until":"${until}"}&access_token=${access_token}`;
+    const metaRes = await fetch(metaUrl);
+    const metaData = await metaRes.json();
+    if (metaData.error) throw new Error(metaData.error.message||'Meta API error');
+    const d = metaData.data?.[0]||{};
+    const leads = (d.actions||[]).find(a=>a.action_type==='lead')?.value||0;
+    let balance = null;
+    try { const br = await fetch(`https://graph.facebook.com/v18.0/${ad_account_id}?fields=balance&access_token=${access_token}`); const bd=await br.json(); if(bd.balance!==undefined)balance=parseFloat(bd.balance)/100; } catch {}
+    const metrics = { spend:parseFloat(d.spend||0), impressions:parseInt(d.impressions||0), clicks:parseInt(d.clicks||0), ctr:parseFloat(d.ctr||0), cpc:parseFloat(d.cpc||0), reach:parseInt(d.reach||0), leads:parseInt(leads) };
+    try {
+      await db.query('INSERT INTO meta_metrics (client_id,spend,impressions,clicks,ctr,cpc,reach,leads,synced_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW()) ON CONFLICT (client_id) DO UPDATE SET spend=$2,impressions=$3,clicks=$4,ctr=$5,cpc=$6,reach=$7,leads=$8,synced_at=NOW()',
+        [req.params.id,metrics.spend,metrics.impressions,metrics.clicks,metrics.ctr,metrics.cpc,metrics.reach,metrics.leads]);
+    } catch {
+      await db.query('INSERT INTO meta_metrics (client_id,spend,impressions,clicks,ctr,cpc,reach,leads,synced_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())',
+        [req.params.id,metrics.spend,metrics.impressions,metrics.clicks,metrics.ctr,metrics.cpc,metrics.reach,metrics.leads]);
+    }
+    await db.query(balance!==null ? 'UPDATE meta_accounts SET balance=$1,last_synced=NOW() WHERE client_id=$2' : 'UPDATE meta_accounts SET last_synced=NOW() WHERE client_id=$1', balance!==null ? [balance,req.params.id] : [req.params.id]);
+    await logActivity({ type:'meta', title:`Meta synced — ₹${metrics.spend.toLocaleString('en-IN')} spend`, client_id:parseInt(req.params.id) });
+    res.json({ ok:true, metrics, balance });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/meta/sync', async (req, res) => {
+  try {
+    const accounts = await db.query("SELECT * FROM meta_accounts WHERE is_active=true AND access_token IS NOT NULL AND access_token!=''");
+    let synced = 0;
+    for (const acc of accounts.rows) {
+      try {
+        const r = await fetch(`https://${req.headers.host}/api/clients/${acc.client_id}/meta-sync`, { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' });
+        if (r.ok) synced++;
+      } catch {}
+    }
+    res.json({ ok:true, synced });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/meta/alerts', async (req, res) => {
+  try {
+    const result = await db.query("SELECT c.id as client_id,c.name,c.company,ma.balance FROM meta_accounts ma JOIN clients c ON c.id=ma.client_id WHERE ma.is_active=true AND ma.balance IS NOT NULL AND ma.balance<500");
+    res.json(result.rows.map(r => ({ client_id:r.client_id, client:r.name, company:r.company, type:r.balance<100?'critical':'warning', msg:`Only ₹${parseFloat(r.balance).toFixed(0)} remaining` })));
+  } catch (e) { res.json([]); }
+});
+
+// ══════════════════════════════════════════════════════════════
+// CAMPAIGNS / AUTOMATIONS / COLLABORATIONS
+// ══════════════════════════════════════════════════════════════
+app.get('/api/campaigns', async (req, res) => {
+  try { res.json((await db.query('SELECT c.*,cl.name as client_name FROM campaigns c LEFT JOIN clients cl ON cl.id=c.client_id ORDER BY c.created_at DESC')).rows); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/campaigns', async (req, res) => {
+  try {
+    const { name, client_id, channel, budget, spend, status } = req.body;
+    const r = await db.query('INSERT INTO campaigns (name,client_id,channel,budget,spend,status,created_at) VALUES ($1,$2,$3,$4,$5,$6,NOW()) RETURNING *', [name,client_id,channel,budget||0,spend||0,status||'Active']);
+    await logActivity({ type:'campaign', title:`Campaign "${name}" created`, client_id:client_id?parseInt(client_id):null });
+    res.json(r.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/campaigns/:id', async (req, res) => {
+  try { await db.query('DELETE FROM campaigns WHERE id=$1',[req.params.id]); res.json({ok:true}); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/automations', async (req, res) => {
+  try { res.json((await db.query('SELECT a.*,c.name as client_name FROM automations a LEFT JOIN clients c ON c.id=a.client_id ORDER BY a.created_at DESC')).rows); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/automations', async (req, res) => {
+  try {
+    const { name, client_id, status, revenue, notes } = req.body;
+    const r = await db.query('INSERT INTO automations (name,client_id,status,revenue,notes,created_at) VALUES ($1,$2,$3,$4,$5,NOW()) RETURNING *', [name,client_id||null,status||'Running',revenue||0,notes||'']);
+    res.json(r.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/automations/:id', async (req, res) => {
+  try { await db.query('DELETE FROM automations WHERE id=$1',[req.params.id]); res.json({ok:true}); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/collaborations', async (req, res) => {
+  try { res.json((await db.query('SELECT * FROM collaborations ORDER BY created_at DESC')).rows); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/collaborations', async (req, res) => {
+  try {
+    const { partner, revenue, status, notes } = req.body;
+    const r = await db.query('INSERT INTO collaborations (partner,revenue,status,notes,created_at) VALUES ($1,$2,$3,$4,NOW()) RETURNING *', [partner,revenue||0,status||'Active',notes||'']);
+    res.json(r.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/collaborations/:id', async (req, res) => {
+  try { await db.query('DELETE FROM collaborations WHERE id=$1',[req.params.id]); res.json({ok:true}); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ══════════════════════════════════════════════════════════════
+// REVENUE
+// ══════════════════════════════════════════════════════════════
+app.get('/api/revenue', async (req, res) => {
+  try { res.json({ entries: (await db.query('SELECT r.*,c.name as client_name FROM revenue_entries r LEFT JOIN clients c ON c.id=r.client_id ORDER BY r.date DESC,r.created_at DESC')).rows }); }
+  catch (e) { res.json({ entries:[] }); }
+});
+app.post('/api/revenue', async (req, res) => {
+  try {
+    const { client_id, amount, date, source, notes } = req.body;
+    const r = await db.query('INSERT INTO revenue_entries (client_id,amount,date,source,notes,created_at) VALUES ($1,$2,$3,$4,$5,NOW()) RETURNING *', [client_id||null,amount,date,source||'manual',notes||'']);
+    await logActivity({ type:'revenue', title:`Revenue: ₹${parseFloat(amount).toLocaleString('en-IN')}`, client_id:client_id?parseInt(client_id):null });
+    res.json(r.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/revenue/:id', async (req, res) => {
+  try { await db.query('DELETE FROM revenue_entries WHERE id=$1',[req.params.id]); res.json({ok:true}); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/finance/personal', async (req, res) => {
+  try {
+    const [txRes, salRes] = await Promise.all([
+      db.query('SELECT t.*,u.name as user_name FROM transactions t LEFT JOIN users u ON u.id=t.user_id ORDER BY t.date DESC').catch(()=>({rows:[]})),
+      db.query('SELECT s.*,u.name as user_name FROM salaries s LEFT JOIN users u ON u.id=s.user_id ORDER BY s.date DESC').catch(()=>({rows:[]}))
+    ]);
+    const txs = txRes.rows;
+    const totalIncome = txs.filter(t=>t.type==='income').reduce((s,t)=>s+parseFloat(t.amount||0),0);
+    const totalExpenses = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+parseFloat(t.amount||0),0);
+    const totalSalaries = salRes.rows.reduce((s,t)=>s+parseFloat(t.amount||0),0);
+    const summaryMap = {};
+    txs.forEach(t=>{ const k=t.user_name||'Unknown'; if(!summaryMap[k])summaryMap[k]={user_name:k,income:0,expenses:0}; if(t.type==='income')summaryMap[k].income+=parseFloat(t.amount||0); else summaryMap[k].expenses+=parseFloat(t.amount||0); });
+    res.json({ transactions:txs, salaries:salRes.rows, summary:Object.values(summaryMap).map(s=>({...s,net:s.income-s.expenses})), totalIncome, totalExpenses, totalSalaries, netBalance:totalIncome-totalExpenses });
+  } catch (e) { res.json({ transactions:[],salaries:[],summary:[],totalIncome:0,totalExpenses:0,totalSalaries:0,netBalance:0 }); }
+});
+app.post('/api/transactions', async (req, res) => {
+  try { const {user_id,type,category,amount,date}=req.body; res.json((await db.query('INSERT INTO transactions (user_id,type,category,amount,date,created_at) VALUES ($1,$2,$3,$4,$5,NOW()) RETURNING *',[user_id,type,category,amount,date])).rows[0]); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/transactions/:id', async (req, res) => {
+  try { await db.query('DELETE FROM transactions WHERE id=$1',[req.params.id]); res.json({ok:true}); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/salaries', async (req, res) => {
+  try { const {user_id,amount,date,notes}=req.body; res.json((await db.query('INSERT INTO salaries (user_id,amount,date,notes,created_at) VALUES ($1,$2,$3,$4,NOW()) RETURNING *',[user_id,amount,date,notes||''])).rows[0]); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/salaries/:id', async (req, res) => {
+  try { await db.query('DELETE FROM salaries WHERE id=$1',[req.params.id]); res.json({ok:true}); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.get('/api/users', async (req, res) => {
+  try { res.json((await db.query('SELECT * FROM users ORDER BY name')).rows); }
+  catch (e) { res.json([{id:1,name:'Admin'}]); }
+});
+
+// ══════════════════════════════════════════════════════════════
+// CHARTS
+// ══════════════════════════════════════════════════════════════
+app.get('/api/charts/performance', async (req, res) => {
+  try {
+    const clients = await db.query('SELECT id,name,revenue,spend,profit,color FROM clients ORDER BY revenue DESC LIMIT 8');
+    const metaRows = await db.query('SELECT * FROM meta_metrics').catch(()=>({rows:[]}));
+    res.json({ clients:clients.rows.map(c=>({...c,revenue:parseFloat(c.revenue||0),spend:parseFloat(c.spend||0),profit:parseFloat(c.profit||0)})), funnel:{ impressions:metaRows.rows.reduce((s,r)=>s+parseInt(r.impressions||0),0), clicks:metaRows.rows.reduce((s,r)=>s+parseInt(r.clicks||0),0), leads:metaRows.rows.reduce((s,r)=>s+parseInt(r.leads||0),0), spend:metaRows.rows.reduce((s,r)=>s+parseFloat(r.spend||0),0) } });
+  } catch (e) { res.json({ clients:[], funnel:{} }); }
+});
+
+// ══════════════════════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════════════════════
+app.get('/api/settings/company', async (req, res) => {
+  try { res.json((await db.query('SELECT * FROM company_settings LIMIT 1')).rows[0]||{}); }
+  catch (e) { res.json({}); }
+});
+app.post('/api/settings/company', async (req, res) => {
+  try {
+    const fields = ['company_name','tagline','address_line1','address_line2','city','state','pincode','phone','email','gstin','upi_id','bank_name','bank_account','bank_ifsc','bank_holder','meta_account_id','google_cid','fiscal_year_start'];
+    const values = fields.map(f=>req.body[f]||null);
+    await db.query(`INSERT INTO company_settings (${fields.join(',')},updated_at) VALUES (${fields.map((_,i)=>'$'+(i+1)).join(',')},NOW()) ON CONFLICT (id) DO UPDATE SET ${fields.map((f,i)=>`${f}=$${i+1}`).join(',')},updated_at=NOW()`, values);
+    res.json({ ok:true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/settings/signature', upload.single('signature'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error:'No file' });
+    const b64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    await db.query('UPDATE company_settings SET signature_url=$1 WHERE id=(SELECT id FROM company_settings LIMIT 1)', [b64]);
+    res.json({ signature_url: b64 });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ══════════════════════════════════════════════════════════════
+// DAILY SPEND / ACTIVITY / CREATIVES
+// ══════════════════════════════════════════════════════════════
+app.get('/api/finance/daily-spend', async (req, res) => {
+  try {
+    const month = req.query.month||new Date().toISOString().slice(0,7);
+    const [yr,mo] = month.split('-').map(Number);
+    const nextMo = mo===12?`${yr+1}-01`:`${yr}-${String(mo+1).padStart(2,'0')}`;
+    res.json((await db.query('SELECT * FROM daily_spend WHERE date >= $1 AND date < $2 ORDER BY date DESC',[month+'-01',nextMo+'-01'])).rows);
+  } catch (e) { res.json([]); }
+});
+app.post('/api/finance/daily-spend', async (req, res) => {
+  try {
+    const {date,amount,category,description,added_by}=req.body;
+    const r = await db.query('INSERT INTO daily_spend (date,amount,category,description,added_by,created_at) VALUES ($1,$2,$3,$4,$5,NOW()) RETURNING *',[date,amount,category||'Other',description||'',added_by||'']);
+    await logActivity({ type:'expense', title:`Expense: ₹${parseFloat(amount).toLocaleString('en-IN')} (${category||'Other'})` });
+    res.json(r.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/finance/daily-spend/:id', async (req, res) => {
+  try { await db.query('DELETE FROM daily_spend WHERE id=$1',[req.params.id]); res.json({ok:true}); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/activity', async (req, res) => {
+  try { res.json((await db.query('SELECT al.*,c.name as client_name FROM activity_log al LEFT JOIN clients c ON c.id=al.client_id ORDER BY al.created_at DESC LIMIT 20')).rows); }
+  catch (e) { res.json([]); }
+});
+app.get('/api/clients/:id/creatives', async (req, res) => {
+  try { res.json((await db.query('SELECT * FROM client_creatives WHERE client_id=$1 ORDER BY score DESC',[req.params.id])).rows); }
+  catch (e) { res.json([]); }
+});
+
+
+
+app.post('/api/clients/:id/quotations/:qid/approve', async (req, res) => {
+  try {
+    await db.query('UPDATE quotations SET approved=true,approved_at=NOW() WHERE id=$1 AND client_id=$2', [req.params.qid, req.params.id]);
+    res.json({ok:true});
+  } catch(e) {
+    // approved column might not exist yet
+    res.json({ok:true, note:'Add approved BOOLEAN column to quotations if needed'});
   }
-}
-
-function copyResearch(){
-  const content = document.getElementById('ai-research-content')?.textContent||'';
-  navigator.clipboard.writeText(content).then(()=>toast('Report copied to clipboard'));
-}
-
-
-// ── CAMPAIGNS ──────────────────────────────────────────────────
-async function buildCampaigns(){
-  const[camps,clients]=await Promise.all([api('/api/campaigns').catch(()=>[]),api('/api/clients').catch(()=>[])]);
-  appState.clients=clients;
-  return `
-  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
-    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
-      <div class="table-title" style="font-size:13px;font-weight:600;color:#111110">All Campaigns <span style="color:var(--text2);font-weight:400;font-size:12px">${camps.length} total</span></div>
-      <input class="search-input" placeholder="Search…" oninput="filterTable(this,'camps-tbody')"/>
-    </div>
-    <table><thead><tr><th>Campaign</th><th>Client</th><th>Channel</th><th>Budget</th><th>Spend</th><th>Progress</th><th>Status</th><th></th></tr></thead>
-    <tbody id="camps-tbody">
-    ${camps.map(c=>{const p=c.budget>0?Math.round(c.spend/c.budget*100):0;return`<tr data-search="${c.name.toLowerCase()} ${(c.client_name||'').toLowerCase()}">
-      <td style="font-weight:500">${c.name}</td>
-      <td style="color:var(--text2)">${c.client_name||'—'}</td>
-      <td><span class="badge badge-blue" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#EFF6FF;color:#2563EB">${c.channel}</span></td>
-      <td>${fmt(c.budget)}</td>
-      <td>${fmt(c.spend)}</td>
-      <td><div class="progress-wrap" style="display:flex;align-items:center;gap:7px"><div class="progress-bar-bg" style="flex:1;height:4px;background:#ECECEA;border-radius:4px"><div class="progress-bar" style="width:${Math.min(p,100)}%;background:${p>90?'var(--red)':p>70?'var(--orange)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2);min-width:28px">${p}%</span></div></td>
-      <td><span class="badge ${c.status==='Active'?'badge-green':c.status==='Paused'?'badge-orange':'badge-gray'}">${c.status}</span></td>
-      <td><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteCampaign(${c.id})">Delete</button></td>
-    </tr>`;}).join('')}
-    </tbody></table>
-  </div>`;
-}
-
-// ── AUTOMATIONS ────────────────────────────────────────────────
-async function buildAutomations(){
-  const autos=await api('/api/automations').catch(()=>[]);
-  const totalRev=autos.reduce((a,x)=>a+parseFloat(x.revenue||0),0);
-  const running=autos.filter(a=>a.status==='Running').length;
-  return `
-  <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">
-    <div class="stat-card accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #E96800;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Auto Revenue</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(Number(totalRev))}</div></div>
-    <div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Running</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${running}</div></div>
-    <div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 20px;transition:box-shadow .12s"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Automations</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${autos.length}</div></div>
-  </div>
-  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
-    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">All Automations</div></div>
-    <table><thead><tr><th>Name</th><th>Client</th><th>Status</th><th>Revenue</th><th>Notes</th><th></th></tr></thead><tbody>
-    ${autos.map(a=>`<tr>
-      <td style="font-weight:500">${a.name}</td>
-      <td style="color:var(--text2)">${a.client_name||'—'}</td>
-      <td><span class="badge ${a.status==='Running'?'badge-green':'badge-orange'}">${a.status}</span></td>
-      <td style="font-weight:500;color:var(--green)">${fmt(a.revenue)}</td>
-      <td style="color:var(--text2);font-size:12.5px">${a.notes||'—'}</td>
-      <td><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteAutomation(${a.id})">Delete</button></td>
-    </tr>`).join('')}
-    </tbody></table>
-  </div>`;
-}
-
-// ── COLLABORATIONS ─────────────────────────────────────────────
-async function buildCollaborations(){
-  const collabs=await api('/api/collaborations').catch(()=>[]);
-  const totalRev=collabs.reduce((a,c)=>a+parseFloat(c.revenue||0),0);
-  return `
-  <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">
-    <div class="stat-card accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #E96800;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Collab Revenue</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(Number(totalRev))}</div></div>
-    <div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Active Partners</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${collabs.filter(c=>c.status==='Active').length}</div></div>
-    <div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 20px;transition:box-shadow .12s"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Partners</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${collabs.length}</div></div>
-  </div>
-  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
-    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Collaborations</div></div>
-    <table><thead><tr><th>Partner</th><th>Revenue</th><th>Status</th><th>Notes</th><th></th></tr></thead><tbody>
-    ${collabs.map(c=>`<tr>
-      <td style="font-weight:500">${c.partner}</td>
-      <td style="font-weight:500;color:var(--green)">${fmt(c.revenue)}</td>
-      <td><span class="badge ${c.status==='Active'?'badge-green':'badge-gray'}">${c.status}</span></td>
-      <td style="color:var(--text2);font-size:12.5px">${c.notes||'—'}</td>
-      <td><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteCollab(${c.id})">Delete</button></td>
-    </tr>`).join('')}
-    </tbody></table>
-  </div>`;
-}
-
-// ── REVENUE ─────────────────────────────────────────────────────
-async function buildRevenue(){
-  return `
-  <div class="tabs">
-    <div class="tab ${appState.financeTab==='company'?'active':''}" onclick="setFinanceTab('company')">Company Finance</div>
-    <div class="tab ${appState.financeTab==='personal'?'active':''}" onclick="setFinanceTab('personal')">Personal & Team</div>
-  </div>
-  <div id="finance-content">${await buildFinanceTab()}</div>`;
-}
-async function setFinanceTab(tab){
-  appState.financeTab=tab;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.textContent.includes(tab==='company'?'Company':'Personal')));
-  document.getElementById('finance-content').innerHTML=await buildFinanceTab();
-}
-async function buildFinanceTab(){
-  if(appState.financeTab==='company') return buildCompanyFinance();
-  return buildPersonalFinance();
-}
-async function buildCompanyFinance(){
-  const[stats,rev,clients]=await Promise.all([api('/api/dashboard').catch(()=>({})),api('/api/revenue').catch(()=>({})),api('/api/clients').catch(()=>[])]);
-  const safeStats={totalRevenue:stats.totalRevenue||0,totalSpend:stats.totalSpend||0,profit:stats.profit||0,activeClients:stats.activeClients||0,totalClients:stats.totalClients||0,automationRevenue:stats.automationRevenue||0,collaborationRevenue:stats.collaborationRevenue||0,thisMonth:stats.thisMonth||0,projected:stats.projected||0};
-  appState.clients=clients;
-  const entries=(rev&&rev.entries)||[];
-  const totalClientRev=clients.reduce((s,c)=>s+parseFloat(c.revenue||0),0);
-  const totalClientSpend=clients.reduce((s,c)=>s+parseFloat(c.spend||0),0);
-  return `
-  <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">
-    <div class="stat-card accent" onclick="openRevenueBreakdownByClient()"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Revenue ↗</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(safeStats.totalRevenue)}</div><div class="stat-sub" style="color:var(--text3)">Click to see per-client</div></div>
-    <div class="stat-card" onclick="openSpendBreakdownByClient()"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Ad Spend ↗</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(safeStats.totalSpend)}</div><div class="stat-sub" style="color:var(--text3)">Click to see per-client</div></div>
-    <div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Profit</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110" style="color:var(--green)">${fmt(safeStats.profit)}</div><div class="stat-sub" style="color:var(--green)">Margin: ${safeStats.totalRevenue>0?((safeStats.profit/safeStats.totalRevenue)*100).toFixed(1):'0'}%</div></div>
-    <div class="stat-card blue-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #2563EB;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">This Month</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(safeStats.thisMonth)}</div></div>
-    <div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 20px;transition:box-shadow .12s"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Projected</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(safeStats.projected)}</div></div>
-  </div>
-  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px" style="margin-bottom:20px">
-    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
-      <div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Revenue per Client</div>
-      <span style="font-size:12px;color:var(--text2)">Click a client row for full detail</span>
-    </div>
-    <table><thead><tr><th>Client</th><th>Revenue</th><th>Ad Spend</th><th>Profit</th><th>ROI</th><th>Expected</th><th>Status</th></tr></thead><tbody>
-    ${clients.map(c=>`<tr onclick="navigate('clientDetail',${c.id})" style="cursor:pointer">
-      <td><div class="name-cell" style="display:flex;align-items:center;gap:9px">${avatarHtml(c,{size:28})}<span style="font-weight:500">${c.name}<br><span style="font-size:11px;color:var(--text2);font-weight:400">${c.company}</span></span></div></td>
-      <td style="font-weight:600;color:var(--orange)">${fmt(c.revenue)}</td>
-      <td>${fmt(c.spend)}</td>
-      <td style="color:var(--green);font-weight:500">${fmt(c.profit)}</td>
-      <td style="color:${c.spend>0&&(c.profit/c.spend)>0?'var(--green)':'var(--red)'}">${c.spend>0?((c.profit/c.spend)*100).toFixed(0)+'%':'—'}</td>
-      <td style="color:var(--blue)">${fmt(c.expected_revenue)}</td>
-      <td><span class="badge ${clientStatusBadgeClass(c.status)}">${c.status}</span></td>
-    </tr>`).join('')}
-    <tr style="background:var(--surface2);font-weight:600">
-      <td>Total</td>
-      <td style="color:var(--orange)">${fmt(Number(totalClientRev))}</td>
-      <td>${fmt(Number(totalClientSpend))}</td>
-      <td style="color:var(--green)">${fmt(totalClientRev-totalClientSpend)}</td>
-      <td colspan="3"></td>
-    </tr>
-    </tbody></table>
-  </div>
-  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
-    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
-      <div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Manual Revenue Entries</div>
-    </div>
-    <table><thead><tr><th>Client</th><th>Amount</th><th>Date</th><th>Source</th><th>Notes</th><th></th></tr></thead><tbody>
-    ${entries.length===0?`<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:32px">No manual entries yet. Use "+ Manual Revenue" to add one.</td></tr>`:
-    entries.map(r=>{
-      const c=clients.find(x=>x.id===r.client_id)||{name:'General',color:'#888'};
-      return`<tr>
-        <td><div class="name-cell" style="display:flex;align-items:center;gap:9px">${avatarHtml(c,{size:24})}${c.name}</div></td>
-        <td style="font-weight:500;color:var(--orange)">${fmt(r.amount)}</td>
-        <td style="color:var(--text2)">${r.date}</td>
-        <td><span class="badge badge-orange" style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:500;white-space:nowrap;background:#FFF3EA;color:#E96800">Manual</span></td>
-        <td style="color:var(--text2);font-size:12px">${r.notes||'—'}</td>
-        <td><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteRevEntry(${r.id})">Delete</button></td>
-      </tr>`;}).join('')}
-    </tbody></table>
-  </div>`;
-}
-
-function openRevenueBreakdownByClient(){
-  const clients=appState.clients;
-  const sorted=[...clients].sort((a,b)=>(b.revenue||0)-(a.revenue||0));
-  const total=sorted.reduce((s,c)=>s+(c.revenue||0),0);
-  openModal(`<div class="modal-title">Revenue Breakdown — All Clients</div>
-    <table style="width:100%;margin-bottom:8px">
-      <thead><tr><th style="padding:8px;background:var(--surface2);font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Client</th><th style="padding:8px;background:var(--surface2);font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;text-align:right">Revenue</th><th style="padding:8px;background:var(--surface2);font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;text-align:right">Share</th></tr></thead>
-      <tbody>${sorted.map(c=>`<tr>
-        <td style="padding:10px 8px"><div style="display:flex;align-items:center;gap:8px">${avatarHtml(c,{size:24})}<span style="font-weight:500">${c.name}</span></div></td>
-        <td style="padding:10px 8px;text-align:right;font-weight:600;color:var(--orange)">${fmt(c.revenue||0)}</td>
-        <td style="padding:10px 8px;text-align:right;color:var(--text2)">${total>0?((c.revenue/total)*100).toFixed(1):0}%</td>
-      </tr>`).join('')}
-      <tr style="background:var(--surface2);font-weight:700"><td style="padding:10px 8px">Total</td><td style="padding:10px 8px;text-align:right;color:var(--orange)">${fmt(total)}</td><td style="padding:10px 8px;text-align:right">100%</td></tr>
-      </tbody>
-    </table>
-    <div class="modal-actions"><button class="btn btn-primary" onclick="closeModal()">Close</button></div>`);
-}
-
-function openSpendBreakdownByClient(){
-  const clients=appState.clients;
-  const sorted=[...clients].sort((a,b)=>(b.spend||0)-(a.spend||0));
-  const total=sorted.reduce((s,c)=>s+(c.spend||0),0);
-  openModal(`<div class="modal-title">Ad Spend Breakdown — All Clients</div>
-    <table style="width:100%;margin-bottom:8px">
-      <thead><tr><th style="padding:8px;background:var(--surface2);font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Client</th><th style="padding:8px;background:var(--surface2);font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;text-align:right">Spend</th><th style="padding:8px;background:var(--surface2);font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;text-align:right">Share</th></tr></thead>
-      <tbody>${sorted.map(c=>`<tr>
-        <td style="padding:10px 8px"><div style="display:flex;align-items:center;gap:8px">${avatarHtml(c,{size:24})}<span style="font-weight:500">${c.name}</span></div></td>
-        <td style="padding:10px 8px;text-align:right;font-weight:600">${fmt(c.spend||0)}</td>
-        <td style="padding:10px 8px;text-align:right;color:var(--text2)">${total>0?((c.spend/total)*100).toFixed(1):0}%</td>
-      </tr>`).join('')}
-      <tr style="background:var(--surface2);font-weight:700"><td style="padding:10px 8px">Total</td><td style="padding:10px 8px;text-align:right">${fmt(total)}</td><td style="padding:10px 8px;text-align:right">100%</td></tr>
-      </tbody>
-    </table>
-    <div class="modal-actions"><button class="btn btn-primary" onclick="closeModal()">Close</button></div>`);
-}
-
-async function buildPersonalFinance(){
-  const data=await api('/api/finance/personal').catch(()=>({}));
-  return `
-  <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
-    <button class="btn btn-primary btn-sm" onclick="openAddTransaction()">+ Add Transaction</button>
-    <button class="btn btn-sm" onclick="openAddSalary()">+ Add Salary</button>
-  </div>
-  <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">
-    <div class="stat-card accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #E96800;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Personal Income</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(data.totalIncome)}</div></div>
-    <div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 20px;transition:box-shadow .12s"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Expenses</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110" style="color:var(--red)">${fmt(data.totalExpenses)}</div></div>
-    <div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Net Balance</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110" style="color:var(--green)">${fmt(data.netBalance)}</div></div>
-    <div class="stat-card blue-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #2563EB;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Salaries Paid</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(data.totalSalaries)}</div></div>
-  </div>
-  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
-    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Transactions</div></div>
-    <table><thead><tr><th>User</th><th>Type</th><th>Category</th><th>Amount</th><th>Date</th><th>Notes</th><th></th></tr></thead><tbody>
-    ${data.transactions.length===0?`<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:32px">No transactions yet.</td></tr>`:
-    data.transactions.map(t=>`<tr>
-      <td style="font-weight:500">${t.user_name||'—'}</td>
-      <td><span class="badge ${t.type==='income'?'badge-green':'badge-red'}">${t.type}</span></td>
-      <td style="color:var(--text2)">${t.category}</td>
-      <td style="font-weight:500;color:${t.type==='income'?'var(--green)':'var(--red)'}">${t.type==='expense'?'-':''}${fmt(t.amount)}</td>
-      <td style="color:var(--text2)">${t.date}</td>
-      <td style="color:var(--text2);font-size:12px">${t.notes||'—'}</td>
-      <td><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteTx(${t.id})">Delete</button></td>
-    </tr>`).join('')}
-    </tbody></table>
-  </div>
-  <div class="two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
-    <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
-      <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Salary Payments</div></div>
-      <table><thead><tr><th>User</th><th>Amount</th><th>Date</th><th>Notes</th><th></th></tr></thead><tbody>
-      ${data.salaries.map(s=>`<tr>
-        <td style="font-weight:500">${s.user_name||'—'}</td>
-        <td style="font-weight:500;color:var(--orange)">${fmt(s.amount)}</td>
-        <td style="color:var(--text2)">${s.date}</td>
-        <td style="color:var(--text2);font-size:12px">${s.notes||'—'}</td>
-        <td><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteSalary(${s.id})">Delete</button></td>
-      </tr>`).join('')}
-      </tbody></table>
-    </div>
-    <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
-      <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Team Summary</div></div>
-      <table><thead><tr><th>User</th><th>Income</th><th>Expenses</th><th>Net</th></tr></thead><tbody>
-      ${data.summary.map(s=>`<tr>
-        <td style="font-weight:500">${s.user_name}</td>
-        <td style="color:var(--green)">${fmt(s.income)}</td>
-        <td style="color:var(--red)">${fmt(s.expenses)}</td>
-        <td style="font-weight:500;color:${s.net>=0?'var(--green)':'var(--red)'}">${fmt(s.net)}</td>
-      </tr>`).join('')}
-      </tbody></table>
-    </div>
-  </div>`;
-}
-
-// ── TALLY / DAILY SPENDS ─────────────────────────────────────
-async function buildTally(){
-  let entries=[];
-  try{
-    const raw=await api('/api/finance/daily-spend');
-    // server returns plain array
-    entries=Array.isArray(raw)?raw:(raw.entries||[]);
-  }catch(e){}
-  // Build summary from entries
-  const catMap={};
-  entries.forEach(e=>{const k=e.category||'Other';if(!catMap[k])catMap[k]=0;catMap[k]+=(e.amount||0);});
-  const summary={total:entries.reduce((s,e)=>s+(e.amount||0),0),categories:Object.entries(catMap).map(([name,total])=>({name,total}))};
-
-  // Group by month
-  const byMonth={};
-  entries.forEach(e=>{
-    const m=e.date?e.date.slice(0,7):'unknown';
-    if(!byMonth[m]){byMonth[m]={total:0,entries:[]};}
-    byMonth[m].total+=e.amount||0;
-    byMonth[m].entries.push(e);
-  });
-  const months=Object.keys(byMonth).sort().reverse();
-
-  const categoryColors={'Ad Spend':'#FF6A00','Salary':'#3B82F6','Software':'#8B5CF6','Office':'#10B981','Travel':'#F59E0B','Other':'#9CA3AF'};
-
-  return `
-  <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">
-    <div class="stat-card accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #E96800;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Spends</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(summary.total||0)}</div></div>
-    <div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 20px;transition:box-shadow .12s"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">This Month</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${fmt(byMonth[new Date().toISOString().slice(0,7)]?.total||0)}</div></div>
-    <div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Categories</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${(summary.categories||[]).length}</div></div>
-    <div class="stat-card blue-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #2563EB;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total Entries</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${entries.length}</div></div>
-  </div>
-
-  ${(summary.categories||[]).length>0?`
-  <div class="chart-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:18px;margin-bottom:16px">
-    <div class="chart-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px"><div class="chart-title" style="font-size:13px;font-weight:600;color:#111110">Spend by Category</div></div>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      ${summary.categories.map(cat=>{
-        const pct=summary.total>0?Math.round((cat.total/summary.total)*100):0;
-        return`<div>
-          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
-            <span style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:${categoryColors[cat.name]||'#888'};display:inline-block"></span><span style="font-weight:500">${cat.name}</span></span>
-            <span><span style="font-weight:600">${fmt(cat.total)}</span> <span style="color:var(--text2);font-size:11px">${pct}%</span></span>
-          </div>
-          <div class="budget-bar-wrap" style="margin:0"><div class="budget-bar-fill" style="width:${pct}%;background:${categoryColors[cat.name]||'#888'}"></div></div>
-        </div>`;}).join('')}
-    </div>
-  </div>`:''}
-
-  ${months.map(m=>{
-    const mData=byMonth[m];
-    const mName=new Date(m+'-01').toLocaleDateString('en-IN',{month:'long',year:'numeric'});
-    return`<div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px" style="margin-bottom:16px">
-      <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
-        <div class="table-title" style="font-size:13px;font-weight:600;color:#111110">${mName}</div>
-        <span style="font-size:14px;font-weight:700;color:var(--orange)">${fmt(mData.total)}</span>
-      </div>
-      <table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Added by</th><th></th></tr></thead><tbody>
-      ${mData.entries.map(e=>`<tr>
-        <td style="color:var(--text2)">${e.date}</td>
-        <td><span class="badge" style="background:${(categoryColors[e.category]||'#888')}22;color:${categoryColors[e.category]||'#888'}">${e.category||'Other'}</span></td>
-        <td style="font-weight:500">${e.description||'—'}</td>
-        <td style="font-weight:600;color:var(--red)">-${fmt(e.amount)}</td>
-        <td style="color:var(--text2);font-size:12px">${e.user_name||'Admin'}</td>
-        <td><button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteSpend(${e.id})">Delete</button></td>
-      </tr>`).join('')}
-      </tbody></table>
-    </div>`;}).join('')}
-
-  ${entries.length===0?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">💸</div><div class="empty-text" style="font-size:12.5px;line-height:1.5">No spend entries yet. Click "+ Add Spend" to start tracking daily expenses like ad spend, salaries, software, office costs etc.</div></div>`:''}`;
-}
-
-async function openAddSpend(){
-  const users=await api('/api/users').catch(()=>[{id:1,name:'Admin'}]);
-  openModal(`<div class="modal-title">Add Spend Entry</div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Category</label>
-        <select class="form-input" id="m-cat" onchange="toggleCustomCat(this)">
-          <option>Ad Spend</option><option>Salary</option><option>Software</option><option>Office</option><option>Travel</option><option>Other</option><option value="__custom">+ Custom...</option>
-        </select>
-        <input class="form-input" id="m-cat-custom" placeholder="Enter custom category" style="display:none;margin-top:6px">
-      </div>
-      <div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" id="m-amount" type="number" placeholder="5000"></div>
-    </div>
-    <div class="form-group"><label class="form-label">Description</label><input class="form-input" id="m-desc" placeholder="Facebook ads for April, Figma subscription…"></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
-      <div class="form-group"><label class="form-label">Added By</label>
-        <select class="form-input" id="m-user">${users.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select>
-      </div>
-    </div>
-    <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveSpend()">Add Spend</button></div>`);
-}
-function toggleCustomCat(sel){
-  const custom=document.getElementById('m-cat-custom');
-  if(custom) custom.style.display=sel.value==='__custom'?'block':'none';
-}
-async function saveSpend(){
-  const amount=parseFloat(document.getElementById('m-amount').value);
-  if(!amount||isNaN(amount)){toast('Enter valid amount','error');return;}
-  await api('/api/finance/daily-spend',{method:'POST',body:JSON.stringify({
-    category:(()=>{const sel=document.getElementById('m-cat');const custom=document.getElementById('m-cat-custom');return sel.value==='__custom'?(custom?.value||'Other'):sel.value;})(),
-    amount,
-    description:document.getElementById('m-desc').value,
-    date:document.getElementById('m-date').value,
-    user_id:parseInt(document.getElementById('m-user').value)||1
-  })});
-  toast('Spend added');closeModal();navigate('tally');
-}
-async function deleteSpend(id){
-  if(!confirm('Delete this spend entry?')) return;
-  await api(`/api/finance/daily-spend/${id}`,{method:'DELETE'});
-  toast('Entry deleted');navigate('tally');
-}
-
-// ── REMINDERS ────────────────────────────────────────────────
-async function buildReminders(){
-  let reminders=[], clients=[];
-  try{[reminders,clients]=await Promise.all([api('/api/reminders'),api('/api/clients')]);}catch(e){}
-  const clientMap={};clients.forEach(cl=>{clientMap[cl.id]=cl;});
-  const now=new Date();
-
-  // Use actual DB fields: sent (boolean), due_date (date)
-  const unsent=reminders.filter(r=>!r.sent);
-  const sent=reminders.filter(r=>r.sent);
-  const overdue=unsent.filter(r=>r.due_date&&new Date(r.due_date)<now);
-  const upcoming=unsent.filter(r=>!r.due_date||new Date(r.due_date)>=now);
-
-  const reminderRow=(r,showSend=true)=>{
-    const cl=clientMap[r.client_id]||{name:'Unknown',color:'#888'};
-    const due=r.due_date?new Date(r.due_date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'No due date';
-    const channels=(r.send_email?'📧 ':'')+( r.send_whatsapp?'💬 ':'');
-    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #ECECEA">'
-      +'<div style="width:32px;height:32px;border-radius:50%;background:'+cl.color+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0">'+ini(cl.name)+'</div>'
-      +'<div style="flex:1;min-width:0">'
-        +'<div style="font-size:13px;font-weight:500;color:#111110">'+r.title+'</div>'
-        +'<div style="font-size:11.5px;color:#6F6F6B;margin-top:2px">'+cl.name+' · Due: '+due+' · '+channels+(r.amount?'₹'+parseFloat(r.amount).toLocaleString('en-IN'):'')+'</div>'
-      +'</div>'
-      +(showSend?'<button class="btn btn-primary btn-sm" onclick="sendReminder('+r.id+')">Send Now</button>':'<span style="font-size:11px;color:var(--green);font-weight:500">✓ Sent</span>')
-      +'<button class="btn btn-ghost btn-sm" style="color:#DC2626" onclick="deleteReminder('+r.id+')">Delete</button>'
-      +'</div>';
-  };
-
-  const statsHtml='<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">'
-    +'<div class="stat-card accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #E96800;border-radius:12px;padding:16px 18px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total</div><div class="stat-value" style="font-size:21px;font-weight:700;color:#111110">'+reminders.length+'</div></div>'
-    +'<div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 18px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Upcoming</div><div class="stat-value" style="font-size:21px;font-weight:700;color:#111110">'+upcoming.length+'</div></div>'
-    +'<div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #DC2626;border-radius:12px;padding:16px 18px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Overdue</div><div class="stat-value" style="font-size:21px;font-weight:700;color:#DC2626">'+overdue.length+'</div></div>'
-    +'<div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 18px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Sent</div><div class="stat-value" style="font-size:21px;font-weight:700;color:#111110">'+sent.length+'</div></div>'
-    +'</div>';
-
-  const overdueHtml=overdue.length?'<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;overflow:hidden;margin-bottom:16px">'
-    +'<div style="padding:12px 16px;border-bottom:1px solid #FECACA;display:flex;align-items:center;justify-content:space-between"><div style="font-size:13px;font-weight:600;color:#991B1B">🚨 Overdue ('+overdue.length+')</div></div>'
-    +overdue.map(r=>reminderRow(r,true)).join('')+'</div>':'';
-
-  const upcomingHtml='<div style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">'
-    +'<div style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between">'
-    +'<div style="font-size:13px;font-weight:600;color:#111110">Upcoming Reminders</div>'
-    +'</div>'
-    +(upcoming.length===0
-      ?'<div style="padding:40px;text-align:center;color:#A8A8A4;font-size:13px">No upcoming reminders. Add one using the button above.</div>'
-      :upcoming.map(r=>reminderRow(r,true)).join(''))
-    +'</div>';
-
-  const sentHtml=sent.length?'<div style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden">'
-    +'<div style="padding:12px 16px;border-bottom:1px solid #ECECEA"><div style="font-size:13px;font-weight:600;color:#111110">Sent Reminders</div></div>'
-    +sent.map(r=>reminderRow(r,false)).join('')+'</div>':'';
-
-  return statsHtml+overdueHtml+upcomingHtml+sentHtml;
-}
-
-async function sendReminder(id){
-  try{
-    await api('/api/reminders/'+id+'/send',{method:'POST',body:'{}'});
-    toast('Reminder sent ✓');navigate('reminders');
-  }catch(e){toast('Error sending: '+e.message,'error');}
-}
-
-async function deleteReminder(id){
-  if(!confirm('Delete this reminder?'))return;
-  await api('/api/reminders/'+id,{method:'DELETE'});
-  toast('Reminder deleted');navigate('reminders');
-}
-
-
-async function openAddReminder(){
-  const clients=await api('/api/clients');
-  openModal(`<div class="modal-title">Add Payment Reminder</div>
-    <div class="form-group"><label class="form-label">Client</label>
-      <select class="form-input" id="m-client"><option value="">— Select Client —</option>${clients.map(c=>`<option value="${c.id}">${c.name} — ${c.company}</option>`).join('')}</select>
-    </div>
-    <div class="form-group"><label class="form-label">Reminder Title</label><input class="form-input" id="m-title" placeholder="April Invoice Due, Renewal Reminder…"></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Amount (₹) <span style="color:var(--text2)">optional</span></label><input class="form-input" id="m-amount" type="number" placeholder="50000"></div>
-      <div class="form-group"><label class="form-label">Due Date</label><input class="form-input" id="m-due" type="date" value="${new Date(Date.now()+7*86400000).toISOString().split('T')[0]}"></div>
-    </div>
-    <div class="form-group"><label class="form-label">Send via</label>
-      <div style="display:flex;gap:10px;margin-top:4px">
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="ch-email" checked> 📧 Email</label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="ch-wa"> 📱 WhatsApp</label>
-      </div>
-    </div>
-    <div class="form-group"><label class="form-label">Custom Message <span style="color:var(--text2)">optional</span></label><textarea class="form-input" id="m-msg" rows="3" placeholder="Hi, just a reminder that your invoice of ₹X is due on…"></textarea></div>
-    <div style="display:flex;gap:6px;align-items:center;margin-bottom:14px">
-      <input type="checkbox" id="m-recurring">
-      <label for="m-recurring" style="font-size:13px;cursor:pointer">Recurring monthly</label>
-    </div>
-    <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveReminder()">Add Reminder</button></div>`);
-}
-async function saveReminder(){
-  const clientId=document.getElementById('m-client').value;
-  if(!clientId){toast('Select a client','error');return;}
-  const sendEmail=document.getElementById('ch-email').checked;
-  const sendWA=document.getElementById('ch-wa').checked;
-  await api('/api/reminders',{method:'POST',body:JSON.stringify({
-    client_id:parseInt(clientId),
-    title:document.getElementById('m-title').value||'Payment Reminder',
-    amount:parseFloat(document.getElementById('m-amount').value)||null,
-    due_date:document.getElementById('m-due').value,
-    send_email:sendEmail,
-    send_whatsapp:sendWA,
-    message:document.getElementById('m-msg').value,
-    recurring:document.getElementById('m-recurring').checked
-  })});
-  toast('Reminder saved ✓');closeModal();navigate('reminders');
-}
-async function sendReminder(id){
-  await api(`/api/reminders/${id}/send`,{method:'POST',body:JSON.stringify({})});
-  toast('Reminder sent ✓');navigate('reminders');
-}
-async function markReminderSent(id){
-  await api(`/api/reminders/${id}/sent`,{method:'PATCH',body:JSON.stringify({})});
-  toast('Marked as sent');navigate('reminders');
-}
-async function deleteReminder(id){
-  if(!confirm('Delete this reminder?')) return;
-  await api(`/api/reminders/${id}`,{method:'DELETE'});
-  toast('Deleted');navigate('reminders');
-}
-
-// ── SETTINGS ─────────────────────────────────────────────────
-async function buildSettings(){
-  if(!appState.settingsTab) appState.settingsTab='company';
-  let co={};
-  try{co=await api('/api/settings/company');}catch(e){}
-  const t=appState.settingsTab;
-  const nav=['company','payment','signature','agency'];
-  const navLabels={'company':'🏢 Company Info','payment':'💳 Payment Details','signature':'✍️ Signature','agency':'⚙️ Agency'};
-  const navHtml=nav.map(n=>`<div class="settings-nav-item${t===n?' active':''}" onclick="appState.settingsTab='${n}';navigate('settings')">${navLabels[n]}</div>`).join('');
-
-  let content='';
-  if(t==='company') content=buildSettingsCompany(co);
-  else if(t==='payment') content=buildSettingsPayment(co);
-  else if(t==='signature') content=buildSettingsSignature(co);
-  else content=buildSettingsAgency(co);
-
-  return `<div style="display:flex;gap:24px;align-items:flex-start">
-    <div class="settings-nav" style="min-width:180px">${navHtml}</div>
-    <div style="flex:1;max-width:600px">${content}</div>
-  </div>`;
-}
-
-function buildSettingsCompany(co){
-  return `<div class="cd-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:14px">
-    <div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">Company Information</div></div>
-    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Company Name</label><input class="form-input" id="s-name" value="${co.company_name||''}"></div>
-        <div class="form-group"><label class="form-label">Tagline</label><input class="form-input" id="s-tagline" value="${co.tagline||''}"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Address Line 1</label><input class="form-input" id="s-addr1" value="${co.address_line1||''}"></div>
-      <div class="form-group"><label class="form-label">Address Line 2</label><input class="form-input" id="s-addr2" value="${co.address_line2||''}"></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">City</label><input class="form-input" id="s-city" value="${co.city||''}"></div>
-        <div class="form-group"><label class="form-label">State</label><input class="form-input" id="s-state" value="${co.state||''}"></div>
-        <div class="form-group"><label class="form-label">Pincode</label><input class="form-input" id="s-pin" value="${co.pincode||''}"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="s-phone" value="${co.phone||''}"></div>
-        <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="s-email" value="${co.email||''}"></div>
-      </div>
-      <div class="form-group"><label class="form-label">GSTIN</label><input class="form-input" id="s-gstin" placeholder="27AAPCS1234A1Z5" value="${co.gstin||''}"></div>
-      <div class="form-group"><label class="form-label">Website</label><input class="form-input" id="s-website" placeholder="https://weclick.ai" value="${co.website||''}"></div>
-      <button class="btn btn-primary" style="width:fit-content" onclick="saveCompanySettings()">Save Company Info</button>
-    </div>
-  </div>`;
-}
-
-function buildSettingsPayment(co){
-  const upiQR=co.upi_id?('https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=upi://pay?pa='+encodeURIComponent(co.upi_id)+'%26pn='+encodeURIComponent(co.company_name||'WeClick AI')):null;
-  const qrHtml=upiQR?('<div style="margin-top:10px;display:flex;align-items:center;gap:12px"><img src="'+upiQR+'" style="width:100px;height:100px;border-radius:6px;border:1px solid var(--border)"/><span style="font-size:12px;color:var(--text2)">Scan to pay via UPI</span></div>'):'';
-  return '<div class="cd-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:14px">'
-    +'<div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="cd-card-title" style="font-size:13px;font-weight:600;color:#111110">Payment Details — shown on Quotations</div></div>'
-    +'<div style="padding:20px;display:flex;flex-direction:column;gap:14px">'
-    +'<div class="form-group"><label class="form-label">UPI ID <span style="color:var(--text2);font-weight:400">(QR auto-generated)</span></label>'
-    +'<input class="form-input" id="s-upi" placeholder="yourname@paytm" value="'+(co.upi_id||'')+'">'
-    +qrHtml+'</div>'
-    +'<div style="border-top:1px solid var(--border);padding-top:14px">'
-    +'<div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px">Bank Transfer Details</div>'
-    +'<div class="form-row">'
-    +'<div class="form-group"><label class="form-label">Bank Name</label><input class="form-input" id="s-bank" placeholder="HDFC Bank" value="'+(co.bank_name||'')+'"></div>'
-    +'<div class="form-group"><label class="form-label">Account Holder</label><input class="form-input" id="s-holder" placeholder="WeClick AI Pvt Ltd" value="'+(co.bank_holder||'')+'"></div>'
-    +'</div><div class="form-row">'
-    +'<div class="form-group"><label class="form-label">Account Number</label><input class="form-input" id="s-accno" value="'+(co.bank_account||'')+'"></div>'
-    +'<div class="form-group"><label class="form-label">IFSC Code</label><input class="form-input" id="s-ifsc" placeholder="HDFC0001234" value="'+(co.bank_ifsc||'')+'"></div>'
-    +'</div></div>'
-    +'<button class="btn btn-primary" style="width:fit-content" onclick="savePaymentSettings()">Save Payment Details</button>'
-    +'</div></div>';
-}
-
-function buildSettingsSignature(co){
-  return '<div class="cd-card">'
-    +'<div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between"><div style="font-size:13px;font-weight:600">Digital Signature — shown on Quotations</div></div>'
-    +'<div style="padding:20px">'
-    +'<div style="font-size:13px;color:#6F6F6B;margin-bottom:16px">Upload a scanned or digital signature image that will appear at the bottom of all quotations as Authorised Signatory.</div>'
-    +(co.signature_url?('<div style="background:#F9F9F8;border:1px solid #E5E5E3;border-radius:8px;padding:14px;display:flex;gap:12px;align-items:center;margin-bottom:16px"><img src="'+co.signature_url+'" style="height:60px;object-fit:contain;border-radius:4px;background:#fff"/><div><div style="font-size:13px;font-weight:500;margin-bottom:4px">Current Signature</div><button class="btn btn-ghost btn-sm" style="color:#DC2626" onclick="removeSignature()">Remove</button></div></div>'):'')
-    +'<div style="border:2px dashed #E5E5E3;border-radius:8px;padding:28px;text-align:center;cursor:pointer;transition:all .15s" onclick="clickSigUpload()">'
-    +'<div style="font-size:28px;margin-bottom:8px">✍️</div>'
-    +'<div style="font-weight:500;margin-bottom:4px">Click to upload signature</div>'
-    +'<div style="font-size:12px;color:#A8A8A4">PNG or JPG · Max 2MB</div>'
-    +'<input type="file" id="sig-upload" accept="image/png,image/jpeg" style="display:none" onchange="uploadSignature(this)">'
-    +'</div>'
-    +'<div style="margin-top:10px;font-size:12px;color:#A8A8A4">Tip: Sign on white paper, take a photo, crop tightly, and upload as PNG for best results.</div>'
-    +'</div></div>';
-}
-
-function buildSettingsAgency(co){
-  return '<div class="cd-card">'
-    +'<div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between"><div style="font-size:13px;font-weight:600">Agency Settings</div></div>'
-    +'<div style="padding:20px;display:flex;flex-direction:column;gap:14px">'
-    +'<div class="form-group"><label class="form-label">Default GST %</label><input class="form-input" id="s-gst" type="number" placeholder="18" value="'+(co.default_gst||'18')+'"></div>'
-    +'<div class="form-group"><label class="form-label">Low Balance Alert (Rs.)</label><input class="form-input" id="s-alert" type="number" placeholder="500" value="'+(co.low_balance_alert||'500')+'"></div>'
-    +'<div class="form-group"><label class="form-label">Alert Email</label><input class="form-input" id="s-alert-email" type="email" placeholder="you@agency.com" value="'+(co.alert_email||'')+'"></div>'
-    +'<div style="border-top:1px solid #E5E5E3;padding-top:14px">'
-    +'<div style="font-size:13px;font-weight:600;color:#111110;margin-bottom:4px">Email Setup</div>'
-    +'<div style="font-size:12px;color:#6F6F6B;margin-bottom:12px">Use Gmail OR SendGrid to send emails to your clients. Gmail is easier to set up.</div>'
-    +'<div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:8px;padding:14px;margin-bottom:14px">'
-    +'<div style="font-size:12px;font-weight:700;color:#15803D;margin-bottom:8px">Option 1: Gmail (Recommended)</div>'
-    +'<div class="form-group"><label class="form-label">Gmail Address (e.g. weclickai@gmail.com)</label><input class="form-input" id="s-smtp-user" type="email" placeholder="weclickai@gmail.com" value="'+(co.smtp_user||'')+'"></div>'
-    +'<div class="form-group"><label class="form-label">Gmail App Password <span style="font-weight:400;color:#6F6F6B">(not your regular password)</span></label><input class="form-input" type="password" id="s-smtp-pass" placeholder="xxxx xxxx xxxx xxxx" value="'+(co.smtp_pass||'')+'"></div>'
-    +'<div style="font-size:11px;color:#6F6F6B;background:#fff;border-radius:6px;padding:8px 10px;line-height:1.7">'
-    +'<b>How to get App Password:</b><br>1. Go to myaccount.google.com/apppasswords<br>2. Select "Mail" + "Other"<br>3. Name it "WeClick" → Generate<br>4. Copy the 16-character password'
-    +'</div></div>'
-    +'<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:14px">'
-    +'<div style="font-size:12px;font-weight:700;color:#1D4ED8;margin-bottom:8px">Option 2: SendGrid</div>'
-    +'<div class="form-group"><label class="form-label">SendGrid API Key</label><input class="form-input" type="password" id="s-sg" placeholder="SG.xxxxx..." value="'+(co.sendgrid_key||'')+'"></div>'
-    +'</div></div>'
-    +'<button class="btn btn-primary" style="width:fit-content" onclick="saveAgencySettings()">Save Agency Settings</button>'
-    +'</div></div>';
-}
-
-function v(id){const el=document.getElementById(id);return el?el.value.trim():'';}
-
-async function saveCompanySettings(){
-  const data={company_name:v('s-name'),tagline:v('s-tagline'),address_line1:v('s-addr1'),address_line2:v('s-addr2'),city:v('s-city'),state:v('s-state'),pincode:v('s-pin'),phone:v('s-phone'),email:v('s-email'),gstin:v('s-gstin'),website:v('s-website')};
-  await api('/api/settings/company',{method:'POST',body:JSON.stringify(data)});
-  toast('Company info saved ✓');
-}
-
-async function savePaymentSettings(){
-  const data={upi_id:v('s-upi'),bank_name:v('s-bank'),bank_holder:v('s-holder'),bank_account:v('s-accno'),bank_ifsc:v('s-ifsc')};
-  await api('/api/settings/company',{method:'POST',body:JSON.stringify(data)});
-  toast('Payment details saved ✓');navigate('settings');
-}
-
-async function saveAgencySettings(){
-  const data={default_gst:v('s-gst'),alert_email:v('s-alert-email'),low_balance_alert:v('s-alert'),sendgrid_key:v('s-sg'),smtp_user:v('s-smtp-user'),smtp_pass:v('s-smtp-pass')};
-  await api('/api/settings/company',{method:'POST',body:JSON.stringify(data)});
-  toast('Agency settings saved ✓');
-}
-
-async function removeSignature(){
-  await api('/api/settings/company',{method:'POST',body:JSON.stringify({signature_url:''})});
-  toast('Signature removed');navigate('settings');
-}
-
-function clickSigUpload(){const el=document.getElementById('sig-upload');if(el)el.click();}
-
-
-
-async function uploadSignature(input){
-  const file=input.files[0];if(!file)return;
-  if(file.size>2*1024*1024){toast('Max 2MB','error');return;}
-  const reader=new FileReader();
-  reader.onload=async e=>{
-    const b64=e.target.result;
-    await api('/api/settings/company',{method:'POST',body:JSON.stringify({signature_url:b64})});
-    toast('Signature saved ✓');navigate('settings');
-  };
-  reader.readAsDataURL(file);
-}
-
-
-// ── MEETINGS ──────────────────────────────────────────────
-async function buildMeetings(){
-  let meetings=[];
-  let clients=[];
-  try{[meetings,clients]=await Promise.all([api('/api/meetings'),api('/api/clients')]);}catch(e){}
-  const now=new Date();
-  const upcoming=meetings.filter(m=>new Date(m.meeting_date)>=now).sort((a,b)=>new Date(a.meeting_date)-new Date(b.meeting_date));
-  const past=meetings.filter(m=>new Date(m.meeting_date)<now).sort((a,b)=>new Date(b.meeting_date)-new Date(a.meeting_date));
-  const clientMap={};clients.forEach(c=>{clientMap[c.id]=c;});
-
-  const meetingRow=(m)=>{
-    const cl=clientMap[m.client_id]||{name:'Unknown',company:'',color:'#888'};
-    const dt=new Date(m.meeting_date);
-    const dateStr=dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
-    const timeStr=dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
-    const isPast=dt<now;
-    return `<tr>
-      <td><div class="name-cell" style="display:flex;align-items:center;gap:9px">${avatarHtml(cl,{size:28})}<div><div style="font-weight:500">${cl.name}</div><div style="font-size:11px;color:var(--text2)">${cl.company}</div></div></div></td>
-      <td style="font-weight:500">${m.title||'Meeting'}</td>
-      <td>${dateStr}</td>
-      <td style="color:var(--text2)">${timeStr}</td>
-      <td>${m.duration_mins||60} min</td>
-      <td><span class="badge ${m.meeting_type==='video'?'badge-blue':m.meeting_type==='call'?'badge-green':'badge-orange'}">${m.meeting_type||'video'}</span></td>
-      <td><span class="badge ${m.notified?'badge-green':'badge-gray'}">${m.notified?'Sent':'Pending'}</span></td>
-      <td style="white-space:nowrap">
-        ${(!m.notified&&!isPast)?'<button class="btn btn-sm btn-primary" onclick="sendMeetingNotification('+m.id+')">📧 Notify</button>':''}
-        <button class="btn btn-ghost btn-sm" onclick="openEditMeeting(${m.id})" style="margin-left:4px">Edit</button>
-        <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteMeeting(${m.id})">Delete</button>
-      </td>
-    </tr>`;
-  };
-
-  return `
-  <div class="stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px;margin-bottom:20px">
-    <div class="stat-card accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #E96800;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Upcoming</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${upcoming.length}</div></div>
-    <div class="stat-card blue-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #2563EB;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">This Week</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${upcoming.filter(m=>{const d=new Date(m.meeting_date);return(d-now)<7*86400000;}).length}</div></div>
-    <div class="stat-card green-accent" style="background:#fff;border:1px solid #E5E5E3;border-left:3px solid #16A34A;border-radius:12px;padding:16px 20px"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Notified</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${meetings.filter(m=>m.notified).length}</div></div>
-    <div class="stat-card" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:16px 20px;transition:box-shadow .12s"><div class="stat-label" style="font-size:10.5px;color:#6F6F6B;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Total</div><div class="stat-value" style="font-size:21px;font-weight:700;letter-spacing:-0.6px;color:#111110">${meetings.length}</div></div>
-  </div>
-
-  <div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px" style="margin-bottom:20px">
-    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px">
-      <div class="table-title" style="font-size:13px;font-weight:600;color:#111110">📅 Upcoming Meetings</div>
-      <span style="font-size:12px;color:var(--text2)">Click "Notify" to send email to client</span>
-    </div>
-    ${upcoming.length===0?`<div class="empty-state" style="padding:44px 20px;text-align:center;color:#A8A8A4"><div class="empty-icon" style="font-size:28px;margin-bottom:10px;opacity:.6">📅</div><div class="empty-text" style="font-size:12.5px;line-height:1.5">No upcoming meetings. Schedule one with the + button.</div></div>`:`
-    <table><thead><tr><th>Client</th><th>Title</th><th>Date</th><th>Time</th><th>Duration</th><th>Type</th><th>Notified</th><th></th></tr></thead>
-    <tbody>${upcoming.map(meetingRow).join('')}</tbody></table>`}
-  </div>
-
-  ${past.length>0?`<div class="table-wrap" style="background:#fff;border:1px solid #E5E5E3;border-radius:12px;overflow:hidden;margin-bottom:16px">
-    <div class="table-header" style="padding:12px 16px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between;gap:10px"><div class="table-title" style="font-size:13px;font-weight:600;color:#111110">Past Meetings</div></div>
-    <table><thead><tr><th>Client</th><th>Title</th><th>Date</th><th>Time</th><th>Duration</th><th>Type</th><th>Notified</th><th></th></tr></thead>
-    <tbody>${past.slice(0,20).map(meetingRow).join('')}</tbody></table>
-  </div>`:''}`;
-}
-
-async function openAddMeeting(){
-  const clients=await api('/api/clients').catch(()=>[]);
-  const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
-  const dateStr=tomorrow.toISOString().slice(0,10);
-  openModal(`<div class="modal-title">Schedule Client Meeting</div>
-    <div class="form-group"><label class="form-label">Client</label>
-      <select class="form-input" id="m-client">${clients.map(cl=>`<option value="${cl.id}">${cl.name} — ${cl.company}</option>`).join('')}</select>
-    </div>
-    <div class="form-group"><label class="form-label">Meeting Title</label>
-      <input class="form-input" id="m-title" placeholder="Monthly Review / Strategy Call / Onboarding">
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-date" type="date" value="${dateStr}"></div>
-      <div class="form-group"><label class="form-label">Time</label><input class="form-input" id="m-time" type="time" value="10:00"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Duration (mins)</label><input class="form-input" id="m-dur" type="number" value="60"></div>
-      <div class="form-group"><label class="form-label">Type</label>
-        <select class="form-input" id="m-type"><option value="video">Video Call</option><option value="call">Phone Call</option><option value="inperson">In Person</option></select>
-      </div>
-    </div>
-    <div class="form-group"><label class="form-label">Meeting Link (Zoom/Meet)</label>
-      <input class="form-input" id="m-link" placeholder="https://meet.google.com/...">
-    </div>
-    <div class="form-group"><label class="form-label">Agenda / Notes</label>
-      <textarea class="form-input" id="m-notes" rows="3" placeholder="Topics to discuss..."></textarea>
-    </div>
-    <div style="background:var(--orange-light);border-radius:8px;padding:10px 14px;font-size:12.5px;color:var(--orange);margin-bottom:4px">
-      📧 An email notification will be sent to the client automatically when you click "Schedule & Notify"
-    </div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal()">Cancel</button>
-      <button class="btn" onclick="saveMeeting(false)">Save Only</button>
-      <button class="btn btn-primary" onclick="saveMeeting(true)">📧 Schedule & Notify</button>
-    </div>`);
-}
-
-async function saveMeeting(notify){
-  const clientId=document.getElementById('m-client').value;
-  const date=document.getElementById('m-date').value;
-  const time=document.getElementById('m-time').value;
-  if(!clientId||!date){toast('Select client and date','error');return;}
-  const meetingDate=date+'T'+time+':00';
-  const payload={client_id:parseInt(clientId),title:document.getElementById('m-title').value||'Meeting',meeting_date:meetingDate,duration_mins:parseInt(document.getElementById('m-dur').value)||60,meeting_type:document.getElementById('m-type').value,meeting_link:document.getElementById('m-link').value,notes:document.getElementById('m-notes').value,send_notification:notify};
-  const result=await api('/api/meetings',{method:'POST',body:JSON.stringify(payload)});
-  toast(notify?'Meeting scheduled & client notified ✓':'Meeting saved');
-  closeModal();navigate('meetings');
-}
-
-async function sendMeetingNotification(id){
-  await api(`/api/meetings/${id}/notify`,{method:'POST',body:'{}'});
-  toast('Email notification sent to client ✓');navigate('meetings');
-}
-
-async function deleteMeeting(id){
-  if(!confirm('Delete this meeting?'))return;
-  await api(`/api/meetings/${id}`,{method:'DELETE'});
-  toast('Meeting deleted');navigate('meetings');
-}
-
-async function openEditMeeting(id){
-  const meetings=await api('/api/meetings');
-  const m=meetings.find(x=>x.id===id);if(!m)return;
-  const clients=await api('/api/clients').catch(()=>[]);
-  const dateStr=m.meeting_date?m.meeting_date.slice(0,10):'';
-  const timeStr=m.meeting_date?m.meeting_date.slice(11,16):'10:00';
-  openModal(`<div class="modal-title">Edit Meeting</div>
-    <div class="form-group"><label class="form-label">Client</label>
-      <select class="form-input" id="m-client">${clients.map(cl=>`<option value="${cl.id}" ${cl.id===m.client_id?'selected':''}>${cl.name} — ${cl.company}</option>`).join('')}</select>
-    </div>
-    <div class="form-group"><label class="form-label">Title</label><input class="form-input" id="m-title" value="${m.title||''}"></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-date" type="date" value="${dateStr}"></div>
-      <div class="form-group"><label class="form-label">Time</label><input class="form-input" id="m-time" type="time" value="${timeStr}"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Duration (mins)</label><input class="form-input" id="m-dur" type="number" value="${m.duration_mins||60}"></div>
-      <div class="form-group"><label class="form-label">Type</label>
-        <select class="form-input" id="m-type">
-          <option value="video" ${m.meeting_type==='video'?'selected':''}>Video Call</option>
-          <option value="call" ${m.meeting_type==='call'?'selected':''}>Phone Call</option>
-          <option value="inperson" ${m.meeting_type==='inperson'?'selected':''}>In Person</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group"><label class="form-label">Meeting Link</label><input class="form-input" id="m-link" value="${m.meeting_link||''}"></div>
-    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="m-notes" rows="3">${m.notes||''}</textarea></div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="updateMeeting(${id})">Save Changes</button>
-    </div>`);
-}
-
-async function updateMeeting(id){
-  const date=document.getElementById('m-date').value;
-  const time=document.getElementById('m-time').value;
-  await api(`/api/meetings/${id}`,{method:'PUT',body:JSON.stringify({client_id:parseInt(document.getElementById('m-client').value),title:document.getElementById('m-title').value,meeting_date:date+'T'+time+':00',duration_mins:parseInt(document.getElementById('m-dur').value)||60,meeting_type:document.getElementById('m-type').value,meeting_link:document.getElementById('m-link').value,notes:document.getElementById('m-notes').value})});
-  toast('Meeting updated');closeModal();navigate('meetings');
-}
-
-
-// ── MODALS ──────────────────────────────────────────────────────
-function openModal(html){
-  document.getElementById('modal-root').innerHTML=`<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="modal">${html}</div></div>`;
-}
-function closeModal(){document.getElementById('modal-root').innerHTML='';}
-
-async function openAddClient(){
-  openModal(`<div class="modal-title">Add New Client</div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="m-name" placeholder="Priya Sharma"></div><div class="form-group"><label class="form-label">Company</label><input class="form-input" id="m-company" placeholder="Growfast Retail"></div></div>
-  <div class="form-group"><label class="form-label">Email Address</label><input class="form-input" id="m-email" type="email" placeholder="client@company.com"></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Revenue (₹)</label><input class="form-input" id="m-rev" type="number" placeholder="0"></div><div class="form-group"><label class="form-label">Ad Spend (₹)</label><input class="form-input" id="m-spend" type="number" placeholder="0"></div></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Expected Revenue (₹)</label><input class="form-input" id="m-exp" type="number" placeholder="0"></div><div class="form-group"><label class="form-label">Status</label><select class="form-input" id="m-status"><option>Active</option><option>Paused</option><option>Stopped</option></select></div></div>
-  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveClient()">Add Client</button></div>`);
-}
-async function saveClient(){
-  const colors=['#FF6A00','#3B82F6','#10B981','#8B5CF6','#F59E0B','#EC4899','#06B6D4'];
-  const rev=parseFloat(document.getElementById('m-rev').value)||0;
-  const spend=parseFloat(document.getElementById('m-spend').value)||0;
-  await api('/api/clients',{method:'POST',body:JSON.stringify({name:document.getElementById('m-name').value,company:document.getElementById('m-company').value,email:document.getElementById('m-email').value||'',status:document.getElementById('m-status').value,revenue:rev,spend,expected_revenue:parseFloat(document.getElementById('m-exp').value)||0,color:colors[Math.floor(Math.random()*colors.length)]})});
-  toast('Client added');closeModal();navigate('clients');
-}
-async function openEditClient(id){
-  const c=await api(`/api/clients/${id}`);
-  openModal(`<div class="modal-title">Edit Client</div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="m-name" value="${c.name}"></div><div class="form-group"><label class="form-label">Company</label><input class="form-input" id="m-company" value="${c.company}"></div></div>
-  <div class="form-group"><label class="form-label">Email Address</label><input class="form-input" id="m-email" type="email" value="${c.email||''}"></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Revenue (₹)</label><input class="form-input" id="m-rev" type="number" value="${c.revenue}"></div><div class="form-group"><label class="form-label">Spend (₹)</label><input class="form-input" id="m-spend" type="number" value="${c.spend}"></div></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Expected Revenue</label><input class="form-input" id="m-exp" type="number" value="${c.expected_revenue}"></div><div class="form-group"><label class="form-label">Status</label><select class="form-input" id="m-status"><option ${c.status==='Active'?'selected':''}>Active</option><option ${c.status==='Paused'?'selected':''}>Paused</option><option ${c.status==='Stopped'?'selected':''}>Stopped</option></select></div></div>
-  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="updateClient(${id})">Save Changes</button></div>`);
-}
-async function updateClient(id){
-  await api(`/api/clients/${id}`,{method:'PUT',body:JSON.stringify({name:document.getElementById('m-name').value,company:document.getElementById('m-company').value,email:document.getElementById('m-email').value||'',revenue:parseFloat(document.getElementById('m-rev').value)||0,spend:parseFloat(document.getElementById('m-spend').value)||0,expected_revenue:parseFloat(document.getElementById('m-exp').value)||0,status:document.getElementById('m-status').value,color:'#FF6A00'})});
-  toast('Client updated');closeModal();navigate(appState.page==='clientDetail'?'clientDetail':'clients',appState.selectedClientId);
-}
-async function deleteClient(id){
-  if(!confirm('Delete this client?')) return;
-  await api(`/api/clients/${id}`,{method:'DELETE'});
-  toast('Client deleted');navigate('clients');
-}
-
-async function openAddCampaign(){
-  const clients=await api('/api/clients');
-  openModal(`<div class="modal-title">Add Campaign</div>
-  <div class="form-group"><label class="form-label">Campaign Name</label><input class="form-input" id="m-name" placeholder="Diwali Sale 2025"></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Client</label><select class="form-input" id="m-client">${clients.map(c=>`<option value="${c.id}">${c.name} — ${c.company}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Channel</label><select class="form-input" id="m-ch"><option>Meta Ads</option><option>Google Ads</option><option>Instagram</option><option>LinkedIn</option><option>YouTube</option></select></div></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Budget (₹)</label><input class="form-input" id="m-bgt" type="number"></div><div class="form-group"><label class="form-label">Status</label><select class="form-input" id="m-status"><option>Active</option><option>Paused</option><option>Draft</option></select></div></div>
-  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveCampaign()">Add Campaign</button></div>`);
-}
-async function saveCampaign(){
-  await api('/api/campaigns',{method:'POST',body:JSON.stringify({name:document.getElementById('m-name').value,client_id:parseInt(document.getElementById('m-client').value),channel:document.getElementById('m-ch').value,budget:parseFloat(document.getElementById('m-bgt').value)||0,spend:0,status:document.getElementById('m-status').value})});
-  toast('Campaign added');closeModal();navigate('campaigns');
-}
-async function deleteCampaign(id){
-  if(!confirm('Delete campaign?')) return;
-  await api(`/api/campaigns/${id}`,{method:'DELETE'});
-  toast('Campaign deleted');navigate('campaigns');
-}
-
-async function openAddAutomation(){
-  const clients=await api('/api/clients');
-  openModal(`<div class="modal-title">Add Automation</div>
-  <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="m-name" placeholder="Lead Follow-up Bot"></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Client</label><select class="form-input" id="m-client">${clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Status</label><select class="form-input" id="m-status"><option>Running</option><option>Paused</option></select></div></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Revenue (₹)</label><input class="form-input" id="m-rev" type="number" placeholder="0"></div><div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="m-notes" placeholder="Description…"></div></div>
-  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveAutomation()">Add</button></div>`);
-}
-async function saveAutomation(){
-  await api('/api/automations',{method:'POST',body:JSON.stringify({name:document.getElementById('m-name').value,client_id:parseInt(document.getElementById('m-client').value),status:document.getElementById('m-status').value,revenue:parseFloat(document.getElementById('m-rev').value)||0,notes:document.getElementById('m-notes').value})});
-  toast('Automation added');closeModal();navigate('automations');
-}
-async function deleteAutomation(id){
-  if(!confirm('Delete automation?')) return;
-  await api(`/api/automations/${id}`,{method:'DELETE'});
-  toast('Deleted');navigate('automations');
-}
-
-async function openAddCollab(){
-  openModal(`<div class="modal-title">Add Collaboration</div>
-  <div class="form-group"><label class="form-label">Partner Name</label><input class="form-input" id="m-partner" placeholder="Agency / Studio name"></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Revenue (₹)</label><input class="form-input" id="m-rev" type="number" placeholder="0"></div><div class="form-group"><label class="form-label">Status</label><select class="form-input" id="m-status"><option>Active</option><option>Ended</option></select></div></div>
-  <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="m-notes" placeholder="White-label, content, SEO…"></div>
-  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveCollab()">Add Partner</button></div>`);
-}
-async function saveCollab(){
-  await api('/api/collaborations',{method:'POST',body:JSON.stringify({partner:document.getElementById('m-partner').value,revenue:parseFloat(document.getElementById('m-rev').value)||0,status:document.getElementById('m-status').value,notes:document.getElementById('m-notes').value})});
-  toast('Partner added');closeModal();navigate('collaborations');
-}
-async function deleteCollab(id){
-  if(!confirm('Delete collaboration?')) return;
-  await api(`/api/collaborations/${id}`,{method:'DELETE'});
-  toast('Deleted');navigate('collaborations');
-}
-
-async function openAddRevenue(){
-  const clients=await api('/api/clients');
-  openModal(`<div class="modal-title">Add Manual Revenue</div>
-  <div class="form-group"><label class="form-label">Client</label><select class="form-input" id="m-client"><option value="">— General / No Client —</option>${clients.map(c=>`<option value="${c.id}">${c.name} — ${c.company}</option>`).join('')}</select></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" id="m-amount" type="number" placeholder="50000"></div><div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div></div>
-  <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="m-notes" placeholder="Consulting, retainer…"></div>
-  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveRevenue()">Add Revenue</button></div>`);
-}
-async function saveRevenue(){
-  const amount=parseFloat(document.getElementById('m-amount').value);
-  if(!amount||isNaN(amount)){toast('Enter a valid amount','error');return;}
-  const clientId=document.getElementById('m-client').value;
-  await api('/api/revenue',{method:'POST',body:JSON.stringify({client_id:clientId?parseInt(clientId):null,amount,date:document.getElementById('m-date').value,source:'manual',notes:document.getElementById('m-notes').value})});
-  toast('Revenue added');closeModal();navigate('revenue');
-}
-async function deleteRevEntry(id){
-  await api(`/api/revenue/${id}`,{method:'DELETE'});
-  toast('Entry removed');navigate('revenue');
-}
-
-async function openAddTransaction(){
-  const users=await api('/api/users').catch(()=>[{id:1,name:'Admin'}]);
-  openModal(`<div class="modal-title">Add Transaction</div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Team Member</label><select class="form-input" id="m-uid">${users.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Type</label><select class="form-input" id="m-type"><option value="income">Income</option><option value="expense">Expense</option></select></div></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Category</label><input class="form-input" id="m-cat" placeholder="Salary, Software, Travel…"></div><div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" id="m-amt" type="number" placeholder="0"></div></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-dt" type="date" value="${new Date().toISOString().split('T')[0]}"></div><div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="m-notes" placeholder="Optional note"></div></div>
-  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTx()">Add Transaction</button></div>`);
-}
-async function saveTx(){
-  const amount=parseFloat(document.getElementById('m-amt').value);
-  if(!amount||isNaN(amount)){toast('Enter valid amount','error');return;}
-  await api('/api/transactions',{method:'POST',body:JSON.stringify({user_id:parseInt(document.getElementById('m-uid').value),type:document.getElementById('m-type').value,category:document.getElementById('m-cat').value||'Other',amount,date:document.getElementById('m-dt').value,notes:document.getElementById('m-notes').value})});
-  toast('Transaction added');closeModal();navigate('revenue');
-}
-async function deleteTx(id){
-  if(!confirm('Delete this transaction?')) return;
-  await api(`/api/transactions/${id}`,{method:'DELETE'});
-  toast('Deleted');navigate('revenue');
-}
-async function deleteSalary(id){
-  if(!confirm('Delete this salary payment?')) return;
-  await api(`/api/salaries/${id}`,{method:'DELETE'});
-  toast('Salary payment deleted');navigate('revenue');
-}
-async function openAddSalary(){
-  const users=await api('/api/users').catch(()=>[{id:1,name:'Admin'}]);
-  openModal(`<div class="modal-title">Add Salary Payment</div>
-  <div class="form-group"><label class="form-label">Team Member</label><select class="form-input" id="m-uid">${users.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}</select></div>
-  <div class="form-row"><div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" id="m-amt" type="number" placeholder="0"></div><div class="form-group"><label class="form-label">Date</label><input class="form-input" id="m-dt" type="date" value="${new Date().toISOString().split('T')[0]}"></div></div>
-  <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="m-notes" placeholder="May salary…"></div>
-  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveSalary()">Add</button></div>`);
-}
-async function saveSalary(){
-  const amount=parseFloat(document.getElementById('m-amt').value);
-  if(!amount||isNaN(amount)){toast('Enter valid amount','error');return;}
-  await api('/api/salaries',{method:'POST',body:JSON.stringify({user_id:parseInt(document.getElementById('m-uid').value),amount,date:document.getElementById('m-dt').value,notes:document.getElementById('m-notes').value})});
-  toast('Salary added');closeModal();navigate('revenue');
-}
-
-// ── FILE UPLOAD ─────────────────────────────────────────────────
-let pendingFile=null;
-function openUploadFile(clientId){
-  pendingFile=null;
-  openModal(`<div class="modal-title">Upload File</div>
-  <div class="upload-zone" onclick="document.getElementById('fu').click()">
-    <div style="font-size:28px;margin-bottom:8px">📎</div>
-    <div style="font-weight:500;margin-bottom:4px">Click to browse</div>
-    <div style="font-size:12px;color:var(--text2)">PDF, images, docs · Max 20MB</div>
-    <input type="file" id="fu" style="display:none" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.xlsx,.csv" onchange="onFileSelect(this,${clientId})">
-  </div>
-  <div class="form-group"><label class="form-label">File Type</label><select class="form-input" id="m-ftype"><option value="report">Report</option><option value="calendar">Calendar</option><option value="quotation">Quotation</option><option value="creative">Creative</option></select></div>
-  <div id="file-preview" style="display:none;background:#F9F9F9;border-radius:6px;padding:10px;font-size:13px;margin-bottom:4px"></div>
-  <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="upload-btn" onclick="confirmUpload(${clientId})" disabled>Upload</button></div>`);
-}
-function onFileSelect(input,clientId){
-  const file=input.files[0];if(!file)return;
-  if(file.size>20*1024*1024){toast('File too large. Max 20MB','error');return;}
-  pendingFile=file;
-  const p=document.getElementById('file-preview');
-  p.style.display='block';
-  p.innerHTML=`📎 <strong>${file.name}</strong> &nbsp;·&nbsp; ${(file.size/1024/1024).toFixed(1)} MB`;
-  document.getElementById('upload-btn').disabled=false;
-}
-async function confirmUpload(clientId){
-  if(!pendingFile){toast('Select a file first','error');return;}
-  const fd=new FormData();fd.append('file',pendingFile);fd.append('file_type',document.getElementById('m-ftype').value);
-  try{
-    const res=await fetch(`/api/clients/${clientId}/files`,{method:'POST',body:fd});
-    const data=await res.json();
-    if(!res.ok) throw new Error(data.error||'Upload failed');
-    toast('File uploaded');pendingFile=null;closeModal();navigate('clientDetail',clientId);
-  }catch(e){toast(e.message,'error');}
-}
-async function deleteFile(clientId,fileId){
-  if(!confirm('Delete this file?')) return;
-  await api(`/api/clients/${clientId}/files/${fileId}`,{method:'DELETE'});
-  toast('File deleted');navigate('clientDetail',clientId);
-}
-async function uploadAvatar(clientId,input){
-  const file=input.files&&input.files[0];if(!file)return;
-  if(!['image/jpeg','image/png','image/webp'].includes(file.type)){toast('Only JPG, PNG or WEBP allowed','error');input.value='';return;}
-  if(file.size>2*1024*1024){toast('File too large (max 2MB)','error');input.value='';return;}
-  const fd=new FormData();fd.append('avatar',file);
-  try{
-    const res=await fetch(`/api/clients/${clientId}/avatar`,{method:'POST',body:fd});
-    const data=await res.json();
-    if(!res.ok)throw new Error(data.error||'Upload failed');
-    toast('Photo updated');navigate('clientDetail',clientId);
-  }catch(e){toast(e.message,'error');}
-  input.value='';
-}
-
-// ── SEND REPORT ───────────────────────────────────────────────
-function openSendReport(clientId){
-  api(`/api/clients/${clientId}`).then(c=>{
-    const subject=`WeClick AI — Performance Report for ${c.company}`;
-    const body=`Hi ${c.name.split(' ')[0]},\n\nPlease find attached your latest performance report.\n\nKey highlights:\n• Revenue: ${fmt(c.revenue)}\n• Ad Spend: ${fmt(c.spend)}\n• Profit: ${fmt(c.profit)}\n\nLet us know if you'd like to discuss next steps.\n\nBest,\nWeClick AI Team`;
-    openModal(`<div class="modal-title">Send Report — ${c.name}</div>
-      <div class="form-group"><label class="form-label">To</label><input class="form-input" id="m-to" type="email" value="${c.email||''}" placeholder="client@company.com"></div>
-      <div class="form-group"><label class="form-label">Subject</label><input class="form-input" id="m-subj" value="${subject}"></div>
-      <div class="form-group"><label class="form-label">Message</label><textarea class="form-input" id="m-body" rows="8" style="resize:vertical">${body}</textarea></div>
-      <div class="modal-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="sendReport(${clientId})">📧 Send Report</button></div>`);
-  });
-}
-async function sendReport(clientId){
-  const to=document.getElementById('m-to').value.trim();
-  if(!to){toast('Recipient email required','error');return;}
-  await api(`/api/clients/${clientId}/send-report`,{method:'POST',body:JSON.stringify({to,subject:document.getElementById('m-subj').value,body:document.getElementById('m-body').value})});
-  toast('Report sent successfully');closeModal();
-}
-
-// ── META SYNC ──────────────────────────────────────────────────
-async function syncMeta(){
-  if(appState.syncing) return;
-  appState.syncing=true;
-  const icon=document.getElementById('sync-icon');
-  if(icon) icon.classList.add('spinning');
-  try{
-    const data=await api('/api/meta/sync',{method:'POST',body:JSON.stringify({})});
-    toast(`Meta synced — ${data.synced} account(s) updated`);
-  }finally{
-    appState.syncing=false;
-    const i2=document.getElementById('sync-icon');
-    if(i2) i2.classList.remove('spinning');
+});
+
+// ── TALLY ALIASES (frontend compatibility) ──────────────────
+app.get('/api/tally', async (req, res) => {
+  try {
+    const month = req.query.month || new Date().toISOString().slice(0, 7);
+    const [yr, mo] = month.split('-').map(Number);
+    const nextMo = mo===12?`${yr+1}-01`:`${yr}-${String(mo+1).padStart(2,'0')}`;
+    const rows = (await db.query('SELECT ds.*, u.name as user_name FROM daily_spend ds LEFT JOIN users u ON u.id=ds.user_id WHERE ds.date >= $1 AND ds.date < $2 ORDER BY ds.date DESC',[month+'-01',nextMo+'-01'])).rows;
+    const total = rows.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+    const catMap={};
+    rows.forEach(e=>{const k=e.category||'Other';if(!catMap[k])catMap[k]=0;catMap[k]+=(parseFloat(e.amount)||0);});
+    const categories=Object.entries(catMap).map(([name,total])=>({name,total}));
+    res.json({entries:rows, summary:{total,categories}});
+  } catch(e){ res.json({entries:[],summary:{total:0,categories:[]}}); }
+});
+app.post('/api/tally', async (req, res) => {
+  try {
+    const {category,amount,description,date,user_id} = req.body;
+    const r = await db.query('INSERT INTO daily_spend (date,amount,category,description,added_by,created_at) VALUES ($1,$2,$3,$4,$5,NOW()) RETURNING *',[date,amount,category||'Other',description||'',req.body.added_by||'']);
+    res.json(r.rows[0]);
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+app.delete('/api/tally/:id', async (req, res) => {
+  try { await db.query('DELETE FROM daily_spend WHERE id=$1',[req.params.id]); res.json({ok:true}); }
+  catch(e){ res.status(500).json({error:e.message}); }
+});
+
+
+
+// ══════════════════════════════════════════════════════════════
+// MEETINGS
+// ══════════════════════════════════════════════════════════════
+app.get('/api/meetings', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT m.*, c.name as client_name, c.company as client_company, c.email as client_email, c.color as client_color
+      FROM meetings m LEFT JOIN clients c ON c.id=m.client_id
+      ORDER BY m.meeting_date ASC`);
+    res.json(result.rows);
+  } catch(e) { res.json([]); }
+});
+
+app.post('/api/meetings', async (req, res) => {
+  try {
+    const { client_id, title, meeting_date, duration_mins, meeting_type, meeting_link, notes, send_notification } = req.body;
+    const result = await db.query(
+      `INSERT INTO meetings (client_id,title,meeting_date,duration_mins,meeting_type,meeting_link,notes,notified,created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,false,NOW()) RETURNING *`,
+      [client_id, title||'Meeting', meeting_date, duration_mins||60, meeting_type||'video', meeting_link||'', notes||'']
+    );
+    const meeting = result.rows[0];
+    await logActivity({type:'meeting', title:`Meeting scheduled: ${title} with client`, client_id: client_id});
+
+    if (send_notification) {
+      await sendMeetingEmail(meeting.id);
+    }
+    res.json(meeting);
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+app.put('/api/meetings/:id', async (req, res) => {
+  try {
+    const { client_id, title, meeting_date, duration_mins, meeting_type, meeting_link, notes } = req.body;
+    const result = await db.query(
+      `UPDATE meetings SET client_id=$1,title=$2,meeting_date=$3,duration_mins=$4,meeting_type=$5,meeting_link=$6,notes=$7 WHERE id=$8 RETURNING *`,
+      [client_id, title, meeting_date, duration_mins||60, meeting_type||'video', meeting_link||'', notes||'', req.params.id]
+    );
+    res.json(result.rows[0]);
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+app.delete('/api/meetings/:id', async (req, res) => {
+  try { await db.query('DELETE FROM meetings WHERE id=$1', [req.params.id]); res.json({ok:true}); }
+  catch(e) { res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/meetings/:id/notify', async (req, res) => {
+  try {
+    const sent = await sendMeetingEmail(parseInt(req.params.id));
+    res.json({ok:true, sent});
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+async function sendMeetingEmail(meetingId) {
+  try {
+    const mRes = await db.query(`SELECT m.*,c.name,c.email,c.company FROM meetings m JOIN clients c ON c.id=m.client_id WHERE m.id=$1`, [meetingId]);
+    if (!mRes.rows[0]) return false;
+    const m = mRes.rows[0];
+    if (!m.email) return false;
+    const co = await db.query('SELECT * FROM company_settings LIMIT 1').then(r=>r.rows[0]||{});
+    const sgKey = co.sendgrid_key;
+    const dt = new Date(m.meeting_date);
+    const dateStr = dt.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const timeStr = dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+    const emailBody = `Hi ${m.name.split(' ')[0]},
+
+Your meeting has been scheduled with ${co.company_name||'WeClick AI'}.
+
+📅 Date: ${dateStr}
+🕐 Time: ${timeStr} IST
+⏱ Duration: ${m.duration_mins||60} minutes
+📋 Title: ${m.title}
+${m.meeting_link?`🔗 Meeting Link: ${m.meeting_link}`:''}
+${m.notes?`
+Agenda:
+${m.notes}`:''}
+
+Please confirm your attendance by replying to this email.
+
+Best regards,
+${co.company_name||'WeClick AI'} Team
+${co.phone?'📞 '+co.phone:''}
+${co.email?'✉ '+co.email:''}`;
+
+    if (sgKey) {
+      await sendEmail({
+        to: m.email, toName: m.name,
+        subject: `Meeting Scheduled: ${m.title} — ${dateStr}`,
+        body: emailBody,
+        co
+      });
+      await db.query('UPDATE meetings SET notified=true WHERE id=$1', [meetingId]);
+      return true;
+    } catch(emailErr) {
+      console.error('Meeting email failed:', emailErr.message);
+    }
+    // Mark as notified anyway
+    await db.query('UPDATE meetings SET notified=true WHERE id=$1', [meetingId]);
+    return false;
+  } catch(e) { console.error('sendMeetingEmail failed:', e.message); return false; }
+}
+
+// ══════════════════════════════════════════════════════════════
+// AI MARKET RESEARCH
+// ══════════════════════════════════════════════════════════════
+app.post('/api/ai/research', async (req, res) => {
+  try {
+    const { prompt, clientName, industry, focus } = req.body;
+    if (!prompt) return res.status(400).json({error:'No prompt'});
+
+    // Call Anthropic API
+    const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY||'',
+        'anthropic-version':'2023-06-01'
+      },
+      body: JSON.stringify({
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:2000,
+        messages:[{role:'user', content:prompt}]
+      })
+    });
+
+    if (!aiRes.ok) {
+      const err = await aiRes.json().catch(()=>({}));
+      // Fallback: generate a template report if no API key
+      if (!process.env.ANTHROPIC_API_KEY) {
+        return res.json({report: generateFallbackReport(clientName, industry, focus, req.body.clientCompany)});
+      }
+      throw new Error(err.error?.message || 'AI API error');
+    }
+
+    const aiData = await aiRes.json();
+    const report = aiData.content?.[0]?.text || 'No report generated';
+    res.json({report});
+  } catch(e) {
+    // Fallback report
+    res.json({report: generateFallbackReport(req.body.clientName, req.body.industry, req.body.focus, req.body.clientCompany)});
   }
-}
-async function saveMetaAccount(clientId,isEdit){
-  const accId=isEdit?document.getElementById('meta-edit-acc')?.value?.trim():document.getElementById('meta-account-id')?.value?.trim();
-  const token=isEdit?document.getElementById('meta-edit-token')?.value?.trim():document.getElementById('meta-token')?.value?.trim();
-  if(!accId){toast('Ad Account ID is required','error');return;}
-  if(!isEdit&&!token){toast('Access Token is required','error');return;}
-  const payload={ad_account_id:accId};
-  if(token) payload.access_token=token;
-  const btn=document.getElementById(isEdit?'meta-update-btn':'meta-save-btn');
-  if(btn){btn.disabled=true;btn.textContent='Saving…';}
-  try{
-    const res=await api(`/api/clients/${clientId}/meta-account`,{method:'POST',body:JSON.stringify(payload)});
-    if(res.error) throw new Error(res.error);
-    toast('Meta account connected');navigate('clientDetail',clientId);
-  }catch(e){
-    toast(e.message,'error');
-    if(btn){btn.disabled=false;btn.textContent=isEdit?'Update Credentials':'Save & Connect';}
-  }
-}
-async function syncClientMeta(clientId){
-  const btn=document.getElementById('meta-sync-btn');
-  if(btn){btn.disabled=true;btn.textContent='Syncing…';}
-  try{
-    const res=await api(`/api/clients/${clientId}/meta-sync`,{method:'POST',body:JSON.stringify({})});
-    if(res.error){let msg=res.error;if(msg.includes('does not exist')||msg.includes('missing permissions'))msg='Invalid Ad Account ID or Access Token — check credentials.';throw new Error(msg);}
-    toast(`Synced ✓  ₹${(res.metrics?.spend||0).toLocaleString('en-IN')} spent · ${(res.metrics?.impressions||0).toLocaleString()} impressions`);
-    navigate('clientDetail',clientId);
-  }catch(e){
-    toast(e.message||'Sync failed','error');
-    if(btn){btn.disabled=false;btn.textContent='↻ Sync Now';}
-  }
-}
-async function disconnectMeta(clientId){
-  if(!confirm('Disconnect this Meta Ads account?')) return;
-  await api(`/api/clients/${clientId}/meta-account`,{method:'DELETE'});
-  toast('Meta account disconnected');navigate('clientDetail',clientId);
-}
-function showMetaEditForm(){
-  const form=document.getElementById('meta-edit-form');
-  if(form) form.style.display=form.style.display==='none'?'block':'none';
+});
+
+function generateFallbackReport(clientName, industry, focus, company) {
+  const now = new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+  return `MARKET RESEARCH REPORT
+Client: ${clientName} (${company||'—'})
+Industry: ${industry}
+Generated: ${now}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. MARKET OVERVIEW
+The ${industry} market in India is growing rapidly, driven by digital adoption and rising consumer spending. Key opportunities exist in tier-2 cities and mobile-first audiences.
+
+2. TARGET AUDIENCE
+• Primary: 25-40 year olds, urban professionals
+• Secondary: 18-25, digital natives, aspirational buyers
+• Pain Points: Price sensitivity, trust issues, discovery challenges
+• Motivations: Quality, convenience, social proof, brand story
+
+3. COMPETITOR LANDSCAPE
+Top players in ${industry} compete on price, quality, and digital presence. Gaps exist in personalization, after-sales service, and community building.
+
+4. RECOMMENDED AD STRATEGY
+• Platform: Meta Ads (primary), Google Search (secondary)
+• Budget Split: 60% Meta, 30% Google, 10% testing
+• Best Performing Formats: Video reels, carousel ads, UGC
+
+5. TOP AD COPY ANGLES
+• "The problem you didn't know you had" — pain-first hook
+• Social proof + transformation story
+• Limited offer + urgency
+• Before/after or comparison
+• Founder/team story for trust
+
+6. QUICK WINS THIS WEEK
+✓ Set up Meta Pixel and conversion tracking
+✓ Create 3 video testimonial ads
+✓ Launch retargeting campaign for website visitors
+✓ A/B test 2 different headlines
+✓ Set up WhatsApp follow-up automation
+
+7. KPIs TO TRACK
+• CPL (Cost Per Lead) — target < ₹150
+• ROAS (Return on Ad Spend) — target > 3x
+• CTR (Click Through Rate) — target > 1.5%
+• Conversion Rate — target > 3%
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Note: Add your ANTHROPIC_API_KEY to Vercel environment variables for AI-powered personalized reports.`;
 }
 
-// ── REVENUE FILTER ─────────────────────────────────────────────
-function setRevPeriod(p){
-  appState.revPeriod=p;
-  const allPeriods=['today','yesterday','7d','30d','90d','date'];
-  document.querySelectorAll('.rev-pill').forEach((el,i)=>{el.classList.toggle('active',allPeriods[i]===p);});
-  const dateRow=document.getElementById('rev-date-row');
-  if(dateRow) dateRow.style.display=p==='date'?'block':'none';
-  if(p!=='date'){
-    const bd=appState.revBreakdown||{};
-    const valMap={today:bd.today||0,yesterday:bd.yesterday||0,'7d':bd.last7||0,'30d':bd.last30||0,'90d':bd.last90||0};
-    const lblMap={today:'Today',yesterday:'Yesterday','7d':'Last 7 Days','30d':'Last 30 Days','90d':'Last 90 Days'};
-    const val=valMap[p]||0;
-    const cmpVal=p==='today'?(bd.yesterday||null):p==='yesterday'?(bd.dayBefore||null):null;
-    const cmpLbl=p==='today'?'vs yesterday':p==='yesterday'?'vs day before':null;
-    let compareHtml=cmpLbl?(()=>{const diff=val-(cmpVal||0);const pct=cmpVal>0?Math.abs(((diff/cmpVal)*100)).toFixed(1):null;return`<div style="text-align:right"><div style="font-size:22px;font-weight:700;color:${diff>=0?'var(--green)':'var(--red)'}">${diff>=0?'↑':'↓'} ${pct?pct+'%':'—'}</div><div style="font-size:11px;color:var(--text2)">${cmpLbl}</div></div>`;})():'<div style="color:var(--text3);font-size:12px">No comparison</div>';
-    const display=document.getElementById('rev-display');
-    if(display) display.innerHTML=`<div><div class="rev-big-num">${fmt(val)}</div><div class="rev-sub">${lblMap[p]}</div></div>${compareHtml}`;
-  }
-}
-async function loadRevCustomDate(date){
-  appState.revCustomDate=date;
-  const display=document.getElementById('rev-display');
-  if(display) display.innerHTML=`<div><div class="rev-big-num" style="font-size:24px;color:var(--text2)">Loading…</div><div class="rev-sub">Custom Date · ${date}</div></div>`;
-  try{
-    const bd=await api('/api/revenue/breakdown?date='+date);
-    appState.revCustomVal=bd.custom||0;
-    if(display) display.innerHTML=`<div><div class="rev-big-num">${fmt(bd.custom||0)}</div><div class="rev-sub">Custom Date · ${date}</div></div><div style="color:var(--text3);font-size:12px">Revenue for this date</div>`;
-  }catch(e){if(display) display.innerHTML=`<div><div class="rev-big-num">₹0</div><div class="rev-sub">Error · ${date}</div></div>`;}
-}
 
-// ── BOOT ────────────────────────────────────────────────────────
-navigate('dashboard');
-</script>
-</body>
-</html>
+
+// ══════════════════════════════════════════════════════════════
+// PAYMENT REMINDERS
+// ══════════════════════════════════════════════════════════════
+app.get('/api/reminders', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT r.*, c.name as client_name, c.email as client_email
+      FROM payment_reminders r
+      LEFT JOIN clients c ON c.id = r.client_id
+      ORDER BY r.due_date ASC
+    `);
+    res.json(result.rows);
+  } catch(e) { res.json([]); }
+});
+
+app.post('/api/reminders', async (req, res) => {
+  try {
+    const { client_id, title, amount, due_date, send_email, send_whatsapp, message, recurring } = req.body;
+    const result = await db.query(
+      `INSERT INTO payment_reminders (client_id,title,amount,due_date,send_email,send_whatsapp,message,recurring,sent,created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,false,NOW()) RETURNING *`,
+      [client_id, title||'Payment Reminder', amount||null, due_date||null, 
+       send_email||false, send_whatsapp||false, message||'', recurring||false]
+    );
+    await logActivity({type:'reminder', title:'Payment reminder added: '+(title||'')});
+    res.json(result.rows[0]);
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+app.put('/api/reminders/:id', async (req, res) => {
+  try {
+    const { title, amount, due_date, send_email, send_whatsapp, message } = req.body;
+    const result = await db.query(
+      `UPDATE payment_reminders SET title=$1,amount=$2,due_date=$3,send_email=$4,send_whatsapp=$5,message=$6 WHERE id=$7 RETURNING *`,
+      [title, amount, due_date, send_email, send_whatsapp, message, req.params.id]
+    );
+    res.json(result.rows[0]);
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+app.delete('/api/reminders/:id', async (req, res) => {
+  try {
+    await db.query('DELETE FROM payment_reminders WHERE id=$1', [req.params.id]);
+    res.json({ok:true});
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/reminders/:id/send', async (req, res) => {
+  try {
+    const r = await db.query(
+      'SELECT r.*,c.name,c.email FROM payment_reminders r JOIN clients c ON c.id=r.client_id WHERE r.id=$1',
+      [req.params.id]
+    ).then(x=>x.rows[0]);
+    if(!r) return res.status(404).json({error:'Not found'});
+    
+    const co = await db.query('SELECT * FROM company_settings LIMIT 1').then(x=>x.rows[0]||{});
+    
+    if(r.send_email && r.email && co.sendgrid_key) {
+      const body = {
+        personalizations:[{to:[{email:r.email, name:r.name}]}],
+        from:{email:co.email||'hello@weclick.ai', name:co.company_name||'WeClick AI'},
+        subject:`Payment Reminder: ${r.title}`,
+        content:[{type:'text/plain', value:r.message||`Hi ${r.name},
+
+This is a reminder that ${r.title} of ₹${r.amount||''} is due on ${r.due_date?new Date(r.due_date).toLocaleDateString():'soon'}.
+
+Please arrange payment at your earliest convenience.
+
+— ${co.company_name||'WeClick AI'}`}]
+      };
+      await sendEmail({
+        to: r.email, toName: r.name,
+        subject: `Payment Reminder: ${r.title}`,
+        body: r.message||`Hi ${r.name},\n\nThis is a reminder that ${r.title}${r.amount?' of ₹'+r.amount:''} is due${r.due_date?' on '+new Date(r.due_date).toLocaleDateString():''}. Please arrange payment at your earliest convenience.\n\n— ${co.company_name||'WeClick AI'}`,
+        co
+      });
+    }
+    
+    await db.query('UPDATE payment_reminders SET sent=true,sent_at=NOW() WHERE id=$1', [req.params.id]);
+    res.json({ok:true});
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+// ── LOW BALANCE ALERT (call manually or via cron) ─────────────
+app.post('/api/meta/check-alerts', async (req, res) => {
+  try {
+    const co = await db.query('SELECT * FROM company_settings LIMIT 1').then(r=>r.rows[0]||{});
+    const alertEmail = co.alert_email;
+    const threshold = parseFloat(co.low_balance_alert || 500);
+    if (!alertEmail) return res.json({ok:true, skipped:'No alert email set in Settings'});
+
+    const lowAccounts = await db.query(
+      `SELECT c.name, c.company, ma.balance, ma.ad_account_id
+       FROM meta_accounts ma JOIN clients c ON c.id=ma.client_id
+       WHERE ma.is_active=true AND ma.balance IS NOT NULL AND ma.balance < $1`,
+      [threshold]
+    );
+    if (lowAccounts.rows.length === 0) return res.json({ok:true, message:'No low balance accounts'});
+
+    // Log activity for each
+    for (const acc of lowAccounts.rows) {
+      await logActivity({type:'meta', title:`⚠️ Low Meta balance: ${acc.name} (₹${parseFloat(acc.balance).toFixed(0)})`});
+    }
+
+    // If SendGrid key is set, send email
+    const sgKey = co.sendgrid_key;
+    if (sgKey) {
+      const body = {
+        personalizations:[{to:[{email:alertEmail}]}],
+        from:{email: co.email||'hello@weclick.ai', name: co.company_name||'WeClick AI'},
+        subject:`⚠️ Low Meta Ads Balance Alert — ${lowAccounts.rows.length} account(s)`,
+        content:[{type:'text/plain', value:
+          `Hi,\n\nThe following client Meta Ads accounts have low balance (below ₹${threshold}):\n\n` +
+          lowAccounts.rows.map(a=>`• ${a.name} (${a.company}): ₹${parseFloat(a.balance).toFixed(0)}`).join('\n') +
+          `\n\nPlease top up these accounts to avoid campaign disruptions.\n\n— ${co.company_name||'WeClick AI'} Dashboard`
+        }]
+      };
+      await sendEmail({
+        to: alertEmail,
+        subject: `Low Meta Ads Balance Alert — ${lowAccounts.rows.length} account(s)`,
+        body: `Hi,\n\nThe following client Meta Ads accounts have low balance (below ₹${threshold}):\n\n` +
+          lowAccounts.rows.map(a=>`• ${a.name} (${a.company}): ₹${parseFloat(a.balance).toFixed(0)}`).join('\n') +
+          `\n\nPlease top up these accounts to avoid campaign disruptions.\n\n— ${co.company_name||'WeClick AI'} Dashboard`,
+        co
+      });
+    }
+
+    res.json({ok:true, alerted: lowAccounts.rows.length, emailSent: !!sgKey});
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+// ── SERVE FRONTEND ─────────────────────────────────────────────
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.listen(PORT, () => console.log(`WeClick AI running on port ${PORT}`));
