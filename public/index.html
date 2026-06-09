@@ -2243,6 +2243,66 @@ function buildSettingsPayment(co){
     +'</div></div>';
 }
 
+function buildSettingsSignature(co){
+  return '<div class="cd-card">'
+    +'<div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between"><div style="font-size:13px;font-weight:600">Digital Signature — shown on Quotations</div></div>'
+    +'<div style="padding:20px">'
+    +'<div style="font-size:13px;color:#6F6F6B;margin-bottom:16px">Upload a scanned or digital signature image that will appear at the bottom of all quotations as Authorised Signatory.</div>'
+    +(co.signature_url?('<div style="background:#F9F9F8;border:1px solid #E5E5E3;border-radius:8px;padding:14px;display:flex;gap:12px;align-items:center;margin-bottom:16px"><img src="'+co.signature_url+'" style="height:60px;object-fit:contain;border-radius:4px;background:#fff"/><div><div style="font-size:13px;font-weight:500;margin-bottom:4px">Current Signature</div><button class="btn btn-ghost btn-sm" style="color:#DC2626" onclick="removeSignature()">Remove</button></div></div>'):'')
+    +'<div style="border:2px dashed #E5E5E3;border-radius:8px;padding:28px;text-align:center;cursor:pointer;transition:all .15s" onclick="clickSigUpload()">'
+    +'<div style="font-size:28px;margin-bottom:8px">✍️</div>'
+    +'<div style="font-weight:500;margin-bottom:4px">Click to upload signature</div>'
+    +'<div style="font-size:12px;color:#A8A8A4">PNG or JPG · Max 2MB</div>'
+    +'<input type="file" id="sig-upload" accept="image/png,image/jpeg" style="display:none" onchange="uploadSignature(this)">'
+    +'</div>'
+    +'<div style="margin-top:10px;font-size:12px;color:#A8A8A4">Tip: Sign on white paper, take a photo, crop tightly, and upload as PNG for best results.</div>'
+    +'</div></div>';
+}
+
+function buildSettingsAgency(co){
+  return '<div class="cd-card">'
+    +'<div class="cd-card-head" style="padding:12px 18px;border-bottom:1px solid #ECECEA;display:flex;align-items:center;justify-content:space-between"><div style="font-size:13px;font-weight:600">Agency Settings</div></div>'
+    +'<div style="padding:20px;display:flex;flex-direction:column;gap:14px">'
+    +'<div class="form-group"><label class="form-label">Default GST %</label><input class="form-input" id="s-gst" type="number" placeholder="18" value="'+(co.default_gst||'18')+'"></div>'
+    +'<div class="form-group"><label class="form-label">Low Balance Alert (Rs.) — alert when Meta balance is below this amount</label><input class="form-input" id="s-alert" type="number" placeholder="500" value="'+(co.low_balance_alert||'500')+'"></div>'
+    +'<div class="form-group"><label class="form-label">Alert Email</label><input class="form-input" id="s-alert-email" type="email" placeholder="you@agency.com" value="'+(co.alert_email||'')+'"></div>'
+    +'<div style="border-top:1px solid #E5E5E3;padding-top:14px">'
+    +'<div style="font-size:12px;font-weight:600;color:#A8A8A4;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">Email Integration</div>'
+    +'<div class="form-group"><label class="form-label">SendGrid API Key <span style="font-weight:400;color:#A8A8A4">(for meeting & reminder emails)</span></label><input class="form-input" type="password" id="s-sg" placeholder="SG.xxxxx..." value="'+(co.sendgrid_key||'')+'"></div>'
+    +'</div>'
+    +'<button class="btn btn-primary" style="width:fit-content" onclick="saveAgencySettings()">Save Agency Settings</button>'
+    +'</div></div>';
+}
+
+function v(id){const el=document.getElementById(id);return el?el.value.trim():'';}
+
+async function saveCompanySettings(){
+  const data={company_name:v('s-name'),tagline:v('s-tagline'),address_line1:v('s-addr1'),address_line2:v('s-addr2'),city:v('s-city'),state:v('s-state'),pincode:v('s-pin'),phone:v('s-phone'),email:v('s-email'),gstin:v('s-gstin'),website:v('s-website')};
+  await api('/api/settings/company',{method:'POST',body:JSON.stringify(data)});
+  toast('Company info saved ✓');
+}
+
+async function savePaymentSettings(){
+  const data={upi_id:v('s-upi'),bank_name:v('s-bank'),bank_holder:v('s-holder'),bank_account:v('s-accno'),bank_ifsc:v('s-ifsc')};
+  await api('/api/settings/company',{method:'POST',body:JSON.stringify(data)});
+  toast('Payment details saved ✓');navigate('settings');
+}
+
+async function saveAgencySettings(){
+  const data={default_gst:v('s-gst'),alert_email:v('s-alert-email'),low_balance_alert:v('s-alert'),sendgrid_key:v('s-sg')};
+  await api('/api/settings/company',{method:'POST',body:JSON.stringify(data)});
+  toast('Agency settings saved ✓');
+}
+
+async function removeSignature(){
+  await api('/api/settings/company',{method:'POST',body:JSON.stringify({signature_url:''})});
+  toast('Signature removed');navigate('settings');
+}
+
+function clickSigUpload(){const el=document.getElementById('sig-upload');if(el)el.click();}
+
+
+
 async function uploadSignature(input){
   const file=input.files[0];if(!file)return;
   if(file.size>2*1024*1024){toast('Max 2MB','error');return;}
