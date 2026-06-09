@@ -641,21 +641,22 @@ ${co.company_name||'WeClick AI'} Team
 ${co.phone?'📞 '+co.phone:''}
 ${co.email?'✉ '+co.email:''}`;
 
-    if (sgKey) {
-      await sendEmail({
-        to: m.email, toName: m.name,
-        subject: `Meeting Scheduled: ${m.title} — ${dateStr}`,
-        body: emailBody,
-        co
-      });
+    try {
+      if (sgKey) {
+        await sendEmail({
+          to: m.email, toName: m.name,
+          subject: `Meeting Scheduled: ${m.title} — ${dateStr}`,
+          body: emailBody,
+          co
+        });
+      }
       await db.query('UPDATE meetings SET notified=true WHERE id=$1', [meetingId]);
       return true;
     } catch(emailErr) {
       console.error('Meeting email failed:', emailErr.message);
+      await db.query('UPDATE meetings SET notified=true WHERE id=$1', [meetingId]);
+      return false;
     }
-    // Mark as notified anyway
-    await db.query('UPDATE meetings SET notified=true WHERE id=$1', [meetingId]);
-    return false;
   } catch(e) { console.error('sendMeetingEmail failed:', e.message); return false; }
 }
 
