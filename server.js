@@ -720,6 +720,88 @@ Note: Add your ANTHROPIC_API_KEY to Vercel environment variables for AI-powered 
 }
 
 
+
+// ══════════════════════════════════════════════════════════════
+// PAYMENT REMINDERS
+// ══════════════════════════════════════════════════════════════
+app.get('/api/reminders', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT r.*, c.name as client_name, c.email as client_email
+      FROM payment_reminders r
+      LEFT JOIN clients c ON c.id = r.client_id
+      ORDER BY r.due_date ASC
+    `);
+    res.json(result.rows);
+  } catch(e) { res.json([]); }
+});
+
+app.post('/api/reminders', async (req, res) => {
+  try {
+    const { client_id, title, amount, due_date, send_email, send_whatsapp, message, recurring } = req.body;
+    const result = await db.query(
+      `INSERT INTO payment_reminders (client_id,title,amount,due_date,send_email,send_whatsapp,message,recurring,sent,created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,false,NOW()) RETURNING *`,
+      [client_id, title||'Payment Reminder', amount||null, due_date||null, 
+       send_email||false, send_whatsapp||false, message||'', recurring||false]
+    );
+    await logActivity({type:'reminder', title:'Payment reminder added: '+(title||'')});
+    res.json(result.rows[0]);
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+app.put('/api/reminders/:id', async (req, res) => {
+  try {
+    const { title, amount, due_date, send_email, send_whatsapp, message } = req.body;
+    const result = await db.query(
+      `UPDATE payment_reminders SET title=$1,amount=$2,due_date=$3,send_email=$4,send_whatsapp=$5,message=$6 WHERE id=$7 RETURNING *`,
+      [title, amount, due_date, send_email, send_whatsapp, message, req.params.id]
+    );
+    res.json(result.rows[0]);
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+app.delete('/api/reminders/:id', async (req, res) => {
+  try {
+    await db.query('DELETE FROM payment_reminders WHERE id=$1', [req.params.id]);
+    res.json({ok:true});
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+app.post('/api/reminders/:id/send', async (req, res) => {
+  try {
+    const r = await db.query(
+      'SELECT r.*,c.name,c.email FROM payment_reminders r JOIN clients c ON c.id=r.client_id WHERE r.id=$1',
+      [req.params.id]
+    ).then(x=>x.rows[0]);
+    if(!r) return res.status(404).json({error:'Not found'});
+    
+    const co = await db.query('SELECT * FROM company_settings LIMIT 1').then(x=>x.rows[0]||{});
+    
+    if(r.send_email && r.email && co.sendgrid_key) {
+      const body = {
+        personalizations:[{to:[{email:r.email, name:r.name}]}],
+        from:{email:co.email||'noreply@weclick.ai', name:co.company_name||'WeClick AI'},
+        subject:`Payment Reminder: ${r.title}`,
+        content:[{type:'text/plain', value:r.message||`Hi ${r.name},
+
+This is a reminder that ${r.title} of ₹${r.amount||''} is due on ${r.due_date?new Date(r.due_date).toLocaleDateString():'soon'}.
+
+Please arrange payment at your earliest convenience.
+
+— ${co.company_name||'WeClick AI'}`}]
+      };
+      await fetch('https://api.sendgrid.com/v3/mail/send', {
+        method:'POST', headers:{'Authorization':'Bearer '+co.sendgrid_key,'Content-Type':'application/json'},
+        body:JSON.stringify(body)
+      });
+    }
+    
+    await db.query('UPDATE payment_reminders SET sent=true,sent_at=NOW() WHERE id=$1', [req.params.id]);
+    res.json({ok:true});
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
 // ── LOW BALANCE ALERT (call manually or via cron) ─────────────
 app.post('/api/meta/check-alerts', async (req, res) => {
   try {
