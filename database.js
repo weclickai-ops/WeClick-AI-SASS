@@ -156,7 +156,39 @@ async function initDb() {
         roas        NUMERIC DEFAULT 0,
         synced_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+      CREATE TABLE IF NOT EXISTS company_settings (
+        id            SERIAL PRIMARY KEY,
+        company_name  TEXT,
+        tagline       TEXT,
+        address_line1 TEXT,
+        address_line2 TEXT,
+        city          TEXT,
+        state         TEXT,
+        pincode       TEXT,
+        phone         TEXT,
+        email         TEXT,
+        gstin         TEXT,
+        website       TEXT,
+        upi_id        TEXT,
+        bank_name     TEXT,
+        bank_account  TEXT,
+        bank_ifsc     TEXT,
+        bank_holder   TEXT,
+        signature_url TEXT,
+        meta_account_id TEXT,
+        google_cid    TEXT,
+        fiscal_year_start TEXT,
+        default_gst   NUMERIC DEFAULT 18,
+        alert_email   TEXT,
+        low_balance_alert NUMERIC,
+        sendgrid_key  TEXT,
+        smtp_user     TEXT,
+        smtp_pass     TEXT,
+        updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
+    // Ensure a single company_settings row always exists
+    await client.query(`INSERT INTO company_settings (company_name, updated_at) SELECT 'WeClick AI', NOW() WHERE NOT EXISTS (SELECT 1 FROM company_settings)`);
 
     const migrations = [
       `ALTER TABLE clients ADD COLUMN IF NOT EXISTS avatar_url TEXT`,
