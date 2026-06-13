@@ -997,17 +997,21 @@ app.post('/api/clients/:id/quotations/:qid/send-for-signing', async (req, res) =
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// Run migrations in background — never blocks server startup
-setTimeout(async () => {
+(async () => {
   const migs = [
     `ALTER TABLE quotations ADD COLUMN IF NOT EXISTS payment TEXT`,
     `ALTER TABLE quotations ADD COLUMN IF NOT EXISTS sign_token TEXT`,
     `ALTER TABLE quotations ADD COLUMN IF NOT EXISTS client_sig TEXT`,
     `ALTER TABLE quotations ADD COLUMN IF NOT EXISTS client_signed_at TIMESTAMP`,
+    `ALTER TABLE quotations ADD COLUMN IF NOT EXISTS approved BOOLEAN DEFAULT false`,
+    `ALTER TABLE quotations ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP`,
+    `ALTER TABLE quotations ADD COLUMN IF NOT EXISTS our_address TEXT`,
+    `ALTER TABLE quotations ADD COLUMN IF NOT EXISTS client_address TEXT`,
     `ALTER TABLE clients ADD COLUMN IF NOT EXISTS avatar_url TEXT`,
     `ALTER TABLE clients ADD COLUMN IF NOT EXISTS email TEXT`,
   ];
-  for (const sql of migs) { try { await db.query(sql); } catch {} }
-}, 2000);
-
-app.listen(PORT, () => console.log(`WeClick AI running on port ${PORT}`));
+  for (const sql of migs) { try { await db.query(sql); } catch(e) { } }
+  console.log('Migrations done');
+})().catch(e => console.log('Migration error:', e.message)).finally(() => {
+  app.listen(PORT, () => console.log(`WeClick AI running on port ${PORT}`));
+});
