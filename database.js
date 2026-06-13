@@ -191,6 +191,7 @@ async function initDb() {
     await client.query(`INSERT INTO company_settings (company_name, updated_at) SELECT 'WeClick AI', NOW() WHERE NOT EXISTS (SELECT 1 FROM company_settings)`);
 
     const migrations = [
+      `ALTER TABLE quotations ADD COLUMN IF NOT EXISTS payment TEXT`,
       `ALTER TABLE clients ADD COLUMN IF NOT EXISTS avatar_url TEXT`,
       `ALTER TABLE clients ADD COLUMN IF NOT EXISTS email TEXT`,
       `ALTER TABLE client_meta_accounts ADD COLUMN IF NOT EXISTS total_funds NUMERIC DEFAULT 0`,
