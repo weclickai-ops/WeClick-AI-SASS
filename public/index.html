@@ -1138,17 +1138,15 @@ function openCreateQuotation(clientId, clientName, clientCompany){
         +'<div class="form-group"><label class="form-label">GST %</label><input class="form-input" id="m-gst" type="number" value="0" min="0" max="28" oninput="renderQuoteTotals()"></div>'
         +'<div class="form-group"><label class="form-label">Valid Until</label><input class="form-input" id="m-valid" type="date" value="'+vd+'"></div>'
       +'</div>'
+      +'</div>'
       +'<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-bottom:14px">'
-        +'<div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Addresses</div>'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+          +'<div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">🏢 Addresses</div>'
+          +'<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);cursor:pointer;font-weight:500"><input type="checkbox" id="q-save-addr" checked style="cursor:pointer"> Save to Settings</label>'
+        +'</div>'
         +'<div class="form-row">'
-          +'<div>'
-            +'<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px">Our Company Address</div>'
-            +'<div style="font-size:11.5px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;min-height:40px;color:var(--text2)">'+addrHtml+'</div>'
-          +'</div>'
-          +'<div>'
-            +'<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px">Client Business Address</div>'
-            +'<textarea class="form-input" id="m-client-addr" rows="2" placeholder="Client business address (optional)">'+clientCompany+'</textarea>'
-          +'</div>'
+          +'<div class="form-group"><label class="form-label">Our Company Address</label><textarea class="form-input" id="q-our-addr" rows="3" placeholder="Your company full address">'+(addr||'')+'</textarea></div>'
+          +'<div class="form-group"><label class="form-label">Client Business Address</label><textarea class="form-input" id="m-client-addr" rows="3" placeholder="Client address">'+clientCompany+'</textarea></div>'
         +'</div>'
       +'</div>'
       +'<div style="background:#FFF3EA;border:1px solid var(--orange-mid);border-radius:8px;padding:14px;margin-bottom:14px">'
@@ -1176,24 +1174,39 @@ function openCreateQuotation(clientId, clientName, clientCompany){
         +'<div style="font-size:10px;color:var(--text3);margin-top:3px">These T&C appear at the bottom of the quotation. Edit freely.</div>'
       +'</div>'
       +'<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-top:12px">'
-        +'<div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Signature and Document</div>'
-        +'<div class="form-row">'
-          +'<div><div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Agency Signature</div>'+sigHtml+'</div>'
+        +'<div style="font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">✍️ Signatures</div>'
+        +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">'
           +'<div>'
-            +'<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Upload Signed Document (optional)</div>'
-            +'<div style="border:1.5px dashed var(--border);border-radius:6px;padding:12px;text-align:center;cursor:pointer" onclick="clickSignedDoc()">'
-              +'<div style="font-size:18px;margin-bottom:4px">📄</div>'
-              +'<div style="font-size:11.5px;color:var(--text2)">Upload signed PDF or image</div>'
+            +'<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Agency Signature</div>'
+            +'<div id="q-agency-sig-preview" style="margin-bottom:6px">'+(co.signature_url?'<img src="'+co.signature_url+'" style="height:50px;object-fit:contain;border:1px solid var(--border);border-radius:6px;padding:4px;background:#fff;display:block"/>':'')+' </div>'
+            +'<div style="border:1.5px dashed var(--border);border-radius:6px;padding:10px;text-align:center;cursor:pointer" onclick="document.getElementById(\'q-agency-sig\').click()">'
+              +'<div style="font-size:11.5px;color:var(--text2)">'+(co.signature_url?'🔄 Replace':'+ Upload')+' Signature</div>'
+              +'<div style="font-size:10px;color:var(--text3)">PNG or JPG</div>'
+              +'<input type="file" id="q-agency-sig" accept="image/*" style="display:none" onchange="previewAgencySig(this)">'
+            +'</div>'
+          +'</div>'
+          +'<div>'
+            +'<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Client Signature</div>'
+            +'<div id="q-client-sig-preview" style="margin-bottom:6px"></div>'
+            +'<div style="border:1.5px dashed var(--border);border-radius:6px;padding:10px;text-align:center;cursor:pointer" onclick="document.getElementById(\'q-client-sig\').click()">'
+              +'<div style="font-size:11.5px;color:var(--text2)">+ Upload Client Signature</div>'
+              +'<div style="font-size:10px;color:var(--text3)">PNG or JPG</div>'
+              +'<input type="file" id="q-client-sig" accept="image/*" style="display:none" onchange="previewClientSig(this)">'
+            +'</div>'
+          +'</div>'
+          +'<div>'
+            +'<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Signed Document (optional)</div>'
+            +'<div id="q-signed-preview" style="margin-bottom:6px;font-size:11px;color:var(--green);font-weight:500"></div>'
+            +'<div style="border:1.5px dashed var(--border);border-radius:6px;padding:10px;text-align:center;cursor:pointer" onclick="document.getElementById(\'q-signed-doc\').click()">'
+              +'<div style="font-size:18px;margin-bottom:2px">📄</div>'
+              +'<div style="font-size:11.5px;color:var(--text2)">Upload Signed PDF</div>'
               +'<div style="font-size:10px;color:var(--text3)">PDF, PNG, JPG</div>'
               +'<input type="file" id="q-signed-doc" accept=".pdf,image/*" style="display:none" onchange="previewSignedDoc(this)">'
             +'</div>'
-            +'<div id="q-signed-preview" style="display:none;margin-top:6px;font-size:11px;color:var(--green);font-weight:500"></div>'
           +'</div>'
         +'</div>'
       +'</div>'
       +'</div>'
-      +'<div style="display:flex;gap:7px;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid var(--border2)">'
-        +'<button class="btn" onclick="closeModal()">Cancel</button>'
         +'<button class="btn btn-primary" onclick="saveQuotation('+clientId+')">Save Quotation</button>'
       +'</div>');
 
@@ -1205,12 +1218,36 @@ function openCreateQuotation(clientId, clientName, clientCompany){
 
 function clickSignedDoc(){var el=document.getElementById('q-signed-doc');if(el)el.click();}
 
-function clickSignedDoc(){var el=document.getElementById('q-signed-doc');if(el)el.click();}
-
 function previewSignedDoc(input){
   const file=input.files[0];if(!file)return;
   const preview=document.getElementById('q-signed-preview');
   if(preview){preview.style.display='block';preview.textContent='Attached: '+file.name+' ('+(file.size/1024).toFixed(0)+' KB)';}
+
+function previewAgencySig(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    appState._agencySigB64=e.target.result;
+    const prev=document.getElementById('q-agency-sig-preview');
+    if(prev) prev.innerHTML='<img src="'+e.target.result+'" style="height:50px;object-fit:contain;border:1px solid var(--border);border-radius:6px;padding:4px;background:#fff;display:block"/>';
+    // Also update upload button text
+    const btn=input.previousElementSibling;
+    if(btn) btn.querySelector('div')&&(btn.querySelector('div').textContent='✓ Agency Signature Ready');
+  };
+  reader.readAsDataURL(file);
+}
+
+function previewClientSig(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    appState._clientSigB64=e.target.result;
+    const prev=document.getElementById('q-client-sig-preview');
+    if(prev) prev.innerHTML='<img src="'+e.target.result+'" style="height:50px;object-fit:contain;border:1px solid var(--border);border-radius:6px;padding:4px;background:#fff;display:block"/>';
+  };
+  reader.readAsDataURL(file);
+}
+
 }
 
 
@@ -1269,6 +1306,7 @@ async function saveQuotation(clientId){
   const gst_pct=parseFloat(document.getElementById('m-gst')?.value)||0;
   const tc=document.getElementById('m-tc')?.value||'';
   const valid_until=document.getElementById('m-valid')?.value;
+  // Payment
   const qPayment={
     upi_id:(document.getElementById('q-upi')?.value||'').trim(),
     bank_name:(document.getElementById('q-bank')?.value||'').trim(),
@@ -1276,12 +1314,28 @@ async function saveQuotation(clientId){
     bank_account:(document.getElementById('q-accno')?.value||'').trim(),
     bank_ifsc:(document.getElementById('q-ifsc')?.value||'').trim()
   };
-  const savePayment=document.getElementById('q-save-payment')?.checked;
-  if(savePayment&&(qPayment.upi_id||qPayment.bank_name||qPayment.bank_account)){
+  if(document.getElementById('q-save-payment')?.checked&&(qPayment.upi_id||qPayment.bank_name||qPayment.bank_account)){
     lsSet(qPayment);
-    api('/api/settings/company',{method:'POST',body:JSON.stringify(qPayment)}).catch(()=>{});
+    api('/api/settings/company',{method:'POST',body:JSON.stringify(qPayment),silent:true}).catch(()=>{});
   }
-  await api(`/api/clients/${clientId}/quotations`,{method:'POST',body:JSON.stringify({items,gst_pct,valid_until,notes:tc,payment:qPayment})});
+  // Address
+  const ourAddr=(document.getElementById('q-our-addr')?.value||'').trim();
+  const clientAddr=(document.getElementById('m-client-addr')?.value||'').trim();
+  if(document.getElementById('q-save-addr')?.checked&&ourAddr){
+    lsSet({address_line1:ourAddr});
+    api('/api/settings/company',{method:'POST',body:JSON.stringify({address_line1:ourAddr}),silent:true}).catch(()=>{});
+  }
+  // Signatures
+  const agencySig=appState._agencySigB64||lsGet().signature_url||'';
+  const clientSig=appState._clientSigB64||'';
+  // If new agency sig uploaded, save to settings
+  if(appState._agencySigB64){
+    lsSet({signature_url:appState._agencySigB64});
+    api('/api/settings/company',{method:'POST',body:JSON.stringify({signature_url:appState._agencySigB64}),silent:true}).catch(()=>{});
+    appState._agencySigB64=null;
+  }
+  appState._clientSigB64=null;
+  await api(`/api/clients/${clientId}/quotations`,{method:'POST',body:JSON.stringify({items,gst_pct,valid_until,notes:tc,payment:qPayment,our_address:ourAddr,client_address:clientAddr,agency_sig:agencySig,client_sig:clientSig})});
   toast('Quotation saved ✓');closeModal();navigate('clientDetail',clientId);
 }
 
