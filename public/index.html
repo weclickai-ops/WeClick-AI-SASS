@@ -1096,12 +1096,6 @@ function openCreateQuotation(clientId, clientName, clientCompany){
   api('/api/settings/company').catch(()=>({})).then(function(co){
     const addr=[co.address_line1,co.address_line2,co.city,co.state,co.pincode].filter(Boolean).join(', ');
     const addrHtml=addr||'Not set — go to Settings to add company address';
-    const bankHtml=co.bank_name
-      ?('<b>Bank:</b> '+co.bank_name+'<br><b>A/C:</b> '+(co.bank_account||'—')+'<br><b>IFSC:</b> '+(co.bank_ifsc||'—')+'<br><b>Name:</b> '+(co.bank_holder||'—'))
-      :'Not set — go to Settings to add bank details';
-    const upiHtml=co.upi_id
-      ?('<div style="font-size:12px;font-weight:600;margin-bottom:6px">UPI: '+co.upi_id+'</div><img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=upi://pay?pa='+encodeURIComponent(co.upi_id)+'%26pn='+encodeURIComponent(co.company_name||'WeClick AI')+'%26cu=INR" style="border-radius:6px;border:1px solid var(--orange-mid);display:block"/>')
-      :'Not set — go to Settings to add UPI ID';
     const sigHtml=co.signature_url
       ?('<img src="'+co.signature_url+'" style="height:44px;object-fit:contain;border:1px solid var(--border);border-radius:6px;padding:4px;background:#fff"/><div style="font-size:10px;color:var(--text3);margin-top:3px">Signature loaded from Settings</div>')
       :'Not set — go to Settings to upload signature';
@@ -1143,11 +1137,18 @@ function openCreateQuotation(clientId, clientName, clientCompany){
         +'</div>'
       +'</div>'
       +'<div style="background:#FFF3EA;border:1px solid var(--orange-mid);border-radius:8px;padding:14px;margin-bottom:14px">'
-        +'<div style="font-size:10.5px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Payment Details</div>'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+          +'<div style="font-size:10.5px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px">💳 Payment Details</div>'
+          +'<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);cursor:pointer;font-weight:500"><input type="checkbox" id="q-save-payment" checked style="cursor:pointer"> Save to Settings</label>'
+        +'</div>'
+        +'<div class="form-row" style="margin-bottom:10px">'
+          +'<div class="form-group"><label class="form-label">UPI ID</label><input class="form-input" id="q-upi" placeholder="yourname@upi" value="'+(co.upi_id||'')+'">'+'</div>'
+          +'<div class="form-group"><label class="form-label">Account Holder</label><input class="form-input" id="q-holder" placeholder="Name on account" value="'+(co.bank_holder||'')+'">'+'</div>'
+        +'</div>'
         +'<div class="form-row">'
-          +'<div><div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">Bank Transfer</div>'
-            +'<div style="font-size:11.5px;color:var(--text2);line-height:2">'+bankHtml+'</div></div>'
-          +'<div><div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">UPI / QR Code</div>'+upiHtml+'</div>'
+          +'<div class="form-group"><label class="form-label">Bank Name</label><input class="form-input" id="q-bank" placeholder="e.g. Kotak811" value="'+(co.bank_name||'')+'">'+'</div>'
+          +'<div class="form-group"><label class="form-label">Account Number</label><input class="form-input" id="q-accno" placeholder="Account number" value="'+(co.bank_account||'')+'">'+'</div>'
+          +'<div class="form-group"><label class="form-label">IFSC Code</label><input class="form-input" id="q-ifsc" placeholder="e.g. KKBK0007497" value="'+(co.bank_ifsc||'')+'">'+'</div>'
         +'</div>'
       +'</div>'
       +'<div id="quote-totals-wrap"></div>'
@@ -1253,7 +1254,18 @@ async function saveQuotation(clientId){
   const gst_pct=parseFloat(document.getElementById('m-gst')?.value)||0;
   const tc=document.getElementById('m-tc')?.value||'';
   const valid_until=document.getElementById('m-valid')?.value;
-  await api(`/api/clients/${clientId}/quotations`,{method:'POST',body:JSON.stringify({items,gst_pct,valid_until,notes:tc})});
+  const qPayment={
+    upi_id:(document.getElementById('q-upi')?.value||'').trim(),
+    bank_name:(document.getElementById('q-bank')?.value||'').trim(),
+    bank_holder:(document.getElementById('q-holder')?.value||'').trim(),
+    bank_account:(document.getElementById('q-accno')?.value||'').trim(),
+    bank_ifsc:(document.getElementById('q-ifsc')?.value||'').trim()
+  };
+  const savePayment=document.getElementById('q-save-payment')?.checked;
+  if(savePayment&&(qPayment.upi_id||qPayment.bank_name||qPayment.bank_account)){
+    await api('/api/settings/company',{method:'POST',body:JSON.stringify(qPayment)}).catch(()=>{});
+  }
+  await api(`/api/clients/${clientId}/quotations`,{method:'POST',body:JSON.stringify({items,gst_pct,valid_until,notes:tc,payment:qPayment})});
   toast('Quotation saved ✓');closeModal();navigate('clientDetail',clientId);
 }
 
