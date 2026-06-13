@@ -468,18 +468,30 @@ app.get('/api/settings/company', async (req, res) => {
 });
 app.post('/api/settings/company', async (req, res) => {
   try {
-    const fields = ['company_name','tagline','address_line1','address_line2','city','state','pincode','phone','email','gstin','upi_id','bank_name','bank_account','bank_ifsc','bank_holder','meta_account_id','google_cid','fiscal_year_start'];
-    const values = fields.map(f=>req.body[f]||null);
-    await db.query(`INSERT INTO company_settings (${fields.join(',')},updated_at) VALUES (${fields.map((_,i)=>'$'+(i+1)).join(',')},NOW()) ON CONFLICT (id) DO UPDATE SET ${fields.map((f,i)=>`${f}=$${i+1}`).join(',')},updated_at=NOW()`, values);
-    res.json({ ok:true });
+    const allowed = ['company_name','tagline','address_line1','address_line2','city','state','pincode','phone','email','gstin','upi_id','bank_name','bank_account','bank_ifsc','bank_holder','meta_account_id','google_cid','fiscal_year_start','signature_url','default_gst','alert_email','low_balance_alert','sendgrid_key','smtp_user','smtp_pass'];
+    // Only update the fields that were actually sent in the request body
+    const sentFields = Object.keys(req.body).filter(f => allowed.includes(f));
+    if (sentFields.length === 0) return res.json({ ok: true });
+    // Ensure a row exists first
+    await db.query('INSERT INTO company_settings (updated_at) VALUES (NOW()) ON CONFLICT (id) DO NOTHING');
+    const values = sentFields.map(f => req.body[f] === '' ? null : (req.body[f] ?? null));
+    const setClause = sentFields.map((f, i) => `${f}=$${i + 1}`).join(',');
+    await db.query(`UPDATE company_settings SET ${setClause},updated_at=NOW() WHERE id=(SELECT id FROM company_settings LIMIT 1)`, values);
+    res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 app.post('/api/settings/signature', upload.single('signature'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error:'No file' });
     const b64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
-    await db.query('UPDATE company_settings SET signature_url=$1 WHERE id=(SELECT id FROM company_settings LIMIT 1)', [b64]);
+    await db.query('INSERT INTO company_settings (signature_url,updated_at) VALUES ($1,NOW()) ON CONFLICT (id) DO UPDATE SET signature_url=$1,updated_at=NOW()', [b64]);
     res.json({ signature_url: b64 });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/settings/signature', async (req, res) => {
+  try {
+    await db.query('UPDATE company_settings SET signature_url=NULL,updated_at=NOW() WHERE id=(SELECT id FROM company_settings LIMIT 1)');
+    res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
