@@ -1100,16 +1100,18 @@ function openCreateQuotation(clientId, clientName, clientCompany){
       ?('<img src="'+co.signature_url+'" style="height:44px;object-fit:contain;border:1px solid var(--border);border-radius:6px;padding:4px;background:#fff"/><div style="font-size:10px;color:var(--text3);margin-top:3px">Signature loaded from Settings</div>')
       :'Not set — go to Settings to upload signature';
 
-    const defaultTC=`1. Scope: Services cover only the deliverables listed above. Any additional work will be quoted separately.
+    const defaultTC=`1. Scope: Services cover only the deliverables listed above. Any additional work, platforms, or creatives outside this scope will be quoted separately.
 2. Payment: 100% advance required before project kickoff. No work begins until full payment is received.
-3. Revisions: Any revision requests beyond the agreed scope will be billed additionally.
-4. Ad spend: Client is responsible for ad spend on Meta Ads. Agency fee covers setup and management only.
-5. Account access: Client must provide Business Manager access within 3 business days of acceptance.
-6. Campaign monitoring: WeClick AI will actively monitor all campaigns. In the event of low ad funds, the client will be notified via email to add funds promptly.
-7. Confidentiality: Both parties agree to keep all shared materials, strategies, and data confidential.
-8. Intellectual property: All creatives and strategy documents remain agency property until full payment is received.
-9. Validity: This quotation is valid until the date mentioned above and is subject to change thereafter.
-10. Jurisdiction: Any disputes arising from this agreement shall be handled under the jurisdiction of WeClick AI.`;
+3. Revisions: Up to 2 revision rounds are included. Any requests beyond the agreed scope will be billed additionally.
+4. Ad Spend: Client is solely responsible for ad spend on Meta Ads, Google Ads, or any other platform. Agency fee covers strategy, setup, and management only.
+5. Performance Marketing: WeClick AI will optimize campaigns for agreed KPIs (CTR, CPL, ROAS, etc.). However, specific results cannot be guaranteed as ad platform performance depends on budget, audience, and market conditions.
+6. Creative Production: Video edits and static creatives are charged at ₹400 per deliverable. Creatives will be delivered within the agreed timeline. Additional revisions beyond 2 rounds will be billed separately.
+7. Account Access: Client must provide Business Manager / Google Ads access within 3 business days of acceptance. Delays may impact campaign timelines.
+8. Campaign Monitoring: WeClick AI will actively monitor all live campaigns. In the event of low ad funds, the client will be notified immediately to add funds. Agency is not liable for campaign pauses due to insufficient balance.
+9. Confidentiality: Both parties agree to keep all shared materials, strategies, data, and campaign insights strictly confidential.
+10. Intellectual Property: All creatives, ad copies, and strategy documents remain agency property until full payment is received.
+11. Validity: This quotation is valid until the date mentioned above and is subject to revision thereafter.
+12. Jurisdiction: Any disputes arising from this agreement shall be handled under the jurisdiction of Hyderabad, Telangana, India.`;
 
     openModal('<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
       +'<div style="font-size:15px;font-weight:650;color:var(--text)">Create Quotation — '+clientName+'</div>'
@@ -1201,7 +1203,7 @@ function previewSignedDoc(input){
 
 function resetTC(){
   const el=document.getElementById('m-tc');
-  if(el) el.value=`1. Scope: Services cover only the deliverables listed above. Any additional work will be quoted separately.\n2. Payment: 100% advance required before project kickoff. No work begins until full payment is received.\n3. Revisions: Any revision requests beyond the agreed scope will be billed additionally.\n4. Ad spend: Client is responsible for ad spend on Meta Ads. Agency fee covers setup & management only.\n5. Account access: Client must provide Business Manager access within 3 business days of acceptance.\n6. Campaign monitoring: WeClick AI will actively monitor all campaigns. In the event of low ad funds, the client will be notified via email to add funds promptly to avoid campaign interruption.\n7. Confidentiality: Both parties agree to keep all shared materials, strategies, and data confidential.\n8. Intellectual property: All creatives and strategy documents remain agency property until full payment is received.\n9. Validity: This quotation is valid until the date mentioned above and is subject to change thereafter.\n10. Jurisdiction: Any disputes arising from this agreement shall be handled under the jurisdiction of WeClick AI.`;
+  if(el) el.value=`1. Scope: Services cover only the deliverables listed above. Any additional work, platforms, or creatives outside this scope will be quoted separately.\n2. Payment: 100% advance required before project kickoff. No work begins until full payment is received.\n3. Revisions: Up to 2 revision rounds are included. Any requests beyond the agreed scope will be billed additionally.\n4. Ad Spend: Client is solely responsible for ad spend on Meta Ads, Google Ads, or any other platform. Agency fee covers strategy, setup, and management only.\n5. Performance Marketing: WeClick AI will optimize campaigns for agreed KPIs (CTR, CPL, ROAS, etc.). However, specific results cannot be guaranteed as ad platform performance depends on budget, audience, and market conditions.\n6. Creative Production: Video edits and static creatives are charged at ₹400 per deliverable. Creatives will be delivered within the agreed timeline. Additional revisions beyond 2 rounds will be billed separately.\n7. Account Access: Client must provide Business Manager / Google Ads access within 3 business days of acceptance. Delays may impact campaign timelines.\n8. Campaign Monitoring: WeClick AI will actively monitor all live campaigns. In the event of low ad funds, the client will be notified immediately. Agency is not liable for pauses due to insufficient balance.\n9. Confidentiality: Both parties agree to keep all shared materials, strategies, data, and campaign insights strictly confidential.\n10. Intellectual Property: All creatives, ad copies, and strategy documents remain agency property until full payment is received.\n11. Validity: This quotation is valid until the date mentioned above and is subject to revision thereafter.\n12. Jurisdiction: Any disputes arising from this agreement shall be handled under the jurisdiction of Hyderabad, Telangana, India.`;
 }
 
 function addQuoteItem(){appState.quoteItems.push({service:'',description:'',qty:1,rate:0});renderQuoteItems();}
