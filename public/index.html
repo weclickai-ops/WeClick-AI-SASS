@@ -1329,17 +1329,20 @@ async function saveQuotation(clientId){
     lsSet({address_line1:ourAddr});
     api('/api/settings/company',{method:'POST',body:JSON.stringify({address_line1:ourAddr}),silent:true}).catch(()=>{});
   }
-  // Signatures
-  const agencySig=appState._agencySigB64||lsGet().signature_url||'';
-  const clientSig=appState._clientSigB64||'';
-  // If new agency sig uploaded, save to settings
+  // Signatures — save to localStorage only (too large for API)
   if(appState._agencySigB64){
     lsSet({signature_url:appState._agencySigB64});
     api('/api/settings/company',{method:'POST',body:JSON.stringify({signature_url:appState._agencySigB64}),silent:true}).catch(()=>{});
     appState._agencySigB64=null;
   }
-  appState._clientSigB64=null;
-  await api(`/api/clients/${clientId}/quotations`,{method:'POST',body:JSON.stringify({items,gst_pct,valid_until,notes:tc,payment:qPayment,our_address:ourAddr,client_address:clientAddr,agency_sig:agencySig,client_sig:clientSig})});
+  if(appState._clientSigB64){
+    lsSet({client_sig_url:appState._clientSigB64});
+    appState._clientSigB64=null;
+  }
+  // Send only small text fields to API — NO base64 images
+  const payload={items,gst_pct,valid_until,notes:tc,
+    payment:qPayment,our_address:ourAddr,client_address:clientAddr};
+  await api(`/api/clients/${clientId}/quotations`,{method:'POST',body:JSON.stringify(payload)});
   toast('Quotation saved ✓');closeModal();navigate('clientDetail',clientId);
 }
 
