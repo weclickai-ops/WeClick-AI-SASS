@@ -1375,7 +1375,7 @@ async function viewQuotation(qid,clientName,clientCompany){
       <div style="font-size:14px;font-weight:600">Quotation Preview</div>
       <div style="display:flex;gap:6px">
         <button class="btn btn-sm" onclick="closeModal()">Close</button>
-        <button class="btn btn-sm" style="background:#7C3AED;color:#fff;border-color:#7C3AED;font-size:11.5px" onclick="sendForSigning(qid)">✍ Send for Signing</button>
+        <button class="btn btn-sm" style="background:#7C3AED;color:#fff;border-color:#7C3AED;font-size:11.5px" id="sign-btn-'+qid+'" onclick="sendForSigning(qid)">✍ Send for Signing</button>
       </div>
     </div>
     <div id="print-area">
@@ -1503,35 +1503,32 @@ async function approveQuotation(qid){
 
 async function sendForSigning(qid){
   const clientId=appState.selectedClientId;
-  const btn=event.target;
-  btn.textContent='Generating link...';
-  btn.disabled=true;
+  const btn=document.getElementById('sign-btn-'+qid);
+  if(btn){btn.textContent='Generating...';btn.disabled=true;}
   try{
     const r=await api(`/api/clients/${clientId}/quotations/${qid}/send-for-signing`,{method:'POST',body:'{}'});
     if(r.link){
-      // Copy to clipboard and show
       try{await navigator.clipboard.writeText(r.link);}catch{}
-      btn.textContent='✓ Link Copied!';
-      btn.style.background='#15803D';
-      toast('Signing link copied to clipboard! Share it with your client.');
-      // Show the link in an alert so they can also see it
-      setTimeout(()=>{
-        const box=document.createElement('div');
-        box.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:24px;z-index:9999;max-width:480px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.15)';
-        box.innerHTML=`<div style='font-size:15px;font-weight:600;margin-bottom:8px'>✍ Client Signing Link</div><div style='font-size:12px;color:#6F6F6B;margin-bottom:12px'>Share this link with your client. They can review the quotation and sign digitally.</div><input type='text' value='${r.link}' readonly style='width:100%;padding:8px;border:1px solid #E5E5E3;border-radius:6px;font-size:11px;background:#F9F9F8;margin-bottom:12px' onclick='this.select()'><div style='display:flex;gap:8px'><button onclick='navigator.clipboard.writeText("${r.link}");this.textContent="Copied!"' style='flex:1;padding:8px;background:#E96800;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600'>Copy Link</button><button onclick='this.closest("div[style]").remove()' style='flex:1;padding:8px;background:#F9F9F8;border:1px solid #E5E5E3;border-radius:6px;cursor:pointer'>Close</button></div>`;
-        document.body.appendChild(box);
-      },500);
+      if(btn){btn.textContent='✓ Link Ready';btn.style.background='#15803D';}
+      // Show link popup
+      const box=document.createElement('div');
+      box.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border:1px solid #E5E5E3;border-radius:12px;padding:24px;z-index:99999;max-width:480px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.2)';
+      const safeLink=r.link.replace(/'/g,'%27');
+      box.innerHTML='<div style="font-size:15px;font-weight:600;margin-bottom:8px">✍ Client Signing Link</div>'
+        +'<div style="font-size:12px;color:#6F6F6B;margin-bottom:14px">Share this link with your client. They open it, read the quotation, draw their signature, and submit.</div>'
+        +'<input id="sign-link-input" type="text" value="'+r.link+'" readonly style="width:100%;padding:8px 10px;border:1px solid #E5E5E3;border-radius:6px;font-size:11px;background:#F9F9F8;margin-bottom:12px">'
+        +'<div style="display:flex;gap:8px">'
+        +'<button onclick="document.getElementById(\'sign-link-input\').select();navigator.clipboard.writeText(document.getElementById(\'sign-link-input\').value);this.textContent=\'Copied!\';" style="flex:1;padding:9px;background:#E96800;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">📋 Copy Link</button>'
+        +'<button onclick="this.closest(\'[data-sigbox]\').remove()" style="flex:1;padding:9px;background:#F9F9F8;border:1px solid #E5E5E3;border-radius:6px;cursor:pointer">Close</button>'
+        +'</div>';
+      box.setAttribute('data-sigbox','1');
+      document.body.appendChild(box);
     }
   }catch(e){
-    btn.textContent='✍ Send for Signing';
-    btn.disabled=false;
+    if(btn){btn.textContent='✍ Send for Signing';btn.disabled=false;}
+    toast('Error generating link: '+e.message,'error');
   }
 }
-function copyQuoteLink(qid){
-  navigator.clipboard.writeText(window.location.origin+'/quotation/'+qid).then(()=>toast('Link copied'));
-}
-
-
 async function buildAdAnalytics(){
   const clients=await api('/api/clients').catch(()=>[]);
   appState.clients=clients;
