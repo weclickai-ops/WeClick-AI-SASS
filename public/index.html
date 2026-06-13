@@ -2317,7 +2317,7 @@ async function saveAgencySettings(){
 }
 
 async function removeSignature(){
-  await api('/api/settings/company',{method:'POST',body:JSON.stringify({signature_url:''})});
+  await api('/api/settings/signature',{method:'DELETE'});
   toast('Signature removed');navigate('settings');
 }
 
