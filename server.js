@@ -244,17 +244,17 @@ app.get('/api/clients/:id/quotations', async (req, res) => {
 
 app.post('/api/clients/:id/quotations', async (req, res) => {
   try {
-    const { items, gst_pct, valid_until, notes, payment } = req.body;
+    const { items, gst_pct, valid_until, notes, payment, our_address, client_address, agency_sig, client_sig } = req.body;
     const subtotal = items.reduce((s,i) => s+(i.qty||0)*(i.rate||0), 0);
     const gst_amount = subtotal*(gst_pct||0)/100;
     const total = subtotal+gst_amount;
     let qno = 'QT-1001';
     try { const sq = await db.query("SELECT nextval('quotation_seq') as n"); qno=`QT-${sq.rows[0].n}`; } catch {}
+    const extra = JSON.stringify({payment:payment||{},our_address:our_address||'',client_address:client_address||'',agency_sig:agency_sig||'',client_sig:client_sig||''});
     const result = await db.query(
       'INSERT INTO quotations (client_id,quotation_no,items,subtotal,gst_pct,gst_amount,total,valid_until,notes,payment,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW()) RETURNING *',
-      [req.params.id, qno, JSON.stringify(items), subtotal, gst_pct||0, gst_amount, total, valid_until||null, notes||'', payment?JSON.stringify(payment):null]
+      [req.params.id, qno, JSON.stringify(items), subtotal, gst_pct||0, gst_amount, total, valid_until||null, notes||'', extra]
     );
-    await logActivity({ type:'quotation', title:`Quotation ${qno} created`, client_id:parseInt(req.params.id) });
     res.json({ ...result.rows[0], items });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
