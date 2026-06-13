@@ -472,8 +472,11 @@ app.post('/api/settings/company', async (req, res) => {
     // Only update the fields that were actually sent in the request body
     const sentFields = Object.keys(req.body).filter(f => allowed.includes(f));
     if (sentFields.length === 0) return res.json({ ok: true });
-    // Ensure a row exists first
-    await db.query('INSERT INTO company_settings (updated_at) VALUES (NOW()) ON CONFLICT (id) DO NOTHING');
+    // Ensure a row exists (table always has exactly 1 row, seeded by initDb)
+    const existing = await db.query('SELECT id FROM company_settings LIMIT 1');
+    if (existing.rows.length === 0) {
+      await db.query('INSERT INTO company_settings (updated_at) VALUES (NOW())');
+    }
     const values = sentFields.map(f => req.body[f] === '' ? null : (req.body[f] ?? null));
     const setClause = sentFields.map((f, i) => `${f}=$${i + 1}`).join(',');
     await db.query(`UPDATE company_settings SET ${setClause},updated_at=NOW() WHERE id=(SELECT id FROM company_settings LIMIT 1)`, values);
