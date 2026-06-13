@@ -517,6 +517,22 @@ async function api(path,opts={}){
     return data;
   }catch(e){toast(e.message,'error');throw e;}
 }
+
+// ── LOCAL SETTINGS CACHE (survives DB failures) ───────────────
+function lsGet(){try{return JSON.parse(localStorage.getItem('wc_settings')||'{}');}catch{return{};}}
+function lsSet(data){try{const cur=lsGet();localStorage.setItem('wc_settings',JSON.stringify({...cur,...data}));}catch{}}
+async function getSettings(){
+  const local=lsGet();
+  try{
+    const remote=await api('/api/settings/company');
+    if(remote&&Object.keys(remote).length>0){
+      lsSet(remote); // keep local in sync with DB
+      return {...local,...remote}; // remote wins
+    }
+  }catch(e){}
+  return local; // fallback to localStorage
+}
+
 function timeAgo(ts){
   if(!ts) return '';
   const now=new Date(),d=new Date(ts);
@@ -1093,7 +1109,7 @@ function openCreateQuotation(clientId, clientName, clientCompany){
   const validDate=new Date();validDate.setDate(validDate.getDate()+30);
   const vd=validDate.toISOString().split('T')[0];
 
-  api('/api/settings/company').catch(()=>({})).then(function(co){
+  getSettings().then(function(co){
     const addr=[co.address_line1,co.address_line2,co.city,co.state,co.pincode].filter(Boolean).join(', ');
     const addrHtml=addr||'Not set — go to Settings to add company address';
     const sigHtml=co.signature_url
@@ -1265,7 +1281,8 @@ async function saveQuotation(clientId){
   };
   const savePayment=document.getElementById('q-save-payment')?.checked;
   if(savePayment&&(qPayment.upi_id||qPayment.bank_name||qPayment.bank_account)){
-    await api('/api/settings/company',{method:'POST',body:JSON.stringify(qPayment)}).catch(()=>{});
+    lsSet(qPayment);
+    api('/api/settings/company',{method:'POST',body:JSON.stringify(qPayment)}).catch(()=>{});
   }
   await api(`/api/clients/${clientId}/quotations`,{method:'POST',body:JSON.stringify({items,gst_pct,valid_until,notes:tc,payment:qPayment})});
   toast('Quotation saved ✓');closeModal();navigate('clientDetail',clientId);
@@ -1281,7 +1298,7 @@ async function viewQuotation(qid,clientName,clientCompany){
   try{
     const[rows,co]=await Promise.all([
       api(`/api/clients/${appState.selectedClientId}/quotations`),
-      api('/api/settings/company').catch(()=>({}))
+      getSettings()
     ]);
     const q=rows.find(r=>r.id===qid);
     if(!q){toast('Not found','error');return;}
@@ -2203,7 +2220,7 @@ async function deleteReminder(id){
 async function buildSettings(){
   if(!appState.settingsTab) appState.settingsTab='company';
   let co={};
-  try{co=await api('/api/settings/company');}catch(e){}
+  try{co=await getSettings();}catch(e){}
   const t=appState.settingsTab;
   const nav=['company','payment','signature','agency'];
   const navLabels={'company':'🏢 Company Info','payment':'💳 Payment Details','signature':'✍️ Signature','agency':'⚙️ Agency'};
@@ -2314,14 +2331,17 @@ function v(id){const el=document.getElementById(id);return el?el.value.trim():''
 
 async function saveCompanySettings(){
   const data={company_name:v('s-name'),tagline:v('s-tagline'),address_line1:v('s-addr1'),address_line2:v('s-addr2'),city:v('s-city'),state:v('s-state'),pincode:v('s-pin'),phone:v('s-phone'),email:v('s-email'),gstin:v('s-gstin'),website:v('s-website')};
-  await api('/api/settings/company',{method:'POST',body:JSON.stringify(data)});
+  lsSet(data);
+  api('/api/settings/company',{method:'POST',body:JSON.stringify(data)}).catch(()=>{});
   toast('Company info saved ✓');
 }
 
 async function savePaymentSettings(){
   const data={upi_id:v('s-upi'),bank_name:v('s-bank'),bank_holder:v('s-holder'),bank_account:v('s-accno'),bank_ifsc:v('s-ifsc')};
-  await api('/api/settings/company',{method:'POST',body:JSON.stringify(data)});
+  lsSet(data);
+  api('/api/settings/company',{method:'POST',body:JSON.stringify(data)}).catch(()=>{});
   appState.settingsTab='payment'; toast('Payment details saved ✓'); navigate('settings');
+}
 }
 
 async function saveAgencySettings(){
@@ -2345,7 +2365,8 @@ async function uploadSignature(input){
   const reader=new FileReader();
   reader.onload=async e=>{
     const b64=e.target.result;
-    await api('/api/settings/company',{method:'POST',body:JSON.stringify({signature_url:b64})});
+    lsSet({signature_url:b64});
+    api('/api/settings/company',{method:'POST',body:JSON.stringify({signature_url:b64})}).catch(()=>{});
     appState.settingsTab='signature'; toast('Signature saved ✓'); navigate('settings');
   };
   reader.readAsDataURL(file);
