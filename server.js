@@ -904,10 +904,106 @@ app.get('*', (req, res) => {
 });
 
 
+
+// ══════════════════════════════════════════════════════════════
+// CLIENT SIGNING
+// ══════════════════════════════════════════════════════════════
+
+// Add migrations for signing columns
+app.get('/api/quotations/:token/sign-page', async (req, res) => {
+  try {
+    const r = await db.query(
+      `SELECT q.*, c.name as client_name, c.email as client_email, c.company as client_company,
+       co.company_name, co.tagline, co.address_line1, co.address_line2, co.city, co.state,
+       co.pincode, co.phone, co.email as agency_email, co.gstin, co.signature_url, co.upi_id,
+       co.bank_name, co.bank_account, co.bank_ifsc, co.bank_holder
+       FROM quotations q JOIN clients c ON c.id=q.client_id
+       LEFT JOIN company_settings co ON true
+       WHERE q.sign_token=$1 LIMIT 1`,
+      [req.params.token]
+    );
+    if (!r.rows[0]) return res.status(404).send('Quotation not found or link expired');
+    const q = r.rows[0];
+    const items = typeof q.items === 'string' ? JSON.parse(q.items) : q.items;
+    const pm = (() => { try { const p = typeof q.payment==='string'?JSON.parse(q.payment):q.payment; return p&&p.payment?p.payment:p||{}; } catch{return {};} })();
+    const addr = [q.address_line1,q.address_line2,q.city,q.state,q.pincode].filter(Boolean).join(', ');
+    const qNo = q.quotation_no || ('QT-'+q.id);
+    const issued = new Date(q.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+    const validTxt = q.valid_until ? new Date(q.valid_until).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}) : '—';
+    const itemsHtml = items.map(it => `<tr><td>${it.service||''}</td><td>${it.description||''}</td><td style='text-align:center'>${it.qty||1}</td><td style='text-align:right'>₹${(it.rate||0).toLocaleString('en-IN')}</td><td style='text-align:right;font-weight:600'>₹${((it.qty||0)*(it.rate||0)).toLocaleString('en-IN')}</td></tr>`).join('');
+    const gstAmt = Math.round((q.subtotal||0)*(q.gst_pct||0)/100);
+    const alreadySigned = q.client_signed_at ? `<div style='background:#F0FDF4;border:1px solid #86EFAC;border-radius:8px;padding:16px;margin:20px 0;text-align:center'><div style='font-size:16px;color:#15803D;font-weight:600'>✓ Already Signed</div><div style='font-size:12px;color:#166534;margin-top:4px'>Signed on ${new Date(q.client_signed_at).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</div>${q.client_sig?'<img src="'+q.client_sig+'" style="height:50px;margin-top:8px;object-fit:contain"/>':''}</div>` : '';
+    const html = `<!DOCTYPE html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Sign Quotation ${qNo} — ${q.company_name||'WeClick AI'}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Inter',system-ui,sans-serif;background:#F5F5F3;min-height:100vh;padding:20px}@media print{body{background:#fff;padding:0}}.wrap{max-width:720px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.08);padding:40px;margin-bottom:40px}.header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:18px;border-bottom:2px solid #E96800;margin-bottom:24px}.logo{width:36px;height:36px;background:#E96800;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0}.co-info{margin-left:10px}.table-wrap{margin:20px 0}table{width:100%;border-collapse:collapse}th{background:#F9F9F8;padding:8px 12px;font-size:11px;font-weight:600;text-transform:uppercase;color:#6F6F6B;letter-spacing:.4px;text-align:left}td{padding:10px 12px;font-size:13px;border-bottom:1px solid #F0F0EE}.payment-box{background:#FFF3EA;border:1px solid #FFD4AA;border-radius:8px;padding:16px;margin:20px 0}.tc-box{background:#FFFBF7;border-left:3px solid #E96800;padding:16px;margin:20px 0}.sign-box{background:#F9F9F8;border:1px solid #E5E5E3;border-radius:8px;padding:24px;margin:24px 0}.canvas-wrap{border:2px dashed #ccc;border-radius:6px;cursor:crosshair;background:#fff;display:block;touch-action:none}.btn{display:inline-flex;align-items:center;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;font-family:inherit}.btn-primary{background:#E96800;color:#fff}.btn-ghost{background:#fff;color:#6F6F6B;border:1px solid #E5E5E3;margin-right:8px}.btn:hover{opacity:.9}.footer{text-align:center;color:#9C9C97;font-size:12px;margin-top:24px}</style></head><body><div class='wrap'><div class='header'><div style='display:flex;align-items:flex-start;gap:12px'><div class='logo'>WC</div><div class='co-info'><div style='font-size:18px;font-weight:700;color:#111110'>${q.company_name||'WeClick AI'}</div><div style='font-size:12px;color:#6F6F6B'>${q.tagline||'Marketing Agency · India'}</div>${addr?'<div style="font-size:11px;color:#6F6F6B;margin-top:2px">'+addr+'</div>':''}</div></div><div style='text-align:right'><div style='font-size:22px;font-weight:700;color:#E96800'>Quotation</div><div style='font-size:14px;font-weight:600;color:#111110'>${qNo}</div><div style='font-size:12px;color:#6F6F6B'>Issued: ${issued}</div><div style='font-size:12px;color:#6F6F6B'>Valid until: ${validTxt}</div></div></div><div style='margin-bottom:20px'><div style='font-size:10px;font-weight:700;text-transform:uppercase;color:#9C9C97;margin-bottom:6px'>Billed To</div><div style='font-size:16px;font-weight:700'>${q.client_name}</div><div style='font-size:13px;color:#6F6F6B'>${q.client_company}</div></div><div class='table-wrap'><table><thead><tr><th>Service</th><th>Description</th><th style='text-align:center'>Qty</th><th style='text-align:right'>Rate</th><th style='text-align:right'>Amount</th></tr></thead><tbody>${itemsHtml}</tbody></table></div>${pm.upi_id||pm.bank_name?'<div class="payment-box"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#E96800;letter-spacing:.5px;margin-bottom:10px">💳 Payment Details</div><div style="font-size:13px;line-height:2">'+(pm.upi_id?'<b>UPI:</b> '+pm.upi_id+'<br>':'')+( pm.bank_name?'<b>Bank:</b> '+pm.bank_name+'<br>':'')+(pm.bank_account?'<b>A/C:</b> '+pm.bank_account+'<br>':'')+(pm.bank_ifsc?'<b>IFSC:</b> '+pm.bank_ifsc+'<br>':'')+(pm.bank_holder?'<b>Name:</b> '+pm.bank_holder:'')+'</div></div>':''}<div style='display:flex;flex-direction:column;gap:6px;padding:12px 0;border-top:1px solid #E5E5E3'><div style='display:flex;justify-content:space-between;font-size:13px'><span style='color:#6F6F6B'>Subtotal</span><span>₹${(q.subtotal||0).toLocaleString('en-IN')}</span></div><div style='display:flex;justify-content:space-between;font-size:13px'><span style='color:#6F6F6B'>GST (${q.gst_pct||0}%)</span><span>₹${gstAmt.toLocaleString('en-IN')}</span></div><div style='display:flex;justify-content:space-between;font-size:18px;font-weight:700;color:#E96800;border-top:1px solid #E5E5E3;padding-top:8px;margin-top:4px'><span>Grand Total</span><span>₹${(q.total||0).toLocaleString('en-IN')}</span></div></div>${q.notes?'<div class="tc-box"><div style="font-size:11px;font-weight:700;color:#E96800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Terms &amp; Conditions</div><div style="font-size:12px;color:#555;line-height:1.8;white-space:pre-wrap">'+q.notes.replace(/</g,'&lt;')+'</div></div>':''}
+    ${alreadySigned}
+    ${!q.client_signed_at ? `<div class='sign-box'><div style='font-size:15px;font-weight:600;margin-bottom:6px'>Your Digital Signature</div><div style='font-size:12px;color:#6F6F6B;margin-bottom:14px'>Draw your signature in the box below and click Submit to confirm acceptance of this quotation.</div><canvas id='sigCanvas' class='canvas-wrap' width='620' height='160'></canvas><div style='display:flex;gap:8px;margin-top:12px'><button class='btn btn-ghost' onclick='clearSig()'>Clear</button><button class='btn btn-primary' onclick='submitSig()'>✓ Accept &amp; Submit Signature</button></div><div id='msg' style='margin-top:12px;font-size:13px;font-weight:500'></div></div>` : ''}
+    </div><div class='footer'>This quotation was prepared by ${q.company_name||'WeClick AI'}. For queries, contact ${q.agency_email||''}.</div><script>const canvas=document.getElementById('sigCanvas');if(canvas){const ctx=canvas.getContext('2d');let drawing=false,lastX=0,lastY=0;function pos(e){const r=canvas.getBoundingClientRect();if(e.touches){return{x:(e.touches[0].clientX-r.left)*(canvas.width/r.width),y:(e.touches[0].clientY-r.top)*(canvas.height/r.height)};}return{x:(e.clientX-r.left)*(canvas.width/r.width),y:(e.clientY-r.top)*(canvas.height/r.height)};}canvas.addEventListener('mousedown',e=>{drawing=true;const p=pos(e);lastX=p.x;lastY=p.y;});canvas.addEventListener('mousemove',e=>{if(!drawing)return;ctx.beginPath();ctx.moveTo(lastX,lastY);const p=pos(e);ctx.lineTo(p.x,p.y);ctx.strokeStyle='#1a1a1a';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.stroke();lastX=p.x;lastY=p.y;});canvas.addEventListener('mouseup',()=>drawing=false);canvas.addEventListener('mouseleave',()=>drawing=false);canvas.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;const p=pos(e);lastX=p.x;lastY=p.y;},{passive:false});canvas.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;ctx.beginPath();ctx.moveTo(lastX,lastY);const p=pos(e);ctx.lineTo(p.x,p.y);ctx.strokeStyle='#1a1a1a';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.stroke();lastX=p.x;lastY=p.y;},{passive:false});canvas.addEventListener('touchend',()=>drawing=false);}function clearSig(){if(canvas){const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);}}async function submitSig(){const ctx=canvas.getContext('2d');const blank=!ctx.getImageData(0,0,canvas.width,canvas.height).data.some(v=>v!==0);if(blank){document.getElementById('msg').innerHTML='<span style="color:#DC2626">Please draw your signature first.</span>';return;}const sig=canvas.toDataURL('image/png');document.getElementById('msg').innerHTML='Submitting...';try{const r=await fetch('/api/quotations/${req.params.token}/sign',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({signature:sig})});const d=await r.json();if(d.ok){document.getElementById('msg').innerHTML='<span style="color:#15803D">✓ Signature submitted successfully! Thank you.</span>';canvas.style.opacity='.4';document.querySelector('.btn-primary').disabled=true;document.querySelector('.btn-primary').textContent='✓ Signed';}else{document.getElementById('msg').innerHTML='<span style="color:#DC2626">Error: '+d.error+'</span>';}}catch(e){document.getElementById('msg').innerHTML='<span style="color:#DC2626">Network error. Please try again.</span>';}}</script></body></html>`;
+    res.send(html);
+  } catch(e) { res.status(500).send('Error: ' + e.message); }
+});
+
+// Client submits signature
+app.post('/api/quotations/:token/sign', async (req, res) => {
+  try {
+    const { signature } = req.body;
+    if (!signature) return res.status(400).json({ error: 'No signature provided' });
+    const r = await db.query(
+      'UPDATE quotations SET client_sig=$1, client_signed_at=NOW(), approved=true WHERE sign_token=$2 RETURNING id, client_id',
+      [signature, req.params.token]
+    );
+    if (r.rows.length === 0) return res.status(404).json({ error: 'Invalid or expired link' });
+    // Notify agency via email
+    const q = r.rows[0];
+    try {
+      const co = await db.query('SELECT * FROM company_settings LIMIT 1').then(x => x.rows[0] || {});
+      const cl = await db.query('SELECT name, company FROM clients WHERE id=$1', [q.client_id]).then(x => x.rows[0] || {});
+      if (co.smtp_user && co.smtp_pass) {
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: co.smtp_user, pass: co.smtp_pass } });
+        await transporter.sendMail({
+          from: co.smtp_user,
+          to: co.smtp_user,
+          subject: `✅ Quotation Signed by ${cl.name} (${cl.company})`,
+          html: `<p><b>${cl.name}</b> from <b>${cl.company}</b> has signed and accepted the quotation.</p><p>Log in to WeClick AI to view the signed quotation.</p>`
+        });
+      }
+    } catch(e) { console.log('Email notify failed:', e.message); }
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// Get a signing link for a quotation
+app.post('/api/clients/:id/quotations/:qid/send-for-signing', async (req, res) => {
+  try {
+    const token = require('crypto').randomBytes(24).toString('hex');
+    await db.query('UPDATE quotations SET sign_token=$1 WHERE id=$2 AND client_id=$3', [token, req.params.qid, req.params.id]);
+    const baseUrl = req.headers.origin || `https://${req.headers.host}`;
+    const link = `${baseUrl}/api/quotations/${token}/sign-page`;
+    // Send email if client has email
+    const cl = await db.query('SELECT * FROM clients WHERE id=$1', [req.params.id]).then(x => x.rows[0] || {});
+    const co = await db.query('SELECT * FROM company_settings LIMIT 1').then(x => x.rows[0] || {});
+    if (cl.email && co.smtp_user && co.smtp_pass) {
+      try {
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: co.smtp_user, pass: co.smtp_pass } });
+        await transporter.sendMail({
+          from: `${co.company_name||'WeClick AI'} <${co.smtp_user}>`,
+          to: cl.email,
+          subject: `Please sign your quotation — ${co.company_name||'WeClick AI'}`,
+          html: `<div style='font-family:Inter,sans-serif;max-width:500px;margin:0 auto'><h2 style='color:#E96800'>Your Quotation is Ready</h2><p>Hi ${cl.name},</p><p>Please review and sign your quotation by clicking the button below.</p><a href='${link}' style='display:inline-block;background:#E96800;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin:16px 0'>Review &amp; Sign Quotation</a><p style='color:#666;font-size:12px'>Or copy this link: ${link}</p><p>Warm regards,<br>${co.company_name||'WeClick AI'}</p></div>`
+        });
+      } catch(e) { console.log('Email failed:', e.message); }
+    }
+    res.json({ ok: true, link });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // Run migrations in background — never blocks server startup
 setTimeout(async () => {
   const migs = [
     `ALTER TABLE quotations ADD COLUMN IF NOT EXISTS payment TEXT`,
+    `ALTER TABLE quotations ADD COLUMN IF NOT EXISTS sign_token TEXT`,
+    `ALTER TABLE quotations ADD COLUMN IF NOT EXISTS client_sig TEXT`,
+    `ALTER TABLE quotations ADD COLUMN IF NOT EXISTS client_signed_at TIMESTAMP`,
     `ALTER TABLE clients ADD COLUMN IF NOT EXISTS avatar_url TEXT`,
     `ALTER TABLE clients ADD COLUMN IF NOT EXISTS email TEXT`,
   ];
