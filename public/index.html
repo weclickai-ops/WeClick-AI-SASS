@@ -526,10 +526,14 @@ function lsSet(data){try{const cur=lsGet();localStorage.setItem('wc_settings',JS
 async function getSettings(){
   const local=lsGet();
   try{
-    const remote=await api('/api/settings/company',{silent:true});
+    const remote=await fetch('/api/settings/company').then(r=>r.ok?r.json():null).catch(()=>null);
     if(remote&&Object.keys(remote).length>0){
-      lsSet(remote);
-      return {...local,...remote};
+      // Merge: remote wins for non-empty fields
+      const merged={};
+      const allKeys=[...new Set([...Object.keys(local),...Object.keys(remote)])];
+      for(const k of allKeys) merged[k]=remote[k]||local[k]||'';
+      lsSet(merged);
+      return merged;
     }
   }catch(e){}
   return local;
@@ -2383,14 +2387,14 @@ function v(id){const el=document.getElementById(id);return el?el.value.trim():''
 async function saveCompanySettings(){
   const data={company_name:v('s-name'),tagline:v('s-tagline'),address_line1:v('s-addr1'),address_line2:v('s-addr2'),city:v('s-city'),state:v('s-state'),pincode:v('s-pin'),phone:v('s-phone'),email:v('s-email'),gstin:v('s-gstin'),website:v('s-website')};
   lsSet(data);
-  api('/api/settings/company',{method:'POST',body:JSON.stringify(data)}).catch(()=>{});
+  try{await api('/api/settings/company',{method:'POST',body:JSON.stringify(data),silent:true});}catch(e){}
   toast('Company info saved ✓');
 }
 
 async function savePaymentSettings(){
   const data={upi_id:v('s-upi'),bank_name:v('s-bank'),bank_holder:v('s-holder'),bank_account:v('s-accno'),bank_ifsc:v('s-ifsc')};
   lsSet(data);
-  api('/api/settings/company',{method:'POST',body:JSON.stringify(data)}).catch(()=>{});
+  try{await api('/api/settings/company',{method:'POST',body:JSON.stringify(data),silent:true});}catch(e){}
   appState.settingsTab='payment'; toast('Payment details saved ✓'); navigate('settings');
 }
 
@@ -2416,7 +2420,8 @@ async function uploadSignature(input){
   reader.onload=async e=>{
     const b64=e.target.result;
     lsSet({signature_url:b64});
-    api('/api/settings/company',{method:'POST',body:JSON.stringify({signature_url:b64})}).catch(()=>{});
+    lsSet({signature_url:b64});
+    try{await api('/api/settings/company',{method:'POST',body:JSON.stringify({signature_url:b64}),silent:true});}catch(e){}
     appState.settingsTab='signature'; toast('Signature saved ✓'); navigate('settings');
   };
   reader.readAsDataURL(file);
