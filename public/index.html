@@ -534,7 +534,6 @@ async function getSettings(){
   }catch(e){}
   return local;
 }
-}
 
 function timeAgo(ts){
   if(!ts) return '';
@@ -2344,7 +2343,6 @@ async function savePaymentSettings(){
   lsSet(data);
   api('/api/settings/company',{method:'POST',body:JSON.stringify(data)}).catch(()=>{});
   appState.settingsTab='payment'; toast('Payment details saved ✓'); navigate('settings');
-}
 }
 
 async function saveAgencySettings(){
