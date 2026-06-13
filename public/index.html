@@ -2307,7 +2307,7 @@ async function saveCompanySettings(){
 async function savePaymentSettings(){
   const data={upi_id:v('s-upi'),bank_name:v('s-bank'),bank_holder:v('s-holder'),bank_account:v('s-accno'),bank_ifsc:v('s-ifsc')};
   await api('/api/settings/company',{method:'POST',body:JSON.stringify(data)});
-  toast('Payment details saved ✓');navigate('settings');
+  appState.settingsTab='payment'; toast('Payment details saved ✓'); navigate('settings');
 }
 
 async function saveAgencySettings(){
@@ -2318,7 +2318,7 @@ async function saveAgencySettings(){
 
 async function removeSignature(){
   await api('/api/settings/signature',{method:'DELETE'});
-  toast('Signature removed');navigate('settings');
+  appState.settingsTab='signature'; toast('Signature removed'); navigate('settings');
 }
 
 function clickSigUpload(){const el=document.getElementById('sig-upload');if(el)el.click();}
@@ -2332,7 +2332,7 @@ async function uploadSignature(input){
   reader.onload=async e=>{
     const b64=e.target.result;
     await api('/api/settings/company',{method:'POST',body:JSON.stringify({signature_url:b64})});
-    toast('Signature saved ✓');navigate('settings');
+    appState.settingsTab='signature'; toast('Signature saved ✓'); navigate('settings');
   };
   reader.readAsDataURL(file);
 }
