@@ -508,6 +508,8 @@ function toast(msg,type='success'){
   setTimeout(()=>div.remove(),3000);
 }
 async function api(path,opts={}){
+  const silent=opts.silent||false;
+  delete opts.silent;
   try{
     const res=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts});
     const ct=res.headers.get('content-type')||'';
@@ -515,7 +517,7 @@ async function api(path,opts={}){
     const data=await res.json();
     if(!res.ok) throw new Error(data.error||'Request failed');
     return data;
-  }catch(e){toast(e.message,'error');throw e;}
+  }catch(e){if(!silent)toast(e.message,'error');throw e;}
 }
 
 // ── LOCAL SETTINGS CACHE (survives DB failures) ───────────────
@@ -524,13 +526,14 @@ function lsSet(data){try{const cur=lsGet();localStorage.setItem('wc_settings',JS
 async function getSettings(){
   const local=lsGet();
   try{
-    const remote=await api('/api/settings/company');
+    const remote=await api('/api/settings/company',{silent:true});
     if(remote&&Object.keys(remote).length>0){
-      lsSet(remote); // keep local in sync with DB
-      return {...local,...remote}; // remote wins
+      lsSet(remote);
+      return {...local,...remote};
     }
   }catch(e){}
-  return local; // fallback to localStorage
+  return local;
+}
 }
 
 function timeAgo(ts){
